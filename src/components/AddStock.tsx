@@ -80,7 +80,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                <Icons.ArrowLeft size={20} />
             </Button>
             <div>
-               <h1 className="text-xl font-bold tracking-tight">New Strategy</h1>
+               <h1 className="text-xl font-bold tracking-tight">New Stock Engine</h1>
                <p className="text-xs text-muted-foreground">Configure Dynamic SIP Parameters</p>
             </div>
          </div>

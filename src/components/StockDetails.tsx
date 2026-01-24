@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Icons } from '../constants';
 import { Stock } from '../types';
+import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
 const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy }) => {
    // Execution State: 'IDLE' -> 'CALCULATED' -> 'CONFIRMING'
    const [executionState, setExecutionState] = useState<'IDLE' | 'CALCULATED' | 'CONFIRMING'>('IDLE');
+   const { toast } = useToast();
 
    // Edit Mode State
    const [isEditing, setIsEditing] = useState(false);
@@ -61,6 +63,27 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [executedAmount, setExecutedAmount] = useState<string>('');
    const [executionPrice, setExecutionPrice] = useState<string>('');
 
+   // Partition State & Data Helper
+   const [selectedPartition, setSelectedPartition] = useState<number | null>(null);
+
+   const getPartitionData = (index: number) => {
+      // Mock Data Generation based on index
+      if (index >= (stock.currentCycle || 2)) return null; // Future partitions have no data
+
+      // Deterministic pseudo-random for consistent demo feel
+      const seed = index * 123;
+      const amount = Math.floor(2000 + (seed % 3000));
+      const variation = (seed % 20) - 10;
+      const price = stock.currentAverage * (1 + (variation / 100));
+
+      return {
+         partitionIndex: index + 1,
+         amountInvested: amount,
+         avgPrice: price,
+         status: 'COMPLETED'
+      };
+   };
+
    // Derived Stats
    const totalInvested = (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount;
    const sipQuantity = stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
@@ -68,8 +91,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const avgBuyPrice = totalShares > 0 ? totalInvested / totalShares : 0;
 
    // Progress Mocks (In real app, comes from backend)
-   const currentCycle = stock.currentCycle || 2;
-   const totalCycles = stock.totalCycles || 18;
+   const currentCycle = stock.currentCycle || 10;
+   const totalCycles = stock.totalCycles || 20;
    const daysInvested = stock.daysInvested || 14;
    const cycleLength = stock.partitionDays; // e.g. 60
    const daysRemaining = cycleLength - (daysInvested % cycleLength);
@@ -131,6 +154,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       setLockInPct('');
       setConvictionOverride([50]);
       setRecommendation(null);
+      toast({
+         title: "Successfully Implemented",
+         description: "Your strategy execution has been recorded.",
+         duration: 3000,
+         className: "bg-emerald-50 border-emerald-200"
+      });
    };
 
    return (
@@ -501,7 +530,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  });
                               }
                            }}>
-                              Add New Strategy
+                              Activate Stock Engine
                            </Button>
                         </DialogFooter>
                      </DialogContent>
@@ -572,37 +601,157 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            </div>
 
                            {/* 2. Allocation Progress Section (New) */}
+
+
                            <div className="space-y-3">
                               <div className="flex justify-between items-center">
                                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                                    <Icons.Target size={16} className="text-blue-500" />
-                                    Allocation Progress
+                                    <Icons.PieChart size={16} className="text-purple-500" />
+                                    Partition Progress
                                  </h3>
                                  <span className="text-xs font-mono font-medium text-muted-foreground">
-                                    {((stock.deployedAmount / stock.totalBudget) * 100).toFixed(1)}% Deployed
+                                    {((currentCycle / totalCycles) * 100).toFixed(1)}% Complete
                                  </span>
                               </div>
 
-                              <div className="relative h-6 w-full bg-secondary/50 rounded-full overflow-hidden shadow-inner">
-                                 {/* Deployment Fill */}
-                                 <div
-                                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-700 ease-out flex items-center justify-end pr-2"
-                                    style={{ width: `${Math.min((stock.deployedAmount / stock.totalBudget) * 100, 100)}%` }}
-                                 >
-                                 </div>
-                                 <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground/60">
-                                    ₹{stock.deployedAmount.toLocaleString()} / ₹{stock.totalBudget.toLocaleString()}
+                              {/* Segmented Progress Bar */}
+                              <div className="relative w-full h-10 flex items-center bg-secondary/30 rounded-full p-1 ring-1 ring-black/5 dark:ring-white/10 shadow-inner">
+                                 {/* Track Background is handled by container */}
+                                 <div className="flex gap-1.5 w-full h-full">
+                                    {Array.from({ length: totalCycles }).map((_, i) => {
+                                       const isCompleted = i < currentCycle;
+                                       const isCurrent = i === currentCycle;
+                                       const partitionNum = i + 1;
+                                       return (
+                                          <TooltipProvider key={i} delayDuration={0}>
+                                             <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                   <div
+                                                      onClick={() => setSelectedPartition(i)}
+                                                      className={`flex-1 rounded-full cursor-pointer transition-all duration-300 relative group ${isCompleted
+                                                         ? "bg-gradient-to-br from-cyan-500 to-blue-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] hover:brightness-110"
+                                                         : isCurrent
+                                                            ? "bg-background border-2 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.5)] z-10 scale-110"
+                                                            : "bg-transparent hover:bg-white/10 dark:hover:bg-white/5 border border-transparent hover:border-white/10"
+                                                         }`}
+                                                   >
+                                                      {/* Active Breathing Ring */}
+                                                      {isCurrent && (
+                                                         <span className="absolute -inset-1 rounded-full bg-cyan-500/30 animate-pulse" />
+                                                      )}
+                                                      {/* Future Ghost Dot */}
+                                                      {!isCompleted && !isCurrent && (
+                                                         <div className="absolute inset-0 m-auto w-1 h-1 rounded-full bg-muted-foreground/20 group-hover:bg-muted-foreground/40 transition-colors" />
+                                                      )}
+                                                   </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="text-xs font-bold bg-foreground text-background">
+                                                   Partition #{partitionNum} {isCompleted ? "(Verified)" : isCurrent ? "(Active)" : "(Upcoming)"}
+                                                </TooltipContent>
+                                             </Tooltip>
+                                          </TooltipProvider>
+                                       );
+                                    })}
                                  </div>
                               </div>
+                              <div className="flex justify-between text-[10px] text-muted-foreground font-mono px-1">
+                                 <span>START</span>
+                                 <span>{currentCycle}/{totalCycles}</span>
+                                 <span>END</span>
+                              </div>
                            </div>
+
+                           {/* Partition Details Modal - Trading Card Style */}
+                           <Dialog open={selectedPartition !== null} onOpenChange={(open) => !open && setSelectedPartition(null)}>
+                              <DialogContent className="max-w-sm p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl">
+                                 <div className="relative bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-background p-6 space-y-6">
+
+                                    <div className="flex items-center justify-between">
+                                       <div className="flex items-center gap-3">
+                                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${getPartitionData(selectedPartition!) ? 'bg-indigo-500 text-white shadow-indigo-500/20' : 'bg-muted text-muted-foreground'
+                                             }`}>
+                                             <span className="font-mono font-bold text-lg">#{selectedPartition !== null ? selectedPartition + 1 : 0}</span>
+                                          </div>
+                                          <div>
+                                             <h3 className="font-bold text-lg leading-none">Partition Cert</h3>
+                                             <p className="text-xs text-muted-foreground font-mono mt-1">
+                                                DSIP-{stock.symbol}-{(selectedPartition || 0) + 1}
+                                             </p>
+                                          </div>
+                                       </div>
+                                       <Badge variant={getPartitionData(selectedPartition!) ? "default" : "outline"} className={getPartitionData(selectedPartition!) ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20" : ""}>
+                                          {getPartitionData(selectedPartition!) ? 'EXECUTED' : 'PENDING'}
+                                       </Badge>
+                                    </div>
+
+                                    <Separator className="bg-border/50" />
+
+                                    {selectedPartition !== null && (
+                                       <div className="space-y-6">
+                                          {getPartitionData(selectedPartition) ? (
+                                             <>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                   <div className="space-y-1.5 p-3 rounded-xl bg-background/50 border shadow-sm">
+                                                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                                                         <Icons.Wallet size={12} /> Invested
+                                                      </div>
+                                                      <div className="text-xl font-black tracking-tight">
+                                                         ₹{getPartitionData(selectedPartition)?.amountInvested.toLocaleString()}
+                                                      </div>
+                                                   </div>
+                                                   <div className="space-y-1.5 p-3 rounded-xl bg-background/50 border shadow-sm">
+                                                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                                                         <Icons.Target size={12} /> Avg Price
+                                                      </div>
+                                                      <div className="text-xl font-black tracking-tight">
+                                                         ₹{getPartitionData(selectedPartition)?.avgPrice.toFixed(2)}
+                                                      </div>
+                                                   </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                   <div className="flex justify-between text-sm">
+                                                      <span className="text-muted-foreground">Executed On</span>
+                                                      <span className="font-mono font-medium">May 12, 2024</span>
+                                                   </div>
+                                                   <div className="flex justify-between text-sm">
+                                                      <span className="text-muted-foreground">Units Acquired</span>
+                                                      <span className="font-mono font-medium">
+                                                         {(getPartitionData(selectedPartition)!.amountInvested / getPartitionData(selectedPartition)!.avgPrice).toFixed(2)}
+                                                      </span>
+                                                   </div>
+                                                </div>
+                                             </>
+                                          ) : (
+                                             <div className="py-6 text-center space-y-3">
+                                                <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mx-auto text-muted-foreground/40 border-2 border-dashed border-muted-foreground/20">
+                                                   <Icons.Clock className="w-8 h-8" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                   <p className="font-medium text-foreground">Awaiting Execution</p>
+                                                   <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+                                                      This partition is scheduled for a future date.
+                                                   </p>
+                                                </div>
+                                             </div>
+                                          )}
+                                       </div>
+                                    )}
+                                 </div>
+                                 <div className="bg-muted/30 p-4 flex justify-between items-center border-t">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-50"></p>
+                                    <Button size="sm" variant="outline" onClick={() => setSelectedPartition(null)}>Close</Button>
+                                 </div>
+                              </DialogContent>
+                           </Dialog>
 
                            <Separator />
 
                            {/* P&L Bar - Simplified & Straightforward */}
-                           
+
                         </div>
 
-                        
+
 
                      </CardContent>
                   </Card>
@@ -629,3 +778,4 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 };
 
 export default StockDetails;
+

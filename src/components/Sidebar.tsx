@@ -11,7 +11,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setView }) => {
   const menuItems = [
     { label: 'Dashboard', icon: <Icons.TrendUp />, view: 'DASHBOARD' as AppView },
-    { label: 'Add Strategy', icon: <Icons.Plus />, view: 'ADD_STOCK' as AppView },
+    { label: 'Activate Stock Engine', icon: <Icons.Plus />, view: 'ADD_STOCK' as AppView },
   ];
 
   return (

@@ -34,7 +34,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
              <Icons.Plus />
           </div>
           <div className="text-left flex-1">
-            <p className="text-sm font-semibold">New Strategy</p>
+            <p className="text-sm font-semibold">Activate Stock Engine</p>
             <p className="text-[10px] opacity-70 font-normal">Create DSIP instance</p>
           </div>
         </Button>

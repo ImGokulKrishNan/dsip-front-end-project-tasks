@@ -8,10 +8,22 @@ import StockDetails from './components/StockDetails';
 import MainLayout from './components/MainLayout';
 import { ThemeProvider } from './components/theme-provider';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
+import { Toaster } from "@/components/ui/toaster";
+
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('LANDING');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [tempStrategyConfig, setTempStrategyConfig] = useState<Partial<Stock> | undefined>(undefined);
 
@@ -55,6 +67,9 @@ const App: React.FC = () => {
   };
 
   const addStock = (newStock: Stock) => {
+    if (stocks.length === 0) {
+      setShowCelebration(true);
+    }
     setStocks(prev => [...prev, newStock]);
     // After adding, select the new stock and show details
     setSelectedStockId(newStock.id);
@@ -130,6 +145,32 @@ const App: React.FC = () => {
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 font-sans">
         {renderContent()}
+
+        {/* First DSIP Celebration Modal */}
+        <Dialog open={showCelebration} onOpenChange={setShowCelebration}>
+          <DialogContent className="sm:max-w-md text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center animate-bounce">
+                <span className="text-3xl">🎉</span>
+              </div>
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-center">Congratulations!</DialogTitle>
+              <DialogDescription className="text-center pt-2 text-lg">
+                You've successfully created your first <span className="font-bold text-primary">DSIP Strategy</span>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 text-muted-foreground text-sm">
+              Your journey to disciplined, emotion-free investing starts now.
+            </div>
+            <DialogFooter className="sm:justify-center">
+              <Button size="lg" onClick={() => setShowCelebration(false)} className="w-full sm:w-auto min-w-[150px]">
+                Let's Go!
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Toaster />
       </div>
     </ThemeProvider>
   );

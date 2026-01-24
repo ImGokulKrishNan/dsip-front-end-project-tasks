@@ -98,7 +98,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             onClick={onAddStock}
             className="bg-slate-900 text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-800 transition"
           >
-            New Strategy
+            Activate Stock Engine
           </button>
 
           <ProfileIcon user={user} />

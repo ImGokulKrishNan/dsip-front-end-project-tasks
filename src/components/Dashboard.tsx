@@ -61,29 +61,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <Card className="flex items-center p-3 gap-3 bg-card border-border shadow-sm">
-             <div className="p-2 bg-primary/5 rounded-md text-primary">
-               <Icons.Park />
-             </div>
-             <div>
-               <p className="text-[10px] uppercase font-bold text-muted-foreground">Money Park</p>
-               <p className="text-sm font-bold">₹{user.moneyParkBalance.toLocaleString()}</p>
-             </div>
-          </Card>
-           
-          <Card className="flex items-center p-3 gap-3 bg-card border-border shadow-sm">
-             <div className="p-2 bg-primary/5 rounded-md text-primary">
-               <Icons.Wallet />
-             </div>
-             <div>
-               <p className="text-[10px] uppercase font-bold text-muted-foreground">Wallet</p>
-               <p className="text-sm font-bold">₹{user.walletBalance.toLocaleString()}</p>
-             </div>
-          </Card>
-          
           <Button onClick={onAddStock} size="lg" className="shadow-lg">
             <Icons.Plus />
-            <span className="ml-2">Add Strategy</span>
+            <span className="ml-2">Activate Stock Engine</span>
           </Button>
         </div>
       </div>
@@ -121,48 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
                   </div>
               </div>
 
-               {/* P&L Bar Integration - Simplified */}
-               <div className="relative z-10 mt-6 space-y-2">
-                  <div className="h-6 w-full bg-primary-foreground/10 rounded-md overflow-hidden flex text-xs font-bold text-primary leading-none border border-primary-foreground/10">
-                     {isPortfolioProfit ? (
-                        // PROFIT: [ Invested (Semi-Transparent) ] [ Profit (Solid Green) ]
-                        <>
-                           <div 
-                              className="h-full bg-primary-foreground/30 flex items-center justify-center text-primary-foreground" 
-                              style={{ width: `${(totalInvestedValue / currentMarketValue) * 100}%` }} 
-                           >
-                              Invested
-                           </div>
-                           <div 
-                              className="h-full bg-emerald-400 flex items-center justify-center text-emerald-900" 
-                              style={{ width: `${(1 - (totalInvestedValue / currentMarketValue)) * 100}%` }}
-                           >
-                              +₹{Math.round(currentMarketValue - totalInvestedValue).toLocaleString()}
-                           </div>
-                        </>
-                     ) : (
-                        // LOSS: [ Current (Semi-Transparent) ] [ Loss (Solid Red) ]
-                        <>
-                           <div 
-                              className="h-full bg-primary-foreground/30 flex items-center justify-center text-primary-foreground" 
-                              style={{ width: `${(currentMarketValue / totalInvestedValue) * 100}%` }} 
-                           >
-                              Current
-                           </div>
-                           <div 
-                              className="h-full bg-red-400 flex items-center justify-center text-red-900" 
-                              style={{ width: `${(1 - (currentMarketValue / totalInvestedValue)) * 100}%` }} 
-                           >
-                              -₹{Math.round(totalInvestedValue - currentMarketValue).toLocaleString()}
-                           </div>
-                        </>
-                     )}
-                  </div>
-                  <div className="flex justify-between text-xs font-medium text-primary-foreground/60">
-                     <span>Invested: ₹{Math.round(totalInvestedValue).toLocaleString()}</span>
-                     <span>Current: ₹{Math.round(currentMarketValue).toLocaleString()}</span>
-                  </div>
-               </div>
+               
 
               <div className="relative z-10 mt-6 grid grid-cols-3 gap-4 border-t border-primary-foreground/20 pt-6">
                  <div>
@@ -239,7 +178,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
                                        onSelectStock(stock.id);
                                     }}
                                  >
-                                    <Icons.Zap className="w-3 h-3 mr-2" /> Execute Daily
+                                    <Icons.Zap className="w-3 h-3 mr-2" /> Execute
                                  </Button>
                               </div>
                            </CardContent>
