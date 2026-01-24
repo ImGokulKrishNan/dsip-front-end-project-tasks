@@ -599,77 +599,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            <Separator />
 
                            {/* P&L Bar - Simplified & Straightforward */}
-                           <div className="space-y-2">
-                              {/* Labels */}
-                              <div className="flex justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                                 <span>{((totalShares * stock.currentPrice) - totalInvested) >= 0 ? "Invested" : "Current Value"}</span>
-                                 <span>{((totalShares * stock.currentPrice) - totalInvested) >= 0 ? "Profit" : "Loss"}</span>
-                              </div>
-
-                              <div className="h-6 w-full bg-secondary/50 rounded-md overflow-hidden flex text-xs font-bold text-white leading-none shadow-inner border border-black/5">
-                                 {((totalShares * stock.currentPrice) >= totalInvested) ? (
-                                    // PROFIT SCENARIO: [ Invested (Slate) ][ Profit (Green) ]
-                                    <>
-                                       <div
-                                          className="h-full bg-slate-500 flex items-center justify-center text-slate-100 shadow-[inset_-1px_0_0_rgba(0,0,0,0.1)]"
-                                          style={{ width: `${(totalInvested / (totalShares * stock.currentPrice)) * 100}%` }}
-                                       >
-                                          {/* Only show label if width is sufficient */}
-                                          {(totalInvested / (totalShares * stock.currentPrice)) > 0.15 && "Invested"}
-                                       </div>
-                                       <div
-                                          className="h-full bg-emerald-500 flex items-center justify-center text-emerald-50 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]"
-                                          style={{ width: `${(1 - (totalInvested / (totalShares * stock.currentPrice))) * 100}%` }}
-                                       >
-                                          +₹{((totalShares * stock.currentPrice) - totalInvested).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                       </div>
-                                    </>
-                                 ) : (
-                                    // LOSS SCENARIO: [ Current (Slate) ][ Loss (Red) ]
-                                    <>
-                                       <div
-                                          className="h-full bg-slate-500 flex items-center justify-center text-slate-100 shadow-[inset_-1px_0_0_rgba(0,0,0,0.1)]"
-                                          style={{ width: `${((totalShares * stock.currentPrice) / totalInvested) * 100}%` }}
-                                       >
-                                          {(totalShares * stock.currentPrice / totalInvested) > 0.15 && "Current"}
-                                       </div>
-                                       <div
-                                          className="h-full bg-red-500 flex items-center justify-center text-red-50 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]"
-                                          style={{ width: `${((totalInvested - (totalShares * stock.currentPrice)) / totalInvested) * 100}%` }}
-                                       >
-                                          -₹{(totalInvested - (totalShares * stock.currentPrice)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                       </div>
-                                    </>
-                                 )}
-                              </div>
-
-                              <div className="flex justify-between text-xs font-medium pt-1">
-                                 <div className="flex flex-col">
-                                    <span className="text-muted-foreground text-[10px]">Invested Capital</span>
-                                    <span>₹{totalInvested.toLocaleString()}</span>
-                                 </div>
-                                 <div className="flex flex-col items-end">
-                                    <span className="text-muted-foreground text-[10px]">Current Value</span>
-                                    <span>₹{(totalShares * stock.currentPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                                 </div>
-                              </div>
-                           </div>
+                           
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 pt-2 text-center divide-x">
-                           <div className="px-2">
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Invested</p>
-                              <p className="font-bold text-lg">₹{totalInvested.toLocaleString()}</p>
-                           </div>
-                           <div className="px-2">
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Avg Price</p>
-                              <p className="font-bold text-lg">₹{avgBuyPrice.toFixed(2)}</p>
-                           </div>
-                           <div className="px-2">
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Shares</p>
-                              <p className="font-bold text-lg">{totalShares.toFixed(2)}</p>
-                           </div>
-                        </div>
+                        
 
                      </CardContent>
                   </Card>
@@ -690,8 +623,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                </div>
 
             </div>
-         </ScrollArea>
-      </div>
+         </ScrollArea >
+      </div >
    );
 };
 
