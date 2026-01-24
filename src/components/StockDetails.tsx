@@ -10,11 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface StockDetailsProps {
    stock: Stock;
    onBack: () => void;
    onUpdate: (stock: Stock) => void;
+   onCopyStrategy?: (config: Partial<Stock>) => void;
 }
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
@@ -32,13 +35,24 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
    </TooltipProvider>
 );
 
-const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate }) => {
+const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy }) => {
    // Execution State: 'IDLE' -> 'CALCULATED' -> 'CONFIRMING'
    const [executionState, setExecutionState] = useState<'IDLE' | 'CALCULATED' | 'CONFIRMING'>('IDLE');
 
+   // Edit Mode State
+   const [isEditing, setIsEditing] = useState(false);
+   const [editConfig, setEditConfig] = useState({
+      totalBudget: stock.totalBudget,
+      convictionYears: stock.convictionYears,
+      loadFactor: stock.loadFactor,
+      partitionDays: stock.partitionDays
+   });
+   const [showWarning, setShowWarning] = useState(false);
+   const [showDailyLimitWarning, setShowDailyLimitWarning] = useState(false);
+
    // Daily Context Inputs
    const [lockInPct, setLockInPct] = useState<string>('');
-   const [convictionOverride, setConvictionOverride] = useState<number[]>([0]); // 0 means neutral/unchanged
+   const [convictionOverride, setConvictionOverride] = useState<number[]>([50]); // 50 means neutral (1.0x)
 
    // Calculated Recommendation (Mock)
    const [recommendation, setRecommendation] = useState<{ amount: number; price: number; shares: number } | null>(null);
@@ -60,12 +74,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate }) 
    const cycleLength = stock.partitionDays; // e.g. 60
    const daysRemaining = cycleLength - (daysInvested % cycleLength);
 
-   const handleCalculate = () => {
+   const performCalculation = () => {
       // Mock Calculation Logic based on spec
       // In reality, this would call the "Daily Calculation API"
       const refPrice = stock.currentPrice * (1 + (Number(lockInPct) / 100)); // Apply lock-in context
       const baseAmount = stock.totalBudget / (stock.convictionYears * 250); // Daily spread roughly
-      const adjustedAmount = Math.round(baseAmount * (1 + (convictionOverride[0] / 10))); // Adjust by conviction
+
+      // Confidence Logic: 0 -> 0x, 50 -> 1x, 100 -> 2x
+      const confidenceFactor = (convictionOverride[0] - 50) / 50;
+      const adjustedAmount = Math.round(baseAmount * (1 + confidenceFactor));
 
       setRecommendation({
          amount: Math.max(500, adjustedAmount), // Min floor
@@ -77,6 +94,20 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate }) 
       // Pre-fill confirmation inputs for UX convenience
       setExecutedAmount(Math.max(500, adjustedAmount).toString());
       setExecutionPrice(refPrice.toFixed(2));
+   };
+
+   const handleCalculate = () => {
+      // Check if executed today
+      // Check if executed today
+      const alreadyExecutedToday = stock.history.some(h =>
+         new Date(h.date).toDateString() === new Date().toDateString()
+      );
+
+      if (alreadyExecutedToday) {
+         setShowDailyLimitWarning(true);
+      } else {
+         performCalculation();
+      }
    };
 
    const handleConfirm = () => {
@@ -98,7 +129,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate }) 
       onUpdate(updatedStock);
       setExecutionState('IDLE');
       setLockInPct('');
-      setConvictionOverride([0]);
+      setConvictionOverride([50]);
       setRecommendation(null);
    };
 
@@ -173,22 +204,26 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate }) 
                                     Conviction Adjustment (Optional) [x factor]
                                     <InfoTooltip text="Only use if today's news significantly changes your view." />
                                  </Label>
-                                 <Badge variant={convictionOverride[0] === 0 ? "secondary" : "default"}>
-                                    {convictionOverride[0] === 0 ? "Neutral" : (convictionOverride[0] > 0 ? "Stronger" : "Weaker")}
+                                 <Badge className={
+                                    convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600" :
+                                       convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600" :
+                                          "bg-yellow-500 hover:bg-yellow-600"
+                                 }>
+                                    {convictionOverride[0]}% Confidence
                                  </Badge>
                               </div>
                               <Slider
-                                 min={-5}
-                                 max={5}
-                                 step={1}
+                                 min={0}
+                                 max={100}
+                                 step={5}
                                  value={convictionOverride}
                                  onValueChange={setConvictionOverride}
                                  className="py-2"
                               />
                               <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground px-1">
-                                 <span>Low Confidence</span>
-                                 <span>Neutral</span>
-                                 <span>High Confidence</span>
+                                 <span>0% (Low)</span>
+                                 <span>50% (Neutral)</span>
+                                 <span>100% (High)</span>
                               </div>
                            </div>
 
@@ -315,31 +350,189 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate }) 
                   {/* Summary Card */}
                   <Card className="bg-muted/20 border-border/50 shadow-sm">
                      <CardHeader className="pb-3 pt-5">
-                        <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            Tracker Configuration <InfoTooltip text="Approximate change at the moment you are ready to buy." />
+                        <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-between w-full">
+                           <span className="flex items-center gap-2">Tracker Configuration <InfoTooltip text="Approximate change at the moment you are ready to buy." /></span>
+                           {!isEditing && (
+                              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setIsEditing(true)}>
+                                 Edit
+                              </Button>
+                           )}
                         </CardTitle>
                      </CardHeader>
                      <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 gap-y-4 text-sm">
-                           <div>
-                              <p className="text-xs text-muted-foreground">Conviction Period</p>
-                              <p className="font-semibold">{stock.convictionYears} years</p>
-                           </div>
-                           <div>
-                              <p className="text-xs text-muted-foreground">Total Budget</p>
-                              <p className="font-semibold">₹{stock.totalBudget.toLocaleString()}</p>
-                           </div>
-                           <div>
-                              <p className="text-xs text-muted-foreground">Deployment Style</p>
-                              <p className="font-semibold capitalize">{stock.loadFactor.toLowerCase().replace('_', ' ')}</p>
-                           </div>
-                           <div>
-                              <p className="text-xs text-muted-foreground">Partition Length</p>
-                              <p className="font-semibold">{stock.partitionDays} trading days</p>
-                           </div>
+                           {!isEditing ? (
+                              // READ ONLY VIEW
+                              <>
+                                 <div>
+                                    <p className="text-xs text-muted-foreground">Conviction Period</p>
+                                    <p className="font-semibold">{stock.convictionYears} years</p>
+                                 </div>
+                                 <div>
+                                    <p className="text-xs text-muted-foreground">Total Budget</p>
+                                    <p className="font-semibold">₹{stock.totalBudget.toLocaleString()}</p>
+                                 </div>
+                                 <div>
+                                    <p className="text-xs text-muted-foreground">Load Factor</p>
+                                    <p className="font-semibold capitalize">{stock.loadFactor.toLowerCase().replace('_', ' ')}</p>
+                                 </div>
+                                 <div>
+                                    <p className="text-xs text-muted-foreground">Partition Length</p>
+                                    <p className="font-semibold">{stock.partitionDays} trading days</p>
+                                 </div>
+                              </>
+                           ) : (
+                              // EDIT VIEW
+                              <>
+                                 <div className="space-y-1">
+                                    <Label className="text-xs">Conviction (Yrs)</Label>
+                                    <Input
+                                       type="number"
+                                       className="h-8"
+                                       value={editConfig.convictionYears}
+                                       onChange={e => setEditConfig({ ...editConfig, convictionYears: Number(e.target.value) })}
+                                    />
+                                 </div>
+                                 <div className="space-y-1">
+                                    <Label className="text-xs">Total Budget (₹)</Label>
+                                    <Input
+                                       type="number"
+                                       className="h-8"
+                                       value={editConfig.totalBudget}
+                                       onChange={e => setEditConfig({ ...editConfig, totalBudget: Number(e.target.value) })}
+                                    />
+                                 </div>
+                                 <div className="space-y-1 col-span-2">
+                                    <Label className="text-xs flex justify-between">
+                                       Load Factor
+                                       <span className="text-[10px] text-amber-600 font-normal">*Not recommended to change</span>
+                                    </Label>
+                                    <Select
+                                       value={editConfig.loadFactor}
+                                       onValueChange={(val: any) => setEditConfig({ ...editConfig, loadFactor: val })}
+                                    >
+                                       <SelectTrigger className="h-8">
+                                          <SelectValue />
+                                       </SelectTrigger>
+                                       <SelectContent>
+                                          <SelectItem value="AGGRESSIVE">Aggressive</SelectItem>
+                                          <SelectItem value="MODERATE">Moderate</SelectItem>
+                                          <SelectItem value="GRADUAL">Gradual</SelectItem>
+                                       </SelectContent>
+                                    </Select>
+                                 </div>
+                                 <div className="space-y-1 col-span-2">
+                                    <Label className="text-xs">Partition Length (Days)</Label>
+                                    <Input
+                                       type="number"
+                                       className="h-8"
+                                       value={editConfig.partitionDays}
+                                       onChange={e => setEditConfig({ ...editConfig, partitionDays: Number(e.target.value) })}
+                                    />
+                                 </div>
+                              </>
+                           )}
                         </div>
+
+                        {isEditing && (
+                           <div className="flex gap-2 pt-2">
+                              <Button size="sm" onClick={() => {
+                                 // Validation Logic
+                                 const isSafe =
+                                    editConfig.totalBudget >= stock.totalBudget &&
+                                    editConfig.convictionYears >= stock.convictionYears &&
+                                    editConfig.partitionDays === stock.partitionDays &&
+                                    editConfig.loadFactor === stock.loadFactor;
+
+                                 if (isSafe) {
+                                    onUpdate({ ...stock, ...editConfig });
+                                    setIsEditing(false);
+                                 } else {
+                                    setShowWarning(true);
+                                 }
+                              }}>Save Changes</Button>
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                 setEditConfig({
+                                    totalBudget: stock.totalBudget,
+                                    convictionYears: stock.convictionYears,
+                                    loadFactor: stock.loadFactor,
+                                    partitionDays: stock.partitionDays
+                                 });
+                                 setIsEditing(false);
+                              }}>Cancel</Button>
+                           </div>
+                        )}
                      </CardContent>
                   </Card>
+
+                  {/* Warning Modal */}
+                  <Dialog open={showWarning} onOpenChange={setShowWarning}>
+                     <DialogContent>
+                        <DialogHeader>
+                           <DialogTitle className="flex items-center gap-2 text-amber-600">
+                              <Icons.AlertTriangle className="w-5 h-5" />
+                              Strategy Modification Warning
+                           </DialogTitle>
+                           <DialogDescription className="pt-2">
+                              This change is not recommended for an existing strategy. Reducing budget, conviction, or changing structural parameters can disrupt the mathematical execution.
+                           </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                           <Button variant="outline" onClick={() => {
+                              // Discard
+                              setEditConfig({
+                                 totalBudget: stock.totalBudget,
+                                 convictionYears: stock.convictionYears,
+                                 loadFactor: stock.loadFactor,
+                                 partitionDays: stock.partitionDays
+                              });
+                              setShowWarning(false);
+                              setIsEditing(false);
+                           }}>
+                              Discard Changes
+                           </Button>
+                           <Button onClick={() => {
+                              // Redirect
+                              if (onCopyStrategy) {
+                                 onCopyStrategy({
+                                    symbol: stock.symbol,
+                                    name: stock.name,
+                                    ...editConfig
+                                 });
+                              }
+                           }}>
+                              Add New Strategy
+                           </Button>
+                        </DialogFooter>
+                     </DialogContent>
+                  </Dialog>
+
+                  {/* Daily Limit Warning Modal */}
+                  <Dialog open={showDailyLimitWarning} onOpenChange={setShowDailyLimitWarning}>
+                     <DialogContent>
+                        <DialogHeader>
+                           <DialogTitle className="flex items-center gap-2 text-amber-600">
+                              <Icons.AlertTriangle className="w-5 h-5" />
+                              Not Recommended for This Strategy
+                           </DialogTitle>
+                           <DialogDescription className="pt-2">
+                              DSIP is designed for one disciplined execution per day.
+                              Multiple executions within the same day may accelerate capital deployment.
+                           </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                           <Button variant="outline" onClick={() => setShowDailyLimitWarning(false)}>
+                              Cancel
+                           </Button>
+                           <Button variant="destructive" onClick={() => {
+                              setShowDailyLimitWarning(false);
+                              performCalculation();
+                           }}>
+                              Execute Anyway
+                           </Button>
+                        </DialogFooter>
+                     </DialogContent>
+                  </Dialog>
 
                   {/* Progress & Position Card */}
                   <Card className="border-primary/10 shadow-sm bg-background">

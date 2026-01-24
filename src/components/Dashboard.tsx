@@ -27,7 +27,6 @@ interface DashboardProps {
   stocks: Stock[];
   onAddStock: () => void;
   onSelectStock: (id: string) => void;
-  onExecute: (id: string, amount: number) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelectStock }) => {
@@ -231,6 +230,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
                                        ₹{stock.deployedAmount.toLocaleString()} / ₹{stock.totalBudget.toLocaleString()}
                                     </div>
                                  </div>
+                                 
+                                 <Button 
+                                    className="w-full mt-4 h-8 text-xs font-bold uppercase tracking-wider" 
+                                    size="sm"
+                                    onClick={(e) => {
+                                       e.stopPropagation(); // Prevent card click
+                                       onSelectStock(stock.id);
+                                    }}
+                                 >
+                                    <Icons.Zap className="w-3 h-3 mr-2" /> Execute Daily
+                                 </Button>
                               </div>
                            </CardContent>
                         </Card>

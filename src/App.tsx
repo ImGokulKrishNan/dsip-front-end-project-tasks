@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
+  const [tempStrategyConfig, setTempStrategyConfig] = useState<Partial<Stock> | undefined>(undefined);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('smart_sip_user');
@@ -57,6 +58,7 @@ const App: React.FC = () => {
     setStocks(prev => [...prev, newStock]);
     // After adding, select the new stock and show details
     setSelectedStockId(newStock.id);
+    setTempStrategyConfig(undefined); // Clear temp config
     setView('STOCK_DETAILS');
   };
 
@@ -64,19 +66,7 @@ const App: React.FC = () => {
     setStocks(prev => prev.map(s => s.id === updatedStock.id ? updatedStock : s));
   };
 
-  const executeSip = (stockId: string, amount: number) => {
-    setStocks(prev => prev.map(s => {
-      if (s.id === stockId) {
-        return {
-          ...s,
-          deployedAmount: s.deployedAmount + amount,
-          history: [...s.history, { date: new Date().toISOString(), amount, price: s.currentPrice, type: 'SIP' }]
-        };
-      }
-      return s;
-    }));
-    if (user) setUser({ ...user, moneyParkBalance: user.moneyParkBalance - amount });
-  };
+
 
   const renderContent = () => {
     if (!user || view === 'LANDING') return <LandingPage onLogin={handleLogin} />;
@@ -94,37 +84,43 @@ const App: React.FC = () => {
         }}
         onCreateNew={() => {
           setSelectedStockId(null);
+          setTempStrategyConfig(undefined);
           setView('ADD_STOCK');
         }}
       >
         {view === 'DASHBOARD' && (
-          <Dashboard 
-            user={user} 
-            stocks={stocks} 
-            onAddStock={() => setView('ADD_STOCK')} 
-            onSelectStock={(id) => { setSelectedStockId(id); setView('STOCK_DETAILS'); }} 
-            onExecute={executeSip} 
+          <Dashboard
+            user={user}
+            stocks={stocks}
+            onAddStock={() => { setTempStrategyConfig(undefined); setView('ADD_STOCK'); }}
+            onSelectStock={(id) => { setSelectedStockId(id); setView('STOCK_DETAILS'); }}
+          // onExecute={executeSip} // Removed as requested
           />
         )}
         {view === 'ADD_STOCK' && (
-          <AddStock 
-            onBack={() => setView('DASHBOARD')} 
-            onAdd={addStock} 
+          <AddStock
+            onBack={() => setView('DASHBOARD')}
+            onAdd={addStock}
+            initialValues={tempStrategyConfig}
           />
         )}
         {view === 'STOCK_DETAILS' && (() => {
-           const selectedStock = stocks.find(s => s.id === selectedStockId);
-           return selectedStock ? (
-             <StockDetails 
-               stock={selectedStock} 
-               onBack={() => setView('DASHBOARD')} 
-               onUpdate={updateStock} 
-             />
-           ) : (
-             <div className="flex-1 flex items-center justify-center text-slate-400">
-               Select a strategy to view details
-             </div>
-           );
+          const selectedStock = stocks.find(s => s.id === selectedStockId);
+          return selectedStock ? (
+            <StockDetails
+              stock={selectedStock}
+              onBack={() => setView('DASHBOARD')}
+              onUpdate={updateStock}
+              onCopyStrategy={(config) => {
+                setTempStrategyConfig(config);
+                setView('ADD_STOCK');
+              }}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-slate-400">
+              Select a strategy to view details
+            </div>
+          );
         })()}
       </MainLayout>
     );

@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 interface AddStockProps {
    onBack: () => void;
    onAdd: (stock: Stock) => void;
+   initialValues?: Partial<Stock>;
 }
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
@@ -31,20 +32,20 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
    </TooltipProvider>
 );
 
-const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd }) => {
+const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => {
    // const [step, setStep] = useState<1 | 2>(1); // Removed stepper
    const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
-   const [symbol, setSymbol] = useState('');
-   const [budget, setBudget] = useState('50000');
-   const [partition, setPartition] = useState('22');
-   const [convictionYears, setConvictionYears] = useState('3');
-   const [loadFactor, setLoadFactor] = useState<LoadFactor>(LoadFactor.MODERATE);
+   const [symbol, setSymbol] = useState(initialValues?.symbol || '');
+   const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '50000');
+   const [partition, setPartition] = useState(initialValues?.partitionDays?.toString() || '22');
+   const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '3');
+   const [loadFactor, setLoadFactor] = useState<LoadFactor>(initialValues?.loadFactor || LoadFactor.MODERATE);
 
    const [quantityOwned, setQuantityOwned] = useState('0');
    const [averagePriceOwned, setAveragePriceOwned] = useState('0');
 
-   const [convictionLevel, setConvictionLevel] = useState([75]);
+   const [convictionLevel, setConvictionLevel] = useState([initialValues?.convictionLevel || 75]);
    // const [priceMovementPct, setPriceMovementPct] = useState('0'); // Removed as requested
 
    const handleSubmit = (e: React.FormEvent) => {
