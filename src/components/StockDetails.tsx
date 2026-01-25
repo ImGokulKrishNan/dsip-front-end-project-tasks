@@ -166,101 +166,138 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
 
          {/* Header */}
-         <div className="p-6 border-b flex items-center justify-between bg-background/95 backdrop-blur z-20 sticky top-0">
-            <div className="flex items-center gap-4">
+         <div className="px-6 py-4 border-b flex items-center justify-between bg-background/95 backdrop-blur z-20 sticky top-0">
+            <div className="flex items-center gap-3">
                <Button variant="ghost" size="icon" onClick={onBack}>
-                  <Icons.ArrowLeft size={20} />
+                  <Icons.ArrowLeft size={18} />
                </Button>
                <div>
-                  <h1 className="text-2xl font-bold tracking-tight">{stock.symbol} Tracker</h1>
-                  <p className="text-xs text-muted-foreground">Daily Smart Investment Execution</p>
+                  <h1 className="text-xl font-bold tracking-tight">{stock.symbol} Tracker</h1>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Daily Smart Investment Execution</p>
                </div>
             </div>
             <div className="flex items-center gap-2">
-               <Badge variant="outline" className="h-7 px-3 text-xs font-mono">
+               <Badge variant="outline" className="h-6 px-2.5 text-[10px] font-semibold">
                   Tracker Active
                </Badge>
             </div>
          </div>
 
          <ScrollArea className="flex-1">
-            <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 pb-32">
+            <div className="p-5 md:p-6 max-w-5xl mx-auto space-y-6 pb-32">
 
                {/* 1. Daily Execution Zone */}
-               <div className="space-y-4">
-                  <div className="flex items-center gap-3 mb-2">
-                     <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/30">
-                        <Icons.Zap size={18} />
+               <div className="space-y-3">
+                  <div className="flex items-center gap-2.5">
+                     <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-md shadow-primary/30">
+                        <Icons.Zap size={16} />
                      </div>
-                     <h2 className="text-xl font-bold">Today's Execution</h2>
+                     <h2 className="text-lg font-bold">Today's Execution</h2>
                   </div>
 
                   {executionState === 'IDLE' && (
                      <Card className="border-l-4 border-l-primary shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <CardHeader>
-                           <CardTitle>Market Context</CardTitle>
-                           <CardDescription>Enter today's price conditions to generate your smart order.</CardDescription>
+                        <CardHeader className="pb-3">
+                           <CardTitle className="text-lg">Market Context</CardTitle>
+                           <CardDescription className="text-xs">Enter today's price conditions to generate your smart order.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-8">
+                        <CardContent className="space-y-5 p-5">
 
-                           {/* Lock-In Context */}
-                           <div className="space-y-3">
-                              <Label className="font-bold flex items-center gap-2">
-                                 Current Price Change (%)  [lock in %]
-                                 <InfoTooltip text="Approximate change at the moment you are ready to buy." />
-                              </Label>
-                              <div className="relative max-w-sm">
-                                 <Input
-                                    type="number"
-                                    step="0.1"
-                                    placeholder="-2.4"
-                                    className="h-14 text-2xl font-bold pl-4 pr-12"
-                                    value={lockInPct}
-                                    onChange={e => setLockInPct(e.target.value)}
-                                    autoFocus
-                                 />
-                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">%</div>
+                           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+                              {/* Left Column: Main Controls */}
+                              <div className="space-y-4">
+                                 {/* Lock-In Context */}
+                                 <div className="space-y-2">
+                                    <Label className="text-sm font-semibold flex items-center gap-1.5">
+                                       Current Price Change (%) [lock in %]
+                                       <InfoTooltip text="Approximate change at the moment you are ready to buy." />
+                                    </Label>
+                                    <div className="relative">
+                                       <Input
+                                          type="number"
+                                          step="0.1"
+                                          placeholder="-2.4"
+                                          className="h-10 text-lg font-semibold pl-3 pr-10"
+                                          value={lockInPct}
+                                          onChange={e => setLockInPct(e.target.value)}
+                                          autoFocus
+                                       />
+                                       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">%</div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-tight">
+                                       Tip: If red, lock early. If green, you may wait closer to close.
+                                    </p>
+                                 </div>
+
+                                 {/* Conviction Override */}
+                                 <div className="space-y-3">
+                                    <div className="flex justify-between items-center gap-3">
+                                       <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                                          Conviction Adjustment (Optional)
+                                          <InfoTooltip text="Only use if today's news significantly changes your view." />
+                                       </Label>
+                                       <Badge className={
+                                          convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600 h-6 px-2 text-xs" :
+                                             convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600 h-6 px-2 text-xs" :
+                                                "bg-yellow-500 hover:bg-yellow-600 h-6 px-2 text-xs"
+                                       }>
+                                          {convictionOverride[0]}% Confidence
+                                       </Badge>
+                                    </div>
+                                    <Slider
+                                       min={0}
+                                       max={100}
+                                       step={5}
+                                       value={convictionOverride}
+                                       onValueChange={setConvictionOverride}
+                                       className="py-1"
+                                    />
+                                    <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
+                                       <span>0% (LOW)</span>
+                                       <span>50% (NEUTRAL)</span>
+                                       <span>100% (HIGH)</span>
+                                    </div>
+                                 </div>
                               </div>
-                              <p className="text-xs text-muted-foreground">
-                                 Tip: If red, lock early. If green, you may wait closer to close.
-                              </p>
+
+                              {/* Right Column: Quick Stats */}
+                              <div className="rounded-lg border bg-muted/30 p-4 space-y-3 h-fit">
+                                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <Icons.Activity size={12} />
+                                    Quick Context
+                                 </h4>
+                                 <div className="space-y-2.5">
+                                    <div className="flex justify-between items-center text-sm">
+                                       <span className="text-muted-foreground text-xs">Current Price</span>
+                                       <span className="font-semibold">₹{stock.currentPrice.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                       <span className="text-muted-foreground text-xs">Avg Buy Price</span>
+                                       <span className="font-semibold">₹{avgBuyPrice.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                       <span className="text-muted-foreground text-xs">Total Invested</span>
+                                       <span className="font-semibold">₹{totalInvested.toLocaleString()}</span>
+                                    </div>
+                                    <Separator className="my-2" />
+                                    <div className="flex justify-between items-center text-sm">
+                                       <span className="text-muted-foreground text-xs">Days Invested</span>
+                                       <span className="font-semibold font-mono">{daysInvested}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                       <span className="text-muted-foreground text-xs">Days Remaining</span>
+                                       <span className="font-semibold font-mono">{daysRemaining}</span>
+                                    </div>
+                                 </div>
+                              </div>
                            </div>
 
-                           {/* Conviction Override */}
-                           <div className="space-y-4 max-w-md">
-                              <div className="flex justify-between items-center">
-                                 <Label className="flex items-center gap-2 text-muted-foreground">
-                                    Conviction Adjustment (Optional) [x factor]
-                                    <InfoTooltip text="Only use if today's news significantly changes your view." />
-                                 </Label>
-                                 <Badge className={
-                                    convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600" :
-                                       convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600" :
-                                          "bg-yellow-500 hover:bg-yellow-600"
-                                 }>
-                                    {convictionOverride[0]}% Confidence
-                                 </Badge>
-                              </div>
-                              <Slider
-                                 min={0}
-                                 max={100}
-                                 step={5}
-                                 value={convictionOverride}
-                                 onValueChange={setConvictionOverride}
-                                 className="py-2"
-                              />
-                              <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground px-1">
-                                 <span>0% (Low)</span>
-                                 <span>50% (Neutral)</span>
-                                 <span>100% (High)</span>
-                              </div>
-                           </div>
-
-                           <div className="pt-4 flex gap-4">
-                              <Button size="lg" className="w-full md:w-auto min-w-[200px] text-lg h-12 shadow-md" onClick={handleCalculate} disabled={!lockInPct}>
-                                 <Icons.TrendUp className="mr-2 w-5 h-5" /> Calculate Amount
+                           {/* Action Buttons */}
+                           <div className="flex gap-3 pt-1">
+                              <Button size="default" className="flex-1 h-10" onClick={handleCalculate} disabled={!lockInPct}>
+                                 <Icons.TrendUp className="mr-2 w-4 h-4" /> Calculate Amount
                               </Button>
-                              <Button variant="ghost" size="lg" className="text-muted-foreground">
+                              <Button variant="ghost" size="default" className="h-10 px-4">
                                  Skip Today
                               </Button>
                            </div>
@@ -271,36 +308,36 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                   {executionState === 'CALCULATED' && recommendation && (
                      <Card className="border-l-4 border-l-emerald-500 shadow-xl animate-in fade-in zoom-in-95 duration-300">
-                        <CardHeader className="bg-emerald-500/5 pb-4">
-                           <CardTitle className="text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                              <Icons.Check className="w-5 h-5" /> Recommendation Generated
+                        <CardHeader className="bg-emerald-500/5 pb-3">
+                           <CardTitle className="text-lg text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                              <Icons.Check className="w-4 h-4" /> Recommendation Generated
                            </CardTitle>
                         </CardHeader>
-                        <CardContent className="pt-8 space-y-8">
+                        <CardContent className="pt-6 space-y-5 p-5">
 
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                           <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-6 items-start">
                               <div className="space-y-1">
-                                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Recommended Amount</p>
-                                 <div className="text-5xl font-black text-foreground tracking-tighter">
+                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Recommended Amount</p>
+                                 <div className="text-4xl font-black text-foreground tracking-tight">
                                     ₹{recommendation.amount.toLocaleString()}
                                  </div>
-                                 <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                    <span className="bg-muted px-1.5 py-0.5 rounded text-xs">Ref Price: ₹{recommendation.price.toFixed(2)}</span>
+                                 <p className="text-xs text-muted-foreground flex items-center gap-2 leading-tight">
+                                    <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-medium">Ref Price: ₹{recommendation.price.toFixed(2)}</span>
                                     <span>~ {recommendation.shares.toFixed(2)} shares</span>
                                  </p>
                               </div>
 
-                              <div className="border rounded-xl p-4 bg-muted/30 space-y-2">
+                              <div className="border rounded-lg p-3.5 bg-muted/30 space-y-2">
                                  <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">New Projected Avg</span>
+                                    <span className="text-muted-foreground text-xs">New Projected Avg</span>
                                     <span className="font-bold">₹{((totalInvested + recommendation.amount) / (totalShares + recommendation.shares)).toFixed(2)}</span>
                                  </div>
                                  <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Remaining in Cycle</span>
+                                    <span className="text-muted-foreground text-xs">Remaining in Cycle</span>
                                     <span className="font-bold">₹{(stock.totalBudget / 4 - stock.deployedAmount % (stock.totalBudget / 4)).toLocaleString()}</span>
                                  </div>
                                  <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Cycle Days Left</span>
+                                    <span className="text-muted-foreground text-xs">Cycle Days Left</span>
                                     <span className="font-bold">{daysRemaining - 1}</span>
                                  </div>
                               </div>
@@ -308,15 +345,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                            <Separator />
 
-                           <div className="flex gap-4">
+                           <div className="flex gap-3">
                               <Button
-                                 size="lg"
-                                 className="w-full md:w-auto min-w-[200px] text-lg h-12 bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-lg"
+                                 size="default"
+                                 className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-md"
                                  onClick={() => setExecutionState('CONFIRMING')}
                               >
-                                 Place Order & Confirm
+                                 <Icons.Check className="mr-2 w-4 h-4" /> Place Order & Confirm
                               </Button>
-                              <Button variant="outline" size="lg" onClick={() => setExecutionState('IDLE')}>
+                              <Button variant="outline" size="default" className="h-10 px-4" onClick={() => setExecutionState('IDLE')}>
                                  Recalculate
                               </Button>
                            </div>
@@ -327,43 +364,43 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                   {executionState === 'CONFIRMING' && recommendation && (
                      <Card className="border-2 border-primary shadow-2xl animate-in slide-in-from-right-4 duration-300">
-                        <CardHeader className="border-b bg-muted/20">
-                           <CardTitle>Final Confirmation</CardTitle>
-                           <CardDescription>Enter the actual executed values from your broker.</CardDescription>
+                        <CardHeader className="border-b bg-muted/20 pb-3">
+                           <CardTitle className="text-lg">Final Confirmation</CardTitle>
+                           <CardDescription className="text-xs">Enter the actual executed values from your broker.</CardDescription>
                         </CardHeader>
-                        <CardContent className="pt-8 space-y-6">
+                        <CardContent className="pt-6 space-y-5 p-5">
 
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="space-y-3">
-                                 <Label className="font-bold">Actual Invested Amount (₹)</Label>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                              <div className="space-y-2">
+                                 <Label className="text-sm font-semibold">Actual Invested Amount (₹)</Label>
                                  <Input
                                     type="number"
-                                    className="h-12 text-xl font-bold bg-background"
+                                    className="h-10 text-lg font-semibold bg-background"
                                     value={executedAmount}
                                     onChange={e => setExecutedAmount(e.target.value)}
                                  />
                               </div>
-                              <div className="space-y-3">
-                                 <Label className="font-bold">Execution Price (₹)</Label>
+                              <div className="space-y-2">
+                                 <Label className="text-sm font-semibold">Execution Price (₹)</Label>
                                  <Input
                                     type="number"
                                     step="0.05"
-                                    className="h-12 text-xl font-bold bg-background"
+                                    className="h-10 text-lg font-semibold bg-background"
                                     value={executionPrice}
                                     onChange={e => setExecutionPrice(e.target.value)}
                                  />
                               </div>
                            </div>
 
-                           <div className="flex gap-4 pt-4">
+                           <div className="flex gap-3 pt-2">
                               <Button
-                                 size="lg"
-                                 className="w-full h-14 text-lg font-bold shadow-xl"
+                                 size="default"
+                                 className="flex-1 h-11 font-semibold shadow-lg"
                                  onClick={handleConfirm}
                               >
-                                 <Icons.Check className="mr-2" /> Confirm & Record
+                                 <Icons.Check className="mr-2 w-4 h-4" /> Confirm & Record
                               </Button>
-                              <Button variant="ghost" size="lg" className="w-full" onClick={() => setExecutionState('CALCULATED')}>
+                              <Button variant="ghost" size="default" className="h-11 px-4" onClick={() => setExecutionState('CALCULATED')}>
                                  Cancel
                               </Button>
                            </div>
@@ -375,21 +412,21 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                </div>
                <Separator />
                {/* 2. Tracker Summary & Progress (Read-Only) */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Summary Card */}
                   <Card className="bg-muted/20 border-border/50 shadow-sm">
-                     <CardHeader className="pb-3 pt-5">
-                        <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-between w-full">
-                           <span className="flex items-center gap-2">Tracker Configuration <InfoTooltip text="Approximate change at the moment you are ready to buy." /></span>
+                     <CardHeader className="pb-2.5 pt-4">
+                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-between w-full">
+                           <span className="flex items-center gap-1.5">Tracker Configuration <InfoTooltip text="Approximate change at the moment you are ready to buy." /></span>
                            {!isEditing && (
-                              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setIsEditing(true)}>
+                              <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setIsEditing(true)}>
                                  Edit
                               </Button>
                            )}
                         </CardTitle>
                      </CardHeader>
-                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-y-4 text-sm">
+                     <CardContent className="space-y-3.5 pb-4">
+                        <div className="grid grid-cols-2 gap-y-3.5 text-sm">
                            {!isEditing ? (
                               // READ ONLY VIEW
                               <>
@@ -565,15 +602,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                   {/* Progress & Position Card */}
                   <Card className="border-primary/10 shadow-sm bg-background">
-                     <CardHeader className="pb-3 pt-5">
-                        <CardTitle className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                           <Icons.Activity size={14} /> Live Snapshot
+                     <CardHeader className="pb-2.5 pt-4">
+                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+                           <Icons.Activity size={12} /> Live Snapshot
                         </CardTitle>
                      </CardHeader>
-                     <CardContent className="space-y-5">
+                     <CardContent className="space-y-4 pb-4">
 
                         {/* Progress Bar Mockup */}
-                        <div className="space-y-4">
+                        <div className="space-y-3.5">
                            {/* P&L & Market Value Header */}
                            <div className="flex justify-between items-end">
                               <div>
