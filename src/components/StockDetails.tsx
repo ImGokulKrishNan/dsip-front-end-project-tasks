@@ -21,20 +21,36 @@ interface StockDetailsProps {
    onCopyStrategy?: (config: Partial<Stock>) => void;
 }
 
-const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
-   <TooltipProvider>
-      <Tooltip>
-         <TooltipTrigger asChild>
-            <div className="inline-block ml-1 cursor-help opacity-70 hover:opacity-100 transition-opacity align-middle">
-               <Icons.Info size={14} />
-            </div>
-         </TooltipTrigger>
-         <TooltipContent>
-            <p className="max-w-xs">{text}</p>
-         </TooltipContent>
-      </Tooltip>
-   </TooltipProvider>
-);
+const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
+   const [open, setOpen] = React.useState(false);
+   
+   return (
+      <TooltipProvider>
+         <Tooltip open={open} onOpenChange={setOpen}>
+            <TooltipTrigger asChild>
+               <button
+                  type="button"
+                  onClick={(e) => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     setOpen(!open);
+                  }}
+                  className="inline-flex items-center justify-center ml-1.5 w-4 h-4 rounded-full bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-all cursor-pointer align-middle ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+               >
+                  <Icons.Info size={11} className="shrink-0" />
+               </button>
+            </TooltipTrigger>
+            <TooltipContent 
+               side="top" 
+               className="max-w-xs bg-popover text-popover-foreground border shadow-lg"
+               sideOffset={5}
+            >
+               <p className="text-xs leading-relaxed font-normal normal-case">{text}</p>
+            </TooltipContent>
+         </Tooltip>
+      </TooltipProvider>
+   );
+};
 
 const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy }) => {
    // Execution State: 'IDLE' -> 'CALCULATED' -> 'CONFIRMING'
@@ -210,7 +226,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  <div className="space-y-2">
                                     <Label className="text-sm font-semibold flex items-center gap-1.5">
                                        Current Price Change (%) [lock in %]
-                                       <InfoTooltip text="Approximate change at the moment you are ready to buy." />
+                                       <InfoTooltip text="Enter the current percentage change in stock price. This helps calculate the optimal buy price for today's execution." />
                                     </Label>
                                     <div className="relative">
                                        <Input
@@ -234,7 +250,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <div className="flex justify-between items-center gap-3">
                                        <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
                                           Conviction Adjustment (Optional)
-                                          <InfoTooltip text="Only use if today's news significantly changes your view." />
+                                          <InfoTooltip text="Adjust your conviction level if today's market news or events significantly impact your investment thesis. Keep at 50% (Neutral) for normal days." />
                                        </Label>
                                        <Badge className={
                                           convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600 h-6 px-2 text-xs" :
@@ -415,15 +431,25 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Summary Card */}
                   <Card className="bg-muted/20 border-border/50 shadow-sm">
-                     <CardHeader className="pb-2.5 pt-4">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-between w-full">
-                           <span className="flex items-center gap-1.5">Tracker Configuration <InfoTooltip text="Approximate change at the moment you are ready to buy." /></span>
+                     <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between w-full">
+                           <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                                 <Icons.Settings size={14} className="text-muted-foreground" />
+                              </div>
+                              <div>
+                                 <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                                    Tracker Configuration
+                                    <InfoTooltip text="Your investment strategy parameters. These define how your capital is deployed over time." />
+                                 </CardTitle>
+                              </div>
+                           </div>
                            {!isEditing && (
-                              <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setIsEditing(true)}>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs px-2.5" onClick={() => setIsEditing(true)}>
                                  Edit
                               </Button>
                            )}
-                        </CardTitle>
+                        </div>
                      </CardHeader>
                      <CardContent className="space-y-3.5 pb-4">
                         <div className="grid grid-cols-2 gap-y-3.5 text-sm">
@@ -602,10 +628,13 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                   {/* Progress & Position Card */}
                   <Card className="border-primary/10 shadow-sm bg-background">
-                     <CardHeader className="pb-2.5 pt-4">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                           <Icons.Activity size={12} /> Live Snapshot
-                        </CardTitle>
+                     <CardHeader className="pb-3">
+                        <div className="flex items-center gap-2">
+                           <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Icons.Activity size={14} className="text-primary" />
+                           </div>
+                           <CardTitle className="text-sm font-semibold">Live Snapshot</CardTitle>
+                        </div>
                      </CardHeader>
                      <CardContent className="space-y-4 pb-4">
 
@@ -622,14 +651,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <span className={`text-sm font-bold ${((totalShares * stock.currentPrice) - totalInvested) >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                                        {((totalShares * stock.currentPrice) - totalInvested) >= 0 ? "+" : ""}
                                        {totalInvested > 0 ? (((totalShares * stock.currentPrice) - totalInvested) / totalInvested * 100).toFixed(2) : "0.00"}%
-                                       <InfoTooltip text={`Net Profit/Loss: ₹${((totalShares * stock.currentPrice) - totalInvested).toFixed(2)}`} />
+                                       <InfoTooltip text={`Your current profit/loss: ₹${((totalShares * stock.currentPrice) - totalInvested).toLocaleString(undefined, { maximumFractionDigits: 2 })}. This is calculated as (Current Market Value - Total Amount Invested).`} />
                                     </span>
                                  </div>
                               </div>
                               <div className="text-right">
                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 flex items-center justify-end gap-1">
                                     Partition %
-                                    <InfoTooltip text={`Partition percent as of yesterday: ${daysInvested > 0 ? (((daysInvested - 1) / cycleLength) * 100).toFixed(1) : 0}%`} />
+                                    <InfoTooltip text={`Shows how far you've progressed in the current partition cycle. Each partition represents ${cycleLength} trading days. Yesterday's progress: ${daysInvested > 0 ? (((daysInvested - 1) / cycleLength) * 100).toFixed(1) : 0}%`} />
                                  </p>
                                  <p className="font-mono text-sm font-bold">
                                     {((daysInvested % cycleLength) / cycleLength * 100).toFixed(1)}%
