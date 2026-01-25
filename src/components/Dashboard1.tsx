@@ -80,19 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div className="flex items-center gap-5">
-          <div className="flex items-center gap-2">
-            <Icons.Park className="text-sky-500" />
-            <span className="text-sm font-black">
-              ₹{user.moneyParkBalance.toLocaleString()}
-            </span>
-          </div>
 
-          <div className="flex items-center gap-2 text-slate-500">
-            <Icons.Wallet />
-            <span className="text-sm font-bold">
-              ₹{user.walletBalance.toLocaleString()}
-            </span>
-          </div>
 
           <button
             onClick={onAddStock}

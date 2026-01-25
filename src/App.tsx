@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Stock, AppView } from './types';
 import LandingPage from './components/LandingPage';
-import Onboarding from './components/Onboarding';
+
 import Dashboard from './components/Dashboard';
 import AddStock from './components/AddStock';
 import StockDetails from './components/StockDetails';
@@ -50,20 +50,10 @@ const App: React.FC = () => {
     const newUser: UserProfile = {
       name: "Alex Investor",
       email: "alex@example.com",
-      walletBalance: 250000,
-      moneyParkBalance: 0,
-      onboardingComplete: false
+      onboardingComplete: true
     };
     setUser(newUser);
-    setView('ONBOARDING');
-  };
-
-  const completeOnboarding = () => {
-    if (user) {
-      const updated = { ...user, onboardingComplete: true, moneyParkBalance: 200000, walletBalance: 50000 };
-      setUser(updated);
-      setView('DASHBOARD');
-    }
+    setView('DASHBOARD');
   };
 
   const addStock = (newStock: Stock) => {
@@ -85,7 +75,7 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     if (!user || view === 'LANDING') return <LandingPage onLogin={handleLogin} />;
-    if (view === 'ONBOARDING') return <Onboarding onComplete={completeOnboarding} />;
+
 
     // Authenticated View (Split Layout)
     return (

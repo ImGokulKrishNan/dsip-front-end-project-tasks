@@ -15,16 +15,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
-          <div className="text-right">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Money Park</p>
-            <p className="font-bold text-slate-900">₹{user.moneyParkBalance.toLocaleString()}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Wallet</p>
-            <p className="font-bold text-slate-600">₹{user.walletBalance.toLocaleString()}</p>
-          </div>
-        </div>
+
         
         <button className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:text-sky-500 hover:bg-sky-50 transition-all">
           <Icons.Wallet />

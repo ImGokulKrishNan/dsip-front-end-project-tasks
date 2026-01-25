@@ -39,8 +39,6 @@ export interface Transaction {
 export interface UserProfile {
   name: string;
   email: string;
-  walletBalance: number;
-  moneyParkBalance: number;
   onboardingComplete: boolean;
 }
 
