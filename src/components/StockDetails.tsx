@@ -758,18 +758,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                </div>
 
                {/* History List (Moved to bottom) */}
-               <div className="pt-8">
-                  <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 opacity-50">Recent History</h3>
-                  <div className="space-y-2 opacity-60 hover:opacity-100 transition-opacity">
-                     {stock.history.slice().reverse().map((tx, i) => (
-                        <div key={i} className="flex justify-between items-center p-3 border rounded bg-muted/10 text-sm">
-                           <span>{new Date(tx.date).toLocaleDateString()}</span>
-                           <span className="font-medium">₹{tx.amount.toLocaleString()}</span>
-                        </div>
-                     ))}
-                     {stock.history.length === 0 && <p className="text-sm text-muted-foreground">No transactions yet.</p>}
-                  </div>
-               </div>
+
 
             </div>
          </ScrollArea >

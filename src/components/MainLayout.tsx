@@ -84,26 +84,34 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   </div>
               </div>
 
-              <div className="space-y-3 pt-4">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Active Strategies</h4>
-                  {stocks.map(stock => {
-                    const stockInvested = (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount; // Approx
-                    const stockValue = ((stock.quantityOwned + stock.history.reduce((a,b)=>a+(b.amount/b.price),0)) * stock.currentPrice);
-                    const stockPL = stockValue - stockInvested;
-                    const stockIsProfit = stockPL >= 0;
+              <div className="space-y-3 pt-8">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                     {selectedStockId ? 'Recent History' : 'Portfolio Activity'}
+                  </h4>
+                  <div className="space-y-2">
+                     {(() => {
+                        let history = selectedStockId
+                           ? (stocks.find(s => s.id === selectedStockId)?.history || []).map(t => ({ ...t, symbol: stocks.find(s => s.id === selectedStockId)?.symbol }))
+                           : stocks.flatMap(s => s.history.map(t => ({ ...t, symbol: s.symbol })));
 
-                    return (
-                      <div key={stock.id} className="flex items-center justify-between text-sm p-2 hover:bg-accent rounded-lg transition-colors">
-                          <div className="flex items-center gap-2">
-                             <div className={cn("w-1.5 h-1.5 rounded-full", stockIsProfit ? "bg-emerald-500" : "bg-red-500")} />
-                             <span className="font-medium">{stock.symbol}</span>
-                          </div>
-                          <span className={cn("font-bold", stockIsProfit ? "text-emerald-600" : "text-red-600")}>
-                             {stockIsProfit ? '+' : ''}₹{Math.round(stockPL).toLocaleString()}
-                          </span>
-                      </div>
-                    )
-                  })}
+                        // Ensure Newest First
+                        history = history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 15);
+
+                        if (history.length === 0) {
+                           return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
+                        }
+
+                        return history.map((tx, i) => (
+                           <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
+                              <div className="flex flex-col gap-0.5">
+                                 <span className="text-xs font-semibold text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</span>
+                                 {!selectedStockId && <span className="text-[10px] font-black uppercase tracking-wider text-primary">{tx.symbol}</span>}
+                              </div>
+                              <span className="font-mono font-bold">₹{tx.amount.toLocaleString()}</span>
+                           </div>
+                        ));
+                     })()}
+                  </div>
               </div>
            </div>
          </ScrollArea>
