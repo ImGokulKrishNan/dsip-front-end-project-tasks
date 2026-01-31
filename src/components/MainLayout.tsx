@@ -3,6 +3,7 @@ import LeftSidebar from './LeftSidebar';
 import { AppView, Stock } from '../types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { ModeToggle } from './mode-toggle';
 // import { Separator } from '@/components/ui/separator';
 
 interface MainLayoutProps {
@@ -60,6 +61,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       <aside className="w-[320px] bg-background flex flex-col h-full hidden xl:flex border-l">
          <ScrollArea className="flex-1">
            <div className="p-6 space-y-6">
+              {/* User Profile / Theme Toggle - Top Right */}
+              <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted border border-border" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">Jaya Bhuvanesh</p>
+                        <p className="text-[10px] text-muted-foreground truncate">Pro Account</p>
+                    </div>
+                 </div>
+                 <ModeToggle />
+              </div>
+
               <div className="space-y-1">
                   <h3 className="text-lg font-bold tracking-tight">Market Overview</h3>
                   <p className="text-sm text-muted-foreground">Portfolio Performance</p>

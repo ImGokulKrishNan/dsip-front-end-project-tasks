@@ -4,7 +4,6 @@ import { Stock, AppView } from '../types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { ModeToggle } from './mode-toggle';
 
 interface LeftSidebarProps {
   stocks: Stock[];
@@ -95,18 +94,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           )}
         </div>
       </ScrollArea>
-
-      {/* User Profile / Status Bottom */}
-      <div className="p-4 border-t bg-muted/30 flex items-center justify-between">
-         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-muted border border-border" />
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Alex Investor</p>
-                <p className="text-[10px] text-muted-foreground truncate">Pro Account</p>
-            </div>
-         </div>
-         <ModeToggle />
-      </div>
     </aside>
   );
 };
