@@ -213,107 +213,71 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                   {executionState === 'IDLE' && (
                      <Card className="border-l-4 border-l-primary shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <CardHeader className="pb-3">
-                           <CardTitle className="text-lg">Market Context</CardTitle>
+                        <CardHeader className="pb-2">
+                           <CardTitle className="text-base">Market Context</CardTitle>
                            <CardDescription className="text-xs">Enter today's price conditions to generate your smart order.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-5 p-5">
+                        <CardContent className="space-y-3 p-4">
 
-                           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
-                              {/* Left Column: Main Controls */}
-                              <div className="space-y-4">
-                                 {/* Lock-In Context */}
-                                 <div className="space-y-2">
-                                    <Label className="text-sm font-semibold flex items-center gap-1.5">
-                                       Current Price Change (%) [lock in %]
-                                       <InfoTooltip text="Enter the current percentage change in stock price. This helps calculate the optimal buy price for today's execution." />
-                                    </Label>
-                                    <div className="relative">
-                                       <Input
-                                          type="number"
-                                          step="0.1"
-                                          placeholder="-2.4"
-                                          className="h-10 text-lg font-semibold pl-3 pr-10"
-                                          value={lockInPct}
-                                          onChange={e => setLockInPct(e.target.value)}
-                                          autoFocus
-                                       />
-                                       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">%</div>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground leading-tight">
-                                       Tip: If red, lock early. If green, you may wait closer to close.
-                                    </p>
-                                 </div>
-
-                                 {/* Conviction Override */}
-                                 <div className="space-y-3">
-                                    <div className="flex justify-between items-center gap-3">
-                                       <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                                          Conviction Adjustment (Optional)
-                                          <InfoTooltip text="Adjust your conviction level if today's market news or events significantly impact your investment thesis. Keep at 50% (Neutral) for normal days." />
-                                       </Label>
-                                       <Badge className={
-                                          convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600 h-6 px-2 text-xs" :
-                                             convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600 h-6 px-2 text-xs" :
-                                                "bg-yellow-500 hover:bg-yellow-600 h-6 px-2 text-xs"
-                                       }>
-                                          {convictionOverride[0]}% Confidence
-                                       </Badge>
-                                    </div>
-                                    <Slider
-                                       min={0}
-                                       max={100}
-                                       step={5}
-                                       value={convictionOverride}
-                                       onValueChange={setConvictionOverride}
-                                       className="py-1"
+                           {/* Main Controls - Side by Side */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* Current Price Change */}
+                              <div className="space-y-1.5">
+                                 <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                    Current Price Change (%) [lock in %]
+                                    <InfoTooltip text="Enter the current percentage change in stock price. This helps calculate the optimal buy price for today's execution." />
+                                 </Label>
+                                 <div className="relative">
+                                    <Input
+                                       type="number"
+                                       step="0.1"
+                                       placeholder="-2.4"
+                                       className="h-8 text-sm font-semibold pl-2.5 pr-8"
+                                       value={lockInPct}
+                                       onChange={e => setLockInPct(e.target.value)}
+                                       autoFocus
                                     />
-                                    <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
-                                       <span>0% (LOW)</span>
-                                       <span>50% (NEUTRAL)</span>
-                                       <span>100% (HIGH)</span>
-                                    </div>
+                                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-xs">%</div>
                                  </div>
+                                 <p className="text-[10px] text-muted-foreground leading-tight">
+                                    Tip: If red, lock early. If green, you may wait closer to close.
+                                 </p>
                               </div>
 
-                              {/* Right Column: Quick Stats */}
-                              <div className="rounded-lg border bg-muted/30 p-4 space-y-3 h-fit">
-                                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                    <Icons.Activity size={12} />
-                                    Quick Context
-                                 </h4>
-                                 <div className="space-y-2.5">
-                                    <div className="flex justify-between items-center text-sm">
-                                       <span className="text-muted-foreground text-xs">Current Price</span>
-                                       <span className="font-semibold">₹{stock.currentPrice.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                       <span className="text-muted-foreground text-xs">Avg Buy Price</span>
-                                       <span className="font-semibold">₹{avgBuyPrice.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                       <span className="text-muted-foreground text-xs">Total Invested</span>
-                                       <span className="font-semibold">₹{totalInvested.toLocaleString()}</span>
-                                    </div>
-                                    <Separator className="my-2" />
-                                    <div className="flex justify-between items-center text-sm">
-                                       <span className="text-muted-foreground text-xs">Days Invested</span>
-                                       <span className="font-semibold font-mono">{daysInvested}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                       <span className="text-muted-foreground text-xs">Days Remaining</span>
-                                       <span className="font-semibold font-mono">{daysRemaining}</span>
-                                    </div>
+                              {/* Conviction Adjustment */}
+                              <div className="space-y-1.5">
+                                 <div className="flex justify-between items-center gap-2">
+                                    <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                                       Conviction Adjustment (Optional)
+                                       <InfoTooltip text="Adjust your conviction level if today's market news or events significantly impact your investment thesis." />
+                                    </Label>
+                                    <Badge className={
+                                       convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600 h-5 px-1.5 text-[10px]" :
+                                          convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600 h-5 px-1.5 text-[10px]" :
+                                             "bg-yellow-500 hover:bg-yellow-600 h-5 px-1.5 text-[10px]"
+                                    }>
+                                       {convictionOverride[0]}% Confidence
+                                    </Badge>
                                  </div>
+                                 <Slider
+                                    min={0}
+                                    max={100}
+                                    step={1}
+                                    value={convictionOverride}
+                                    onValueChange={setConvictionOverride}
+                                    className="py-0.5 pt-2"
+                                 />
                               </div>
                            </div>
 
+
+
                            {/* Action Buttons */}
-                           <div className="flex gap-3 pt-1">
-                              <Button size="default" className="flex-1 h-10" onClick={handleCalculate} disabled={!lockInPct}>
-                                 <Icons.TrendUp className="mr-2 w-4 h-4" /> Calculate Amount
+                           <div className="flex gap-2 pt-1">
+                              <Button size="sm" className="flex-1 h-8 text-xs" onClick={handleCalculate} disabled={!lockInPct}>
+                                 <Icons.TrendUp className="mr-1.5 w-3.5 h-3.5" /> Calculate Amount
                               </Button>
-                              <Button variant="ghost" size="default" className="h-10 px-4">
+                              <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
                                  Skip Today
                               </Button>
                            </div>
@@ -780,12 +744,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                       <span className="text-muted-foreground">Executed On</span>
                                                       <span className="font-mono font-medium">May 12, 2024</span>
                                                    </div>
-                                                   <div className="flex justify-between text-sm">
+                                                   {/* <div className="flex justify-between text-sm">
                                                       <span className="text-muted-foreground">Units Acquired</span>
                                                       <span className="font-mono font-medium">
                                                          {(getPartitionData(selectedPartition)!.amountInvested / getPartitionData(selectedPartition)!.avgPrice).toFixed(2)}
                                                       </span>
-                                                   </div>
+                                                   </div> */}
                                                 </div>
                                              </>
                                           ) : (

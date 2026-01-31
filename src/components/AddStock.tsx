@@ -100,7 +100,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                            <Input
                               required
                               autoFocus
-                              placeholder="e.g. AAPL"
+                              placeholder="e.g. NFLX"
                               value={symbol}
                               onChange={e => setSymbol(e.target.value)}
                               className="text-lg font-bold uppercase tracking-wider"
