@@ -73,59 +73,63 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                  <ModeToggle />
               </div>
 
-              <div className="space-y-1">
-                  <h3 className="text-lg font-bold tracking-tight">Market Overview</h3>
-                  <p className="text-sm text-muted-foreground">Portfolio Performance</p>
-              </div>
-
-              <div className="grid gap-4">
-                  <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invested</span>
-                      <div className="text-2xl font-bold">₹{totalInvested.toLocaleString()}</div>
+              {/* Only show Market Overview and Recent History when viewing stock details */}
+              {activeView === 'STOCK_DETAILS' && (
+                <>
+                  <div className="space-y-1">
+                      <h3 className="text-lg font-bold tracking-tight">Market Overview</h3>
+                      <p className="text-sm text-muted-foreground">Portfolio Performance</p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
-                      <div className="text-2xl font-bold">₹{Math.round(currentValue).toLocaleString()}</div>
-                  </div>
+                  <div className="grid gap-4">
+                      <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invested</span>
+                          <div className="text-2xl font-bold">₹{totalInvested.toLocaleString()}</div>
+                      </div>
 
-                  <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfit ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
-                      <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
-                      <div className="text-3xl font-black tracking-tight">
-                        {isProfit ? '+' : ''}₹{Math.round(totalPL).toLocaleString()}
+                      <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
+                          <div className="text-2xl font-bold">₹{Math.round(currentValue).toLocaleString()}</div>
+                      </div>
+
+                      <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfit ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
+                          <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
+                          <div className="text-3xl font-black tracking-tight">
+                            {isProfit ? '+' : ''}₹{Math.round(totalPL).toLocaleString()}
+                          </div>
                       </div>
                   </div>
-              </div>
 
-              <div className="space-y-3 pt-8">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                     {selectedStockId ? 'Recent History' : 'Portfolio Activity'}
-                  </h4>
-                  <div className="space-y-2">
-                     {(() => {
-                        let history = selectedStockId
-                           ? (stocks.find(s => s.id === selectedStockId)?.history || []).map(t => ({ ...t, symbol: stocks.find(s => s.id === selectedStockId)?.symbol }))
-                           : stocks.flatMap(s => s.history.map(t => ({ ...t, symbol: s.symbol })));
+                  <div className="space-y-3 pt-8">
+                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                         Recent History
+                      </h4>
+                      <div className="space-y-2">
+                         {(() => {
+                            let history = selectedStockId
+                               ? (stocks.find(s => s.id === selectedStockId)?.history || []).map(t => ({ ...t, symbol: stocks.find(s => s.id === selectedStockId)?.symbol }))
+                               : [];
 
-                        // Ensure Newest First
-                        history = history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 15);
+                            // Ensure Newest First
+                            history = history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 15);
 
-                        if (history.length === 0) {
-                           return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
-                        }
+                            if (history.length === 0) {
+                               return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
+                            }
 
-                        return history.map((tx, i) => (
-                           <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
-                              <div className="flex flex-col gap-0.5">
-                                 <span className="text-xs font-semibold text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</span>
-                                 {!selectedStockId && <span className="text-[10px] font-black uppercase tracking-wider text-primary">{tx.symbol}</span>}
-                              </div>
-                              <span className="font-mono font-bold">₹{tx.amount.toLocaleString()}</span>
-                           </div>
-                        ));
-                     })()}
+                            return history.map((tx, i) => (
+                               <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
+                                  <div className="flex flex-col gap-0.5">
+                                     <span className="text-xs font-semibold text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</span>
+                                  </div>
+                                  <span className="font-mono font-bold">₹{tx.amount.toLocaleString()}</span>
+                               </div>
+                            ));
+                         })()}
+                      </div>
                   </div>
-              </div>
+                </>
+              )}
            </div>
          </ScrollArea>
       </aside>
