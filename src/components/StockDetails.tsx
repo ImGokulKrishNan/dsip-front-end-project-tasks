@@ -605,7 +605,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                               <Icons.Activity size={14} className="text-primary" />
                            </div>
-                           <CardTitle className="text-sm font-semibold">Live Snapshot</CardTitle>
+                           <CardTitle className="text-sm font-semibold">Live Investment Cycle</CardTitle>
                         </div>
                      </CardHeader>
                      <CardContent className="space-y-4 pb-4">

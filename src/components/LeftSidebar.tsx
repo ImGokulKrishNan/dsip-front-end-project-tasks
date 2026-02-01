@@ -31,7 +31,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <aside className="w-[300px] flex flex-col border-r bg-background">
       {/* Header / Create CTA */}
-      <div className="p-4 border-b">
+      <div className="p-3 border-b">
         <Button 
           variant={activeView === 'ADD_STOCK' ? "default" : "outline"}
           className="w-full justify-start h-auto py-3 px-4 gap-3"
@@ -56,7 +56,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           <div className="px-2">
             <Input 
               type="text"
-              placeholder="Search strategies..."
+              placeholder="Search stocks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-8 text-xs"

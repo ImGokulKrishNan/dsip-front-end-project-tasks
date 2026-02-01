@@ -30,6 +30,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
       currentMarketValue += (totalQuantity * stock.currentPrice);
    });
 
+      const totalProfitLossPct = totalInvestedValue > 0
+      ? ((currentMarketValue - totalInvestedValue) / totalInvestedValue) * 100
+      : 0;
+
+   const isPortfolioProfit = totalProfitLossPct >= 0;
+
   return (
     <div className="h-full p-6 space-y-6">
       
@@ -44,7 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
         {/* Portfolio Stats & Grid - Now Full Width/Centered */}
         <div className="space-y-8">
            
-           <Card className="bg-primary text-primary-foreground p-6 overflow-hidden relative border-none shadow-2xl max-w-3xl mx-auto">
+           {/* <Card className="bg-primary text-primary-foreground p-6 overflow-hidden relative border-none shadow-2xl max-w-3xl mx-auto">
 
               <div className="relative z-10 flex justify-between items-start">
                   <div>
@@ -66,7 +72,53 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
                     <p className="text-xl font-bold">{stocks.filter(s => !s.isPaused).length}</p>
                  </div>
               </div>
-           </Card>
+           </Card> */}
+
+           <Card className="relative overflow-hidden border shadow-xl bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-black dark:border-gray-800">
+                  {/* Decorative Elements */}
+                  {/* <div className="absolute top-0 right-0 p-8 opacity-5">
+                     <Icons.Activity size={100} />
+                  </div> */}
+                  <div className="absolute -left-12 -bottom-12 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+                  <div className="absolute -right-12 -top-12 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
+
+                  <div className="relative z-10 p-8">
+                     <div className="flex justify-between items-start">
+                        <div>
+                           <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                              Total Market Value
+                              <InfoTooltip text="Market value as of yesterday's close + today's moves" />
+                           </h3>
+                           <p className="text-4xl md:text-5xl font-black tracking-tighter text-foreground">
+                              ₹{Math.round(currentMarketValue).toLocaleString()}
+                           </p>
+                        </div>
+                        <div className="bg-background/50 border shadow-sm px-4 py-2 rounded-xl backdrop-blur-md">
+                           <div className={isPortfolioProfit ? "text-emerald-600 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>
+                              <span className="text-[10px] font-bold uppercase tracking-wider block text-muted-foreground mb-0.5">Net Yield</span>
+                              <span className="text-xl font-black flex items-center gap-1">
+                                 {isPortfolioProfit ? <Icons.TrendUp size={16} /> : <Icons.TrendDown size={16} />}
+                                 {totalProfitLossPct.toFixed(2)}%
+                              </span>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-8">
+                        <div className="space-y-1">
+                           <p className="text-[10px] Font-bold text-muted-foreground uppercase tracking-widest">Invested Capital</p>
+                           <p className="text-2xl font-bold text-foreground">₹{Math.round(totalInvestedValue).toLocaleString()}</p>
+                        </div>
+                        <div className="space-y-1">
+                           <p className="text-[10px] Font-bold text-muted-foreground uppercase tracking-widest">Active Engines</p>
+                           <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold text-foreground">{stocks.filter(s => !s.isPaused).length}</span>
+                              <span className="text-xs text-muted-foreground font-medium self-end mb-1">/ {stocks.length} Total</span>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </Card>
 
            <div>
               <h2 className="text-lg font-semibold tracking-tight mb-4">Stock Engine Performance</h2>

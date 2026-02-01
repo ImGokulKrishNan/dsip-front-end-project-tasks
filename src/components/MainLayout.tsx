@@ -125,7 +125,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   return (
                     <>
                       <div className="space-y-1">
-                          <h3 className="text-lg font-bold tracking-tight">Market Overview</h3>
+                          <h3 className="text-lg font-bold tracking-tight">Current Investment</h3>
                           <p className="text-sm text-muted-foreground">Portfolio Performance</p>
                       </div>
 
