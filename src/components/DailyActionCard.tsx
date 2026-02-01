@@ -1,8 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Stock } from '../types';
-import { Icons } from '../constants';
-import { getInvestmentExplanation } from '../services/geminiService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -12,7 +10,7 @@ interface DailyActionCardProps {
 }
 
 const DailyActionCard: React.FC<DailyActionCardProps> = ({ stock, onExecute }) => {
-  const [insight, setInsight] = useState<string>("Calculating optimal deployment...");
+  const [insight] = useState<string>("Market conditions favorable for accumulation.");
   const [executing, setExecuting] = useState(false);
 
   const checkSkipped = () => {
@@ -29,15 +27,7 @@ const DailyActionCard: React.FC<DailyActionCardProps> = ({ stock, onExecute }) =
   const isRedDay = Math.random() > 0.6;
   const multiplier = (isRedDay ? 1.5 : 1.0) * (isSkipped ? 1.2 : 1.0);
   const recommendedAmount = Math.round(dailyBase * multiplier);
-  const progress = stock.deployedAmount / stock.totalBudget;
-
-  useEffect(() => {
-    const fetchInsight = async () => {
-      const msg = await getInvestmentExplanation(stock.symbol, recommendedAmount, isRedDay, progress);
-      setInsight(msg);
-    };
-    fetchInsight();
-  }, [stock.id]);
+// Removed unused progress variable
 
   const handleExecute = () => {
     setExecuting(true);
