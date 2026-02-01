@@ -657,9 +657,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </div>
                            </div>
 
+
                            {/* 2. Allocation Progress Section (New) */}
-
-
                            <div className="space-y-3">
                               <div className="flex justify-between items-center">
                                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
