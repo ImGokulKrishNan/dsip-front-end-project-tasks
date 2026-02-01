@@ -86,7 +86,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
          </div>
 
          <div className="flex-1 overflow-y-auto">
-            <form onSubmit={handleSubmit} className="p-6 md:p-8 max-w-4xl mx-auto w-full space-y-8 pb-32">
+            <form onSubmit={handleSubmit} className="p-6 md:p-8 lg:px-16 xl:px-24 w-full space-y-8 pb-32">
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-8">

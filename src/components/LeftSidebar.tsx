@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Icons } from '../constants';
 import { Stock, AppView } from '../types';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onSelectStock, 
   onCreateNew 
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Filter stocks based on search query
+  const filteredStocks = stocks.filter(stock => 
+    stock.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
   return (
     <aside className="w-[300px] flex flex-col border-r bg-background">
       {/* Header / Create CTA */}
@@ -41,15 +49,31 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       {/* Active Instances List */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-1">
+        <div className="p-4 space-y-3">
           <p className="px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Active Strategies</p>
           
-          {stocks.length === 0 ? (
+          {/* Search Input */}
+          <div className="px-2">
+            <Input 
+              type="text"
+              placeholder="Search strategies..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 text-xs"
+            />
+          </div>
+          
+          {/* Strategies List with Border */}
+          <div className="border border-border rounded-md p-2 space-y-1">
+          
+          {filteredStocks.length === 0 ? (
             <div className="text-center p-8 border border-dashed rounded-md">
-              <p className="text-sm text-muted-foreground font-medium">No active strategies</p>
+              <p className="text-sm text-muted-foreground font-medium">
+                {searchQuery ? 'No strategies found' : 'No active strategies'}
+              </p>
             </div>
           ) : (
-            stocks.map(stock => {
+            filteredStocks.map(stock => {
               const isActive = activeView === 'STOCK_DETAILS' && selectedStockId === stock.id;
               const profitLossPct = stock.currentAverage > 0 
                   ? ((stock.currentPrice - stock.currentAverage) / stock.currentAverage) * 100 
@@ -92,6 +116,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               );
             })
           )}
+          </div>
         </div>
       </ScrollArea>
     </aside>

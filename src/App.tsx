@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Stock, AppView } from './types';
+import { Icons } from './constants';
 import LandingPage from './components/LandingPage';
 
 import Dashboard from './components/Dashboard';
@@ -92,6 +93,23 @@ const App: React.FC = () => {
           setTempStrategyConfig(undefined);
           setView('ADD_STOCK');
         }}
+        headerTitle={
+          view === 'STOCK_DETAILS' 
+            ? `${stocks.find(s => s.id === selectedStockId)?.symbol || ''} Tracker`
+            : undefined
+        }
+        headerSubtitle={
+          view === 'STOCK_DETAILS'
+            ? 'Daily Smart Investment Execution'
+            : undefined
+        }
+        headerAction={
+          view === 'STOCK_DETAILS' ? (
+            <Button variant="ghost" size="icon" onClick={() => setView('DASHBOARD')}>
+              <Icons.ArrowLeft size={18} />
+            </Button>
+          ) : undefined
+        }
       >
         {view === 'DASHBOARD' && (
           <Dashboard
