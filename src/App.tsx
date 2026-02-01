@@ -147,7 +147,7 @@ const App: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-center">Congratulations!</DialogTitle>
               <DialogDescription className="text-center pt-2 text-lg">
-                You've successfully created your first <span className="font-bold text-primary">DSIP Strategy</span>.
+                You've successfully created your first <span className="font-bold text-primary">DSIP Stock Engine</span>.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 text-muted-foreground text-sm">

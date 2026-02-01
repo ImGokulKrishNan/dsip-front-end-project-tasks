@@ -42,11 +42,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       {/* Active Instances List */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-1">
-          <p className="px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Active Strategies</p>
+          <p className="px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Active Stock Engines</p>
           
           {stocks.length === 0 ? (
             <div className="text-center p-8 border border-dashed rounded-md">
-              <p className="text-sm text-muted-foreground font-medium">No active strategies</p>
+              <p className="text-sm text-muted-foreground font-medium">No Active Stock Engines</p>
             </div>
           ) : (
             stocks.map(stock => {

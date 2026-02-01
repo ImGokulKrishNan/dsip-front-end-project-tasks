@@ -158,7 +158,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                      <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                            <span className="w-2 h-2 rounded-full bg-primary" />
-                           Strategy Parameters
+                           Stock Engine Parameters
                         </h3>
 
                         <div className="grid gap-2">

@@ -23,7 +23,7 @@ interface StockDetailsProps {
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
    const [open, setOpen] = React.useState(false);
-   
+
    return (
       <TooltipProvider>
          <Tooltip open={open} onOpenChange={setOpen}>
@@ -40,8 +40,8 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
                   <Icons.Info size={11} className="shrink-0" />
                </button>
             </TooltipTrigger>
-            <TooltipContent 
-               side="top" 
+            <TooltipContent
+               side="top"
                className="max-w-xs bg-popover text-popover-foreground border shadow-lg"
                sideOffset={5}
             >
@@ -63,7 +63,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       totalBudget: stock.totalBudget,
       convictionYears: stock.convictionYears,
       loadFactor: stock.loadFactor,
-      partitionDays: stock.partitionDays
+      partitionDays: stock.partitionDays,
+      convictionLevel: stock.convictionLevel,
    });
    const [showWarning, setShowWarning] = useState(false);
    const [showDailyLimitWarning, setShowDailyLimitWarning] = useState(false);
@@ -223,8 +224,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {/* Current Price Change */}
                               <div className="space-y-1.5">
-                                 <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                    Current Price Change (%) [lock in %]
+                                 <Label className="text-sm font-semibold flex items-center gap-1.5">
+                                    Current Price Change (%) [Lock in %]
                                     <InfoTooltip text="Enter the current percentage change in stock price. This helps calculate the optimal buy price for today's execution." />
                                  </Label>
                                  <div className="relative">
@@ -248,8 +249,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               <div className="space-y-1.5">
                                  <div className="flex justify-between items-center gap-2">
                                     <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                                       Conviction Adjustment (Optional)
-                                       <InfoTooltip text="Adjust your conviction level if today's market news or events significantly impact your investment thesis." />
+                                       Daily Conviction Adjustment
+                                       <InfoTooltip text="Not Recommended! Adjust your conviction level if today's market news or events significantly impact your investment thesis." />
                                     </Label>
                                     <Badge className={
                                        convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600 h-5 px-1.5 text-[10px]" :
@@ -289,7 +290,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                   {executionState === 'CALCULATED' && recommendation && (
                      <Card className="border-l-4 border-l-emerald-500 shadow-xl animate-in fade-in zoom-in-95 duration-300">
                         <CardHeader className="bg-emerald-500/5 pb-3">
-                           <CardTitle className="text-lg text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                           <CardTitle className="text-lg text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
                               <Icons.Check className="w-4 h-4" /> Recommendation Generated
                            </CardTitle>
                         </CardHeader>
@@ -328,7 +329,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            <div className="flex gap-3">
                               <Button
                                  size="default"
-                                 className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-md"
+                                 className="flex-1 h-10 bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20 shadow-md"
                                  onClick={() => setExecutionState('CONFIRMING')}
                               >
                                  <Icons.Check className="mr-2 w-4 h-4" /> Place Order & Confirm
@@ -403,7 +404,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </div>
                               <div>
                                  <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-                                    Tracker Configuration
+                                    Engine Configuration
                                     <InfoTooltip text="Your investment strategy parameters. These define how your capital is deployed over time." />
                                  </CardTitle>
                               </div>
@@ -429,11 +430,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <p className="font-semibold">₹{stock.totalBudget.toLocaleString()}</p>
                                  </div>
                                  <div>
+                                    <p className="text-xs text-muted-foreground">Overall Conviction</p>
+                                    <p className="font-semibold">{stock.convictionLevel || 50}%</p>
+                                 </div>
+                                 <div>
                                     <p className="text-xs text-muted-foreground">Load Factor</p>
                                     <p className="font-semibold capitalize">{stock.loadFactor.toLowerCase().replace('_', ' ')}</p>
                                  </div>
                                  <div>
-                                    <p className="text-xs text-muted-foreground">Partition Length</p>
+                                    <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
                                     <p className="font-semibold">{stock.partitionDays} trading days</p>
                                  </div>
                               </>
@@ -459,6 +464,25 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     />
                                  </div>
                                  <div className="space-y-1 col-span-2">
+                                    <Label className="text-xs flex items-center gap-1.5">
+                                       Conviction Adjustment
+                                       <InfoTooltip text="Your overall conviction strength (X-Factor). Higher values execute more aggressively." />
+                                    </Label>
+                                    <div className="flex items-center gap-3">
+                                       <Slider
+                                          min={0}
+                                          max={100}
+                                          step={1}
+                                          className="flex-1"
+                                          value={[editConfig.convictionLevel || 50]}
+                                          onValueChange={(val) => setEditConfig({ ...editConfig, convictionLevel: val[0] })}
+                                       />
+                                       <span className="w-12 text-center text-sm font-bold">
+                                          {editConfig.convictionLevel}%
+                                       </span>
+                                    </div>
+                                 </div>
+                                 <div className="space-y-1 col-span-2">
                                     <Label className="text-xs flex justify-between">
                                        Load Factor
                                        <span className="text-[10px] text-amber-600 font-normal">*Not recommended to change</span>
@@ -478,7 +502,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     </Select>
                                  </div>
                                  <div className="space-y-1 col-span-2">
-                                    <Label className="text-xs">Partition Length (Days)</Label>
+                                    <Label className="text-xs">Investment Cycle Length (Days)</Label>
                                     <Input
                                        type="number"
                                        className="h-8"
@@ -498,7 +522,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     editConfig.totalBudget >= stock.totalBudget &&
                                     editConfig.convictionYears >= stock.convictionYears &&
                                     editConfig.partitionDays === stock.partitionDays &&
-                                    editConfig.loadFactor === stock.loadFactor;
+                                    editConfig.loadFactor === stock.loadFactor &&
+                                    editConfig.convictionLevel === stock.convictionLevel;
 
                                  if (isSafe) {
                                     onUpdate({ ...stock, ...editConfig });
@@ -512,7 +537,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     totalBudget: stock.totalBudget,
                                     convictionYears: stock.convictionYears,
                                     loadFactor: stock.loadFactor,
-                                    partitionDays: stock.partitionDays
+                                    partitionDays: stock.partitionDays,
+                                    convictionLevel: stock.convictionLevel
                                  });
                                  setIsEditing(false);
                               }}>Cancel</Button>
@@ -540,7 +566,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  totalBudget: stock.totalBudget,
                                  convictionYears: stock.convictionYears,
                                  loadFactor: stock.loadFactor,
-                                 partitionDays: stock.partitionDays
+                                 partitionDays: stock.partitionDays,
+                                 convictionLevel: stock.convictionLevel
                               });
                               setShowWarning(false);
                               setIsEditing(false);
@@ -621,8 +648,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </div>
                               <div className="text-right">
                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 flex items-center justify-end gap-1">
-                                    Partition %
-                                    <InfoTooltip text={`Shows how far you've progressed in the current partition cycle. Each partition represents ${cycleLength} trading days. Yesterday's progress: ${daysInvested > 0 ? (((daysInvested - 1) / cycleLength) * 100).toFixed(1) : 0}%`} />
+                                    Investment Cycle %
+                                    <InfoTooltip text={`Shows how far you've progressed in the current investment cycle.`} />
                                  </p>
                                  <p className="font-mono text-sm font-bold">
                                     {((daysInvested % cycleLength) / cycleLength * 100).toFixed(1)}%
@@ -637,7 +664,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               <div className="flex justify-between items-center">
                                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                                     <Icons.PieChart size={16} className="text-purple-500" />
-                                    Partition Progress
+                                    Investment Progress
                                  </h3>
                                  <span className="text-xs font-mono font-medium text-muted-foreground">
                                     {((currentCycle / totalCycles) * 100).toFixed(1)}% Complete
@@ -684,6 +711,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     })}
                                  </div>
                               </div>
+
                               <div className="flex justify-between text-[10px] text-muted-foreground font-mono px-1">
                                  <span>START</span>
                                  <span>{currentCycle}/{totalCycles}</span>
@@ -703,7 +731,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                              <span className="font-mono font-bold text-lg">#{selectedPartition !== null ? selectedPartition + 1 : 0}</span>
                                           </div>
                                           <div>
-                                             <h3 className="font-bold text-lg leading-none">Partition Cert</h3>
+                                             <h3 className="font-bold text-lg leading-none">Investment Cycle Cert</h3>
                                              <p className="text-xs text-muted-foreground font-mono mt-1">
                                                 DSIP-{stock.symbol}-{(selectedPartition || 0) + 1}
                                              </p>
@@ -760,7 +788,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                 <div className="space-y-1">
                                                    <p className="font-medium text-foreground">Awaiting Execution</p>
                                                    <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
-                                                      This partition is scheduled for a future date.
+                                                      This investment cycle is scheduled for a future date.
                                                    </p>
                                                 </div>
                                              </div>
