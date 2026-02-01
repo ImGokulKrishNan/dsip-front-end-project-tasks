@@ -3,7 +3,7 @@ import { UserProfile, Stock } from '../types';
 import { Icons } from '../constants';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -51,27 +51,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
   const isPortfolioProfit = totalProfitLossPct >= 0;
 
   return (
-    <div className="h-full p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="h-full p-6 space-y-6">
       
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Portfolio Overview & Operations</p>
-        </div>
-
-        <div className="flex flex-wrap gap-4">
-          <Button onClick={onAddStock} size="lg" className="shadow-lg">
-            <Icons.Plus />
-            <span className="ml-2">Activate Stock Engine</span>
-          </Button>
-        </div>
-      </div>
-      
-      <Separator />
-
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-6">
         
         {/* Actions are removed as per request. 
             If we need to access them, we might need a dedicated page or a different entry point. 
@@ -81,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
         {/* Portfolio Stats & Grid - Now Full Width/Centered */}
         <div className="space-y-8">
            
-           <Card className="bg-primary text-primary-foreground p-8 overflow-hidden relative border-none shadow-2xl">
+           <Card className="bg-primary text-primary-foreground p-6 overflow-hidden relative border-none shadow-2xl max-w-3xl mx-auto">
 
               <div className="relative z-10 flex justify-between items-start">
                   <div>
@@ -89,7 +72,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
                       Total Market Value
                       <InfoTooltip text="Market value as of yesterday's close + today's moves" />
                     </h3>
-                    <p className="text-4xl font-bold tracking-tight">₹{Math.round(currentMarketValue).toLocaleString()}</p>
+                    <p className="text-3xl font-bold tracking-tight">₹{Math.round(currentMarketValue).toLocaleString()}</p>
                   </div>
                   <div className="bg-primary-foreground/10 px-4 py-2 rounded-md backdrop-blur-sm">
                     <div className={isPortfolioProfit ? "text-emerald-300" : "text-red-300"}>
@@ -117,9 +100,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
 
            <div>
               <h2 className="text-lg font-semibold tracking-tight mb-4">Strategy Performance</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                  {stocks.length === 0 ? (
-                    <Card className="col-span-2 p-8 flex flex-col items-center justify-center text-center border-dashed bg-muted/20">
+                    <Card className="md:col-span-2 lg:col-span-3 p-8 flex flex-col items-center justify-center text-center border-dashed bg-muted/20">
                        <p className="text-muted-foreground mb-4">No strategies deployed yet.</p>
                        <Button onClick={onAddStock} variant="outline">Create First Strategy</Button>
                     </Card>
@@ -138,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelec
                           className="cursor-pointer hover:bg-accent/50 transition-colors group"
                           onClick={() => onSelectStock(stock.id)}
                         >
-                           <CardContent className="p-5">
+                           <CardContent className="p-4">
                               <div className="flex justify-between items-start mb-4">
                                  <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center font-bold text-secondary-foreground">

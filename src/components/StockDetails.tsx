@@ -180,27 +180,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
    return (
       <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-
-         {/* Header */}
-         <div className="px-6 py-4 border-b flex items-center justify-between bg-background/95 backdrop-blur z-20 sticky top-0">
-            <div className="flex items-center gap-3">
-               <Button variant="ghost" size="icon" onClick={onBack}>
-                  <Icons.ArrowLeft size={18} />
-               </Button>
-               <div>
-                  <h1 className="text-xl font-bold tracking-tight">{stock.symbol} Tracker</h1>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Daily Smart Investment Execution</p>
-               </div>
-            </div>
-            <div className="flex items-center gap-2">
-               <Badge variant="outline" className="h-6 px-2.5 text-[10px] font-semibold">
-                  Tracker Active
-               </Badge>
-            </div>
-         </div>
-
          <ScrollArea className="flex-1">
-            <div className="p-5 md:p-6 max-w-5xl mx-auto space-y-6 pb-32">
+            <div className="p-5 md:p-6 space-y-6 pb-32">
 
                {/* 1. Daily Execution Zone */}
                <div className="space-y-3">
@@ -390,7 +371,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                   )}
 
                </div>
-               <Separator />
+               
                {/* 2. Tracker Summary & Progress (Read-Only) */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Summary Card */}

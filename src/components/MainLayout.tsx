@@ -1,10 +1,12 @@
 import React from 'react';
 import LeftSidebar from './LeftSidebar';
 import { AppView, Stock } from '../types';
+import { Icons } from '../constants';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from './mode-toggle';
-// import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,9 @@ interface MainLayoutProps {
   selectedStockId: string | null;
   onSelectStock: (id: string) => void;
   onCreateNew: () => void;
+  headerTitle?: string;
+  headerSubtitle?: string;
+  headerAction?: React.ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ 
@@ -21,7 +26,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   activeView, 
   selectedStockId, 
   onSelectStock, 
-  onCreateNew 
+  onCreateNew,
+  headerTitle,
+  headerSubtitle,
+  headerAction
 }) => {
   // Calculate Global Stats
   const totalInvested = stocks.reduce((acc, stock) => {
@@ -51,88 +59,127 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       />
 
       {/* 2. Center Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 border-r bg-background relative">
+      <main className="flex-1 flex flex-col min-w-0 bg-background relative">
+        {/* Global Header with Divider */}
+        {(headerTitle || activeView === 'DASHBOARD') && (
+          <>
+            <div className="px-6 py-4 flex items-center justify-between bg-background">
+              <div className="flex items-center gap-3">
+                {headerAction}
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                    {headerTitle || 'Dashboard'}
+                  </h1>
+                  <p className="text-muted-foreground text-xs">
+                    {headerSubtitle || 'Portfolio Overview & Operations'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Right side: User Profile + Theme Toggle + Action Button */}
+              <div className="flex items-center gap-4">
+                {activeView === 'DASHBOARD' && (
+                  <Button onClick={onCreateNew} className="shadow-lg">
+                    <Icons.Plus />
+                    <span className="ml-2">Activate Stock Engine</span>
+                  </Button>
+                )}
+                
+                {/* User Profile */}
+                <div className="hidden xl:flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/30 border">
+                  <div className="w-8 h-8 rounded-full bg-muted border border-border" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">Jaya Bhuvanesh</p>
+                    <p className="text-[10px] text-muted-foreground truncate">Pro Account</p>
+                  </div>
+                  <ModeToggle />
+                </div>
+              </div>
+            </div>
+            <Separator />
+          </>
+        )}
+        
         <ScrollArea className="flex-1 w-full h-full"> 
              {children}
         </ScrollArea>
       </main>
 
-      {/* 3. Right Sidebar */}
-      <aside className="w-[320px] bg-background flex flex-col h-full hidden xl:flex border-l">
-         <ScrollArea className="flex-1">
-           <div className="p-6 space-y-6">
-              {/* User Profile / Theme Toggle - Top Right */}
-              <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted border border-border" />
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">Jaya Bhuvanesh</p>
-                        <p className="text-[10px] text-muted-foreground truncate">Pro Account</p>
-                    </div>
-                 </div>
-                 <ModeToggle />
-              </div>
-
-              {/* Only show Market Overview and Recent History when viewing stock details */}
-              {activeView === 'STOCK_DETAILS' && (
-                <>
-                  <div className="space-y-1">
-                      <h3 className="text-lg font-bold tracking-tight">Market Overview</h3>
-                      <p className="text-sm text-muted-foreground">Portfolio Performance</p>
-                  </div>
-
-                  <div className="grid gap-4">
-                      <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invested</span>
-                          <div className="text-2xl font-bold">₹{totalInvested.toLocaleString()}</div>
+      {/* 3. Right Sidebar - Market Overview & Recent History */}
+      {activeView === 'STOCK_DETAILS' && (
+        <aside className="w-[320px] bg-background flex flex-col h-full hidden xl:flex border-l">
+           <ScrollArea className="flex-1">
+             <div className="p-6 space-y-6">
+                {selectedStockId && (() => {
+                  const selectedStock = stocks.find(s => s.id === selectedStockId);
+                  if (!selectedStock) return null;
+                  
+                  const sipQuantity = selectedStock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
+                  const totalShares = selectedStock.quantityOwned + sipQuantity;
+                  const totalInvestedStock = (selectedStock.quantityOwned * selectedStock.averagePriceOwned) + selectedStock.deployedAmount;
+                  const currentValueStock = totalShares * selectedStock.currentPrice;
+                  const totalPLStock = currentValueStock - totalInvestedStock;
+                  const isProfitStock = totalPLStock >= 0;
+                  
+                  return (
+                    <>
+                      <div className="space-y-1">
+                          <h3 className="text-lg font-bold tracking-tight">Market Overview</h3>
+                          <p className="text-sm text-muted-foreground">Portfolio Performance</p>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
-                          <div className="text-2xl font-bold">₹{Math.round(currentValue).toLocaleString()}</div>
-                      </div>
+                      <div className="grid gap-4">
+                          <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invested</span>
+                              <div className="text-2xl font-bold">₹{totalInvestedStock.toLocaleString()}</div>
+                          </div>
 
-                      <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfit ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
-                          <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
-                          <div className="text-3xl font-black tracking-tight">
-                            {isProfit ? '+' : ''}₹{Math.round(totalPL).toLocaleString()}
+                          <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
+                              <div className="text-2xl font-bold">₹{Math.round(currentValueStock).toLocaleString()}</div>
+                          </div>
+
+                          <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfitStock ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
+                              <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
+                              <div className="text-3xl font-black tracking-tight">
+                                {isProfitStock ? '+' : ''}₹{Math.round(totalPLStock).toLocaleString()}
+                              </div>
                           </div>
                       </div>
-                  </div>
 
-                  <div className="space-y-3 pt-8">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                         Recent History
-                      </h4>
-                      <div className="space-y-2">
-                         {(() => {
-                            let history = selectedStockId
-                               ? (stocks.find(s => s.id === selectedStockId)?.history || []).map(t => ({ ...t, symbol: stocks.find(s => s.id === selectedStockId)?.symbol }))
-                               : [];
+                      <div className="space-y-3 pt-8">
+                          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                             Recent History
+                          </h4>
+                          <div className="space-y-2">
+                             {(() => {
+                                let history = selectedStock.history;
 
-                            // Ensure Newest First
-                            history = history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 15);
+                                // Ensure Newest First
+                                history = history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 15);
 
-                            if (history.length === 0) {
-                               return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
-                            }
+                                if (history.length === 0) {
+                                   return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
+                                }
 
-                            return history.map((tx, i) => (
-                               <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
-                                  <div className="flex flex-col gap-0.5">
-                                     <span className="text-xs font-semibold text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</span>
-                                  </div>
-                                  <span className="font-mono font-bold">₹{tx.amount.toLocaleString()}</span>
-                               </div>
-                            ));
-                         })()}
+                                return history.map((tx, i) => (
+                                   <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
+                                      <div className="flex flex-col gap-0.5">
+                                         <span className="text-xs font-semibold text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</span>
+                                      </div>
+                                      <span className="font-mono font-bold">₹{tx.amount.toLocaleString()}</span>
+                                   </div>
+                                ));
+                             })()}
+                          </div>
                       </div>
-                  </div>
-                </>
-              )}
-           </div>
-         </ScrollArea>
-      </aside>
+                    </>
+                  );
+                })()}
+             </div>
+           </ScrollArea>
+        </aside>
+      )}
     </div>
   );
 };
