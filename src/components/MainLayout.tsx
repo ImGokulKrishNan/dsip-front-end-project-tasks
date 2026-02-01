@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from './mode-toggle';
 import { cn } from '@/lib/utils';
+import InfoTooltip from './InfoTooltip';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -50,7 +51,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="flex h-screen w-screen bg-background overflow-hidden font-sans">
       {/* 1. Left Sidebar */}
-      <LeftSidebar 
+      <LeftSidebar
         stocks={stocks}
         activeView={activeView}
         selectedStockId={selectedStockId}
@@ -130,12 +131,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
                       <div className="grid gap-4">
                           <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invested</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invested</span>
+                                <InfoTooltip text="Your investment strategy parameters. These define how your capital is deployed over time." />
+                              </div>
                               <div className="text-2xl font-bold">₹{totalInvestedStock.toLocaleString()}</div>
                           </div>
 
                           <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
+                                <InfoTooltip text="Your investment strategy parameters. These define how your capital is deployed over time." />
+                              </div>
                               <div className="text-2xl font-bold">₹{Math.round(currentValueStock).toLocaleString()}</div>
                           </div>
 
