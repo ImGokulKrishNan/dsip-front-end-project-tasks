@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const AuthCallback: React.FC = () => {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const { setAuthenticated } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -31,8 +29,8 @@ const AuthCallback: React.FC = () => {
         // Close popup after a short delay so user can see the error
         setTimeout(() => window.close(), 2000);
       } else {
-        // If not in a popup, redirect to landing after showing error
-        setTimeout(() => navigate('/'), 3000);
+        // If not in a popup, redirect to home after showing error
+        setTimeout(() => { window.location.href = '/'; }, 3000);
       }
     } else {
       // Success
@@ -47,12 +45,12 @@ const AuthCallback: React.FC = () => {
         // Close popup immediately on success
         window.close();
       } else {
-        // Not in popup (direct navigation) - set auth state and redirect
+        // Not in popup (direct navigation) - set auth state and redirect to home
         setAuthenticated(true);
-        navigate('/dashboard');
+        window.location.href = '/';
       }
     }
-  }, [navigate, setAuthenticated]);
+  }, [setAuthenticated]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { UserProfile, Stock, AppView } from './types';
 import { Icons } from './constants';
 import LandingPage from './components/LandingPage';
@@ -23,42 +23,35 @@ import {
 import { Button } from '@/components/ui/button';
 import { Toaster } from "@/components/ui/toaster";
 
-// Landing page wrapper that redirects if already authenticated
-const LandingPageWrapper: React.FC = () => {
+// Main app content - single page with state-based navigation
+const MainApp: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <LandingPage />;
-};
-
-// Main authenticated app content
-const AuthenticatedApp: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [view, setView] = useState<AppView>('DASHBOARD');
+  const [view, setView] = useState<AppView>('LANDING');
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [tempStrategyConfig, setTempStrategyConfig] = useState<Partial<Stock> | undefined>(undefined);
 
+  // Load stocks from localStorage
   useEffect(() => {
     const savedStocks = localStorage.getItem('smart_sip_stocks');
     if (savedStocks) setStocks(JSON.parse(savedStocks));
   }, []);
 
+  // Save stocks to localStorage
   useEffect(() => {
     localStorage.setItem('smart_sip_stocks', JSON.stringify(stocks));
   }, [stocks]);
+
+  // Auto-navigate to dashboard when authenticated
+  useEffect(() => {
+    if (isAuthenticated && view === 'LANDING') {
+      setView('DASHBOARD');
+    }
+    if (!isAuthenticated && view !== 'LANDING') {
+      setView('LANDING');
+    }
+  }, [isAuthenticated, view]);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -69,12 +62,12 @@ const AuthenticatedApp: React.FC = () => {
     );
   }
 
-  // Redirect to landing if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+  // Show landing page if not authenticated
+  if (!isAuthenticated || view === 'LANDING') {
+    return <LandingPage />;
   }
 
-  // Placeholder user profile (will be replaced when backend provides user info)
+  // Placeholder user profile
   const userProfile: UserProfile = {
     name: "Investor",
     email: "",
@@ -198,10 +191,10 @@ const App: React.FC = () => {
         <AuthProvider>
           <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 font-sans">
             <Routes>
-              <Route path="/" element={<LandingPageWrapper />} />
+              {/* OAuth callback route - required for popup redirect */}
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/dashboard" element={<AuthenticatedApp />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* All other routes go to main app */}
+              <Route path="*" element={<MainApp />} />
             </Routes>
             <Toaster />
           </div>
