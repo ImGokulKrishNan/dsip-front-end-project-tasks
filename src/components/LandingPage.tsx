@@ -1,11 +1,8 @@
-
 import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LandingPageProps {
-  onLogin: () => void;
-}
-
-const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
+const LandingPage: React.FC = () => {
+  const { login, isLoading } = useAuth();
   return (
 
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-b from-slate-900 to-slate-950 text-white selection:bg-indigo-500/30">
@@ -37,7 +34,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
 
         {/* CTA Button */}
         <button
-          onClick={onLogin}
+          onClick={login}
+          disabled={isLoading}
           className="group relative w-full md:w-auto bg-white hover:bg-slate-50 text-slate-900 font-bold py-5 px-10 rounded-2xl flex items-center justify-center gap-4 shadow-[0_20px_50px_-12px_rgba(255,255,255,0.2)] hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.3)] transition-all transform hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 mx-auto"
         >
           <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" className="w-6 h-6" alt="Google" />
