@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from './mode-toggle';
 import { cn } from '@/lib/utils';
 import InfoTooltip from './InfoTooltip';
+import { useAuth } from '../contexts/AuthContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   headerSubtitle,
   headerAction
 }) => {
+  const { user, logout } = useAuth();
   // Calculate Global Stats
   const totalInvested = stocks.reduce((acc, stock) => {
     const historicalInvested = stock.history.reduce((hAcc, t) => hAcc + t.amount, 0);
@@ -88,12 +90,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 
                 {/* User Profile */}
                 <div className="hidden xl:flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/30 border">
-                  <div className="w-8 h-8 rounded-full bg-muted border border-border" />
+                  {user?.profilePicture ? (
+                    <img src={user.profilePicture} alt="" className="w-8 h-8 rounded-full border border-border" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold border border-border">
+                      {user?.name?.charAt(0) || '?'}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">Jaya Bhuvanesh</p>
-                    <p className="text-[10px] text-muted-foreground truncate">Pro Account</p>
+                    <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{user?.email || ''}</p>
                   </div>
                   <ModeToggle />
+                  <Button variant="ghost" size="icon" onClick={logout} title="Sign out">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </Button>
                 </div>
               </div>
             </div>

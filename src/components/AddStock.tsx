@@ -9,7 +9,24 @@ import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+
+interface StockPriceResponse {
+   symbol: string;
+   exchange: string;
+   date: string;
+   closePrice: number;
+   source: string;
+   company: {
+      name: string;
+      symbol: string;
+      exchange: string;
+      industry: string;
+      country: string;
+   } | null;
+}
 
 interface AddStockProps {
    onBack: () => void;
@@ -46,30 +63,54 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
    const [averagePriceOwned, setAveragePriceOwned] = useState('0');
 
    const [convictionLevel, setConvictionLevel] = useState([initialValues?.convictionLevel || 75]);
-   // const [priceMovementPct, setPriceMovementPct] = useState('0'); // Removed as requested
 
-   const handleSubmit = (e: React.FormEvent) => {
+   const [showConfirmModal, setShowConfirmModal] = useState(false);
+   const [stockData, setStockData] = useState<StockPriceResponse | null>(null);
+   const [fetchLoading, setFetchLoading] = useState(false);
+   const [fetchError, setFetchError] = useState<string | null>(null);
+
+   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!symbol) return;
 
+      setFetchLoading(true);
+      setFetchError(null);
+
+      try {
+         const data = await api<StockPriceResponse>(
+            `/api/stocks/close?symbol=${encodeURIComponent(symbol.trim())}&exchange=US`
+         );
+         setStockData(data);
+         setShowConfirmModal(true);
+      } catch {
+         setFetchError(`Could not find stock "${symbol.trim().toUpperCase()}". Please check the symbol and try again.`);
+      } finally {
+         setFetchLoading(false);
+      }
+   };
+
+   const handleConfirm = () => {
+      if (!stockData) return;
+
       const newStock: Stock = {
          id: Date.now().toString(),
-         symbol: symbol.toUpperCase(),
-         name: symbol.toUpperCase(),
+         symbol: stockData.symbol,
+         name: stockData.company?.name || stockData.symbol,
          totalBudget: Number(budget),
          partitionDays: Number(partition),
          convictionYears: Number(convictionYears),
          loadFactor,
          deployedAmount: 0,
          currentAverage: Number(averagePriceOwned),
-         currentPrice: 1250.45, // Mock price
+         currentPrice: stockData.closePrice,
          isPaused: false,
          history: [],
          quantityOwned: alreadyInvested ? Number(quantityOwned) : 0,
          averagePriceOwned: alreadyInvested ? Number(averagePriceOwned) : 0,
          convictionLevel: convictionLevel[0],
-         priceMovementPct: 0, // Default to 0 for new strategies
+         priceMovementPct: 0,
       };
+      setShowConfirmModal(false);
       onAdd(newStock);
    };
 
@@ -266,12 +307,24 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                         </CardContent>
                      </Card>
 
-                     <div className="pt-4">
-                        <Button type="submit" size="lg" className="w-full text-lg h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform">
-                           <Icons.TrendUp className="mr-2" />
-                           Create DSIP Tracker
+                     <div className="pt-4 space-y-3">
+                        <Button type="submit" size="lg" disabled={fetchLoading} className="w-full text-lg h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform">
+                           {fetchLoading ? (
+                              <>
+                                 <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                                 Fetching stock data...
+                              </>
+                           ) : (
+                              <>
+                                 <Icons.TrendUp className="mr-2" />
+                                 Create DSIP Tracker
+                              </>
+                           )}
                         </Button>
-                        <p className="text-center text-xs text-muted-foreground mt-4">
+                        {fetchError && (
+                           <p className="text-center text-sm text-red-500 font-medium">{fetchError}</p>
+                        )}
+                        <p className="text-center text-xs text-muted-foreground">
                            Smart deployment will be active from the next trading day.
                         </p>
                      </div>
@@ -279,6 +332,63 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                </div>
             </form>
          </div>
+         {/* Stock Confirmation Modal */}
+         <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+            <DialogContent className="sm:max-w-md">
+               <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Confirm Stock Details</DialogTitle>
+               </DialogHeader>
+
+               {stockData && (
+                  <div className="space-y-4 py-2">
+                     <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-lg">
+                           {stockData.symbol.substring(0, 2)}
+                        </div>
+                        <div>
+                           <p className="text-lg font-bold">{stockData.symbol}</p>
+                           <p className="text-sm text-muted-foreground">{stockData.company?.name || 'N/A'}</p>
+                        </div>
+                     </div>
+
+                     <Separator />
+
+                     <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Exchange</p>
+                           <p className="font-bold">{stockData.company?.exchange || stockData.exchange}</p>
+                        </div>
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Industry</p>
+                           <p className="font-bold">{stockData.company?.industry || 'N/A'}</p>
+                        </div>
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Country</p>
+                           <p className="font-bold">{stockData.company?.country || 'N/A'}</p>
+                        </div>
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Close Price</p>
+                           <p className="font-bold text-lg">${stockData.closePrice?.toFixed(2)}</p>
+                        </div>
+                     </div>
+
+                     <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+                        Price as of {stockData.date} &middot; Source: {stockData.source}
+                     </div>
+                  </div>
+               )}
+
+               <DialogFooter className="gap-2 sm:gap-0">
+                  <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
+                     Cancel
+                  </Button>
+                  <Button onClick={handleConfirm}>
+                     <Icons.Check className="mr-2 w-4 h-4" />
+                     Confirm &amp; Create Tracker
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
       </div>
    );
 };

@@ -1,58 +1,88 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { api, API_BASE_URL, setOnUnauthorized } from '../lib/api';
 
-const AUTH_STORAGE_KEY = 'smart_sip_auth';
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  profilePicture: string | null;
+}
+
+interface AuthStatusResponse {
+  authenticated: boolean;
+  user?: User;
+}
 
 interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
+  user: User | null;
   login: () => void;
   logout: () => void;
-  setAuthenticated: (value: boolean) => void;
+  checkAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticatedState] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
-  // Check localStorage on mount
+  const checkAuth = useCallback(async () => {
+    try {
+      const data = await api<AuthStatusResponse>('/api/auth/status');
+      if (data.authenticated && data.user) {
+        setIsAuthenticated(true);
+        setUser(data.user);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    } catch {
+      setIsAuthenticated(false);
+      setUser(null);
+    }
+  }, []);
+
+  // Clear auth state on any 401 from API calls
   useEffect(() => {
-    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (stored === 'true') {
-      setIsAuthenticatedState(true);
-    }
-    setIsLoading(false);
+    setOnUnauthorized(() => {
+      setIsAuthenticated(false);
+      setUser(null);
+    });
   }, []);
 
-  const setAuthenticated = useCallback((value: boolean) => {
-    setIsAuthenticatedState(value);
-    if (value) {
-      localStorage.setItem(AUTH_STORAGE_KEY, 'true');
-    } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
-  }, []);
+  // Validate session on mount
+  useEffect(() => {
+    checkAuth().finally(() => setIsLoading(false));
+  }, [checkAuth]);
+
+  // Re-validate session when window regains focus (catches cookie clears, session expiry)
+  useEffect(() => {
+    const handleFocus = () => {
+      checkAuth();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [checkAuth]);
 
   // Listen for messages from auth popup
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Verify origin for security
       if (event.origin !== window.location.origin) return;
 
       if (event.data?.type === 'AUTH_SUCCESS') {
-        setAuthenticated(true);
+        checkAuth();
       } else if (event.data?.type === 'AUTH_ERROR') {
-        console.error('Authentication failed:', event.data.error);
-        setAuthenticated(false);
+        setIsAuthenticated(false);
+        setUser(null);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [setAuthenticated]);
+  }, [checkAuth]);
 
   const login = () => {
     const width = 500;
@@ -66,13 +96,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       `width=${width},height=${height},left=${left},top=${top},popup=yes`
     );
 
-    // Check if popup was blocked
     if (!popup) {
       console.error('Popup was blocked. Please allow popups for this site.');
       return;
     }
 
-    // Poll to check if popup was closed without completing auth
     const checkPopupClosed = setInterval(() => {
       if (popup.closed) {
         clearInterval(checkPopupClosed);
@@ -80,8 +108,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 500);
   };
 
-  const logout = () => {
-    setAuthenticated(false);
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Best-effort logout
+    }
+    setIsAuthenticated(false);
+    setUser(null);
   };
 
   return (
@@ -89,9 +126,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         isLoading,
         isAuthenticated,
+        user,
         login,
         logout,
-        setAuthenticated,
+        checkAuth,
       }}
     >
       {children}

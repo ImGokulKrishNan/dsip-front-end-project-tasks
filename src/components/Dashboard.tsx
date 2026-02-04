@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserProfile, Stock } from '../types';
+import { Stock } from '../types';
 import { Icons } from '../constants';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,12 @@ import { Button } from '@/components/ui/button';
 import InfoTooltip from './InfoTooltip';
 
 interface DashboardProps {
-   user: UserProfile;
    stocks: Stock[];
    onAddStock: () => void;
    onSelectStock: (id: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, stocks, onAddStock, onSelectStock }) => {
+const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock }) => {
 
 
    let totalInvestedValue = 0;

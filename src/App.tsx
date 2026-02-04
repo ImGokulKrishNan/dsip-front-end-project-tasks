@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { UserProfile, Stock, AppView } from './types';
+import { Stock, AppView } from './types';
 import { Icons } from './constants';
 import LandingPage from './components/LandingPage';
 import AuthCallback from './components/AuthCallback';
@@ -67,13 +67,6 @@ const MainApp: React.FC = () => {
     return <LandingPage />;
   }
 
-  // Placeholder user profile
-  const userProfile: UserProfile = {
-    name: "Investor",
-    email: "",
-    onboardingComplete: true,
-  };
-
   const addStock = (newStock: Stock) => {
     if (stocks.length === 0) {
       setShowCelebration(true);
@@ -123,7 +116,6 @@ const MainApp: React.FC = () => {
       >
         {view === 'DASHBOARD' && (
           <Dashboard
-            user={userProfile}
             stocks={stocks}
             onAddStock={() => { setTempStrategyConfig(undefined); setView('ADD_STOCK'); }}
             onSelectStock={(id) => { setSelectedStockId(id); setView('STOCK_DETAILS'); }}
