@@ -58,15 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth().finally(() => setIsLoading(false));
   }, [checkAuth]);
 
-  // Re-validate session when window regains focus (catches cookie clears, session expiry)
-  useEffect(() => {
-    const handleFocus = () => {
-      checkAuth();
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [checkAuth]);
-
   // Listen for messages from auth popup
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
