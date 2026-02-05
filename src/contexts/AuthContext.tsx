@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api, API_BASE_URL, setOnUnauthorized } from '../lib/api';
+import { DEV_CONFIG } from '../config/dev';
 
 interface User {
   id: string;
@@ -25,11 +26,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(DEV_CONFIG.BYPASS_AUTH);
+  const [isLoading, setIsLoading] = useState(!DEV_CONFIG.BYPASS_AUTH);
+  const [user, setUser] = useState<User | null>(DEV_CONFIG.BYPASS_AUTH ? DEV_CONFIG.MOCK_USER : null);
 
   const checkAuth = useCallback(async () => {
+    // Skip auth check in dev mode
+    if (DEV_CONFIG.BYPASS_AUTH) {
+      setIsAuthenticated(true);
+      setUser(DEV_CONFIG.MOCK_USER);
+      return;
+    }
+
     try {
       const data = await api<AuthStatusResponse>('/api/auth/status');
       if (data.authenticated && data.user) {

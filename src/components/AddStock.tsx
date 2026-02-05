@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { DEV_CONFIG } from '@/config/dev';
 
 interface StockPriceResponse {
    symbol: string;
@@ -77,11 +78,30 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
       setFetchError(null);
 
       try {
-         const data = await api<StockPriceResponse>(
-            `/api/stocks/close?symbol=${encodeURIComponent(symbol.trim())}&exchange=US`
-         );
-         setStockData(data);
-         setShowConfirmModal(true);
+         // Use mock data in dev mode
+         if (DEV_CONFIG.BYPASS_STOCK_API) {
+            // Simulate API delay for realistic UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Use mock data with the entered symbol
+            const mockData = {
+               ...DEV_CONFIG.MOCK_STOCK_DATA,
+               symbol: symbol.trim().toUpperCase(),
+               company: DEV_CONFIG.MOCK_STOCK_DATA.company ? {
+                  ...DEV_CONFIG.MOCK_STOCK_DATA.company,
+                  symbol: symbol.trim().toUpperCase(),
+               } : null,
+            };
+
+            setStockData(mockData);
+            setShowConfirmModal(true);
+         } else {
+            const data = await api<StockPriceResponse>(
+               `/api/stocks/close?symbol=${encodeURIComponent(symbol.trim())}&exchange=US`
+            );
+            setStockData(data);
+            setShowConfirmModal(true);
+         }
       } catch {
          setFetchError(`Could not find stock "${symbol.trim().toUpperCase()}". Please check the symbol and try again.`);
       } finally {
