@@ -31,6 +31,7 @@ const MainApp: React.FC = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [tempStrategyConfig, setTempStrategyConfig] = useState<Partial<Stock> | undefined>(undefined);
+  const [showDsipOnly, setShowDsipOnly] = useState(false);
 
   // Load stocks from localStorage
   useEffect(() => {
@@ -113,6 +114,8 @@ const MainApp: React.FC = () => {
             </Button>
           ) : undefined
         }
+        showDsipOnly={showDsipOnly}
+        setShowDsipOnly={setShowDsipOnly}
       >
         {view === 'DASHBOARD' && (
           <Dashboard
@@ -139,6 +142,7 @@ const MainApp: React.FC = () => {
                 setTempStrategyConfig(config);
                 setView('ADD_STOCK');
               }}
+              showDsipOnly={showDsipOnly}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-400">

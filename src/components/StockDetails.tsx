@@ -19,6 +19,7 @@ interface StockDetailsProps {
    onBack: () => void;
    onUpdate: (stock: Stock) => void;
    onCopyStrategy?: (config: Partial<Stock>) => void;
+   showDsipOnly?: boolean;
 }
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
@@ -52,7 +53,7 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
    );
 };
 
-const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy }) => {
+const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy, showDsipOnly }) => {
    // Execution State: 'IDLE' -> 'CALCULATED' -> 'CONFIRMING'
    const [executionState, setExecutionState] = useState<'IDLE' | 'CALCULATED' | 'CONFIRMING'>('IDLE');
 
@@ -685,14 +686,16 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            </div>
                            <CardTitle className="text-sm font-semibold">Live Investment Cycle</CardTitle>
                         </div>
-                        <Button
-                           variant="outline"
-                           size="sm"
-                           onClick={() => setShowSyncPopup(true)}
-                           className="h-7 text-[10px] px-2.5 bg-background hover:bg-muted border-dashed"
-                        >
-                           <Icons.Refresh className="mr-1.5 w-3 h-3" /> Sync
-                        </Button>
+                        {!showDsipOnly && (
+                           <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowSyncPopup(true)}
+                              className="h-7 text-[10px] px-2.5 bg-background hover:bg-muted border-dashed"
+                           >
+                              <Icons.Refresh className="mr-1.5 w-3 h-3" /> Sync
+                           </Button>
+                        )}
                      </CardHeader>
                      <CardContent className="space-y-4 pb-4">
 
