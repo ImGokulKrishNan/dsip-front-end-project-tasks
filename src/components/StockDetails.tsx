@@ -898,7 +898,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           onClick={() => setShowVictoryPopup(false)}
                                           className="w-full h-11 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-bold tracking-wide"
                                        >
-                                          Claim Victory
+                                          Proceed to Next Cycle
                                        </Button>
                                     </div>
                                  </div>
