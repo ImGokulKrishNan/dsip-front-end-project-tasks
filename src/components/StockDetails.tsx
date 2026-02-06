@@ -69,6 +69,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [showWarning, setShowWarning] = useState(false);
    const [showDailyLimitWarning, setShowDailyLimitWarning] = useState(false);
    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+   const [showVictoryPopup, setShowVictoryPopup] = useState(false);
+   const [showKillSwitchPopup, setShowKillSwitchPopup] = useState(false);
 
    // Daily Context Inputs
    const [lockInPct, setLockInPct] = useState<string>('');
@@ -80,6 +82,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    // Final Confirmation Inputs
    const [executedAmount, setExecutedAmount] = useState<string>('');
    const [executionPrice, setExecutionPrice] = useState<string>('');
+
+   // Sync Feature State
+   const [showSyncPopup, setShowSyncPopup] = useState(false);
+   const [syncForm, setSyncForm] = useState({ totalInvested: '', totalShares: '' });
 
    // Partition State & Data Helper
    const [selectedPartition, setSelectedPartition] = useState<number | null>(null);
@@ -106,6 +112,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const totalInvested = (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount;
    const sipQuantity = stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
    const totalShares = stock.quantityOwned + sipQuantity;
+   const currentReturnPercent = totalInvested > 0
+      ? (((totalShares * stock.currentPrice) - totalInvested) / totalInvested * 100)
+      : 0;
    const avgBuyPrice = totalShares > 0 ? totalInvested / totalShares : 0;
 
    // Progress Mocks (In real app, comes from backend)
@@ -139,10 +148,16 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
    const handleCalculate = () => {
       // Check if executed today
-      // Check if executed today
       const alreadyExecutedToday = stock.history.some(h =>
          new Date(h.date).toDateString() === new Date().toDateString()
       );
+
+      // Kill Switch Logic: Check if we should stop execution
+      // Condition: > 50% through cycle AND negative return
+      if (daysInvested > (stock.partitionDays / 2) && currentReturnPercent < 0) {
+         setShowKillSwitchPopup(true);
+         return; // Block execution
+      }
 
       if (alreadyExecutedToday) {
          setShowDailyLimitWarning(true);
@@ -173,7 +188,38 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       setConvictionOverride([50]);
       setRecommendation(null);
 
-      setShowSuccessPopup(true);
+      // Victory Check: If this completes a partition cycle
+      // (daysInvested + 1 because we just added one, but local var isn't updated same tick, so check newDaysInvested)
+      const newDaysInvested = (stock.daysInvested || 0) + 1;
+      if (newDaysInvested % stock.partitionDays === 0) {
+         setShowVictoryPopup(true);
+      } else {
+         setShowSuccessPopup(true);
+      }
+   };
+
+   const handleSync = () => {
+      const userInvested = Number(syncForm.totalInvested);
+      const userShares = Number(syncForm.totalShares);
+
+      if (!userInvested || !userShares) return;
+
+      // Reverse Engineer Base Holdings
+      // Total = Base + Cycle(SIPs)
+      // Base = Total - Cycle
+
+      const newBaseQty = userShares - sipQuantity;
+      // Avoiding divide by zero if user clears out positions (unlikely but safe)
+      const newBaseAvg = newBaseQty > 0 ? (userInvested - stock.deployedAmount) / newBaseQty : 0;
+
+      onUpdate({
+         ...stock,
+         quantityOwned: newBaseQty,
+         averagePriceOwned: newBaseAvg
+      });
+
+      setShowSyncPopup(false);
+      setSyncForm({ totalInvested: '', totalShares: '' });
    };
 
    return (
@@ -639,6 +685,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            </div>
                            <CardTitle className="text-sm font-semibold">Live Investment Cycle</CardTitle>
                         </div>
+                        <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => setShowSyncPopup(true)}
+                           className="h-7 text-[10px] px-2.5 bg-background hover:bg-muted border-dashed"
+                        >
+                           <Icons.Refresh className="mr-1.5 w-3 h-3" /> Sync
+                        </Button>
                      </CardHeader>
                      <CardContent className="space-y-4 pb-4">
 
@@ -654,7 +708,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     </span>
                                     <span className={`text-sm font-bold ${((totalShares * stock.currentPrice) - totalInvested) >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                                        {((totalShares * stock.currentPrice) - totalInvested) >= 0 ? "+" : ""}
-                                       {totalInvested > 0 ? (((totalShares * stock.currentPrice) - totalInvested) / totalInvested * 100).toFixed(2) : "0.00"}%
+                                       {currentReturnPercent.toFixed(2)}%
                                        <InfoTooltip text={`Your current profit/loss: ₹${((totalShares * stock.currentPrice) - totalInvested).toLocaleString(undefined, { maximumFractionDigits: 2 })}. This is calculated as (Current Market Value - Total Amount Invested).`} />
                                     </span>
                                  </div>
@@ -812,6 +866,142 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-50"></p>
                                     <Button size="sm" variant="outline" onClick={() => setSelectedPartition(null)}>Close</Button>
                                  </div>
+                              </DialogContent>
+                           </Dialog>
+
+                           {/* Victory Popup - Completing a Cycle */}
+                           <Dialog open={showVictoryPopup} onOpenChange={setShowVictoryPopup}>
+                              <DialogContent className="sm:max-w-md text-center border-0 bg-background/95 backdrop-blur-3xl shadow-2xl p-0 overflow-hidden">
+                                 {/* Golden/Amber Gradient for Victory */}
+                                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent pointer-events-none" />
+
+                                 <div className="flex flex-col items-center justify-center space-y-5 px-6 py-10 relative z-10">
+                                    <div className="relative">
+                                       <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-900/20 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.3)] animate-in zoom-in-50 duration-700">
+                                          <Icons.Target className="w-12 h-12 text-amber-600 dark:text-amber-400 drop-shadow-sm" />
+                                       </div>
+                                       <div className="absolute -inset-2 rounded-full border border-amber-500/20 animate-spin-slow duration-[10s]" />
+                                       <div className="absolute -inset-4 rounded-full border border-amber-500/10 animate-pulse duration-[3s]" />
+                                    </div>
+
+                                    <div className="space-y-2 max-w-sm mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
+                                       <DialogTitle className="text-2xl font-black tracking-tight text-foreground uppercase">
+                                          Partition Completed!
+                                       </DialogTitle>
+                                       <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
+                                          Outstanding discipline! You have successfully completed a full investment cycle.
+                                       </DialogDescription>
+                                    </div>
+
+                                    <div className="pt-2 w-full animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
+                                       <Button
+                                          onClick={() => setShowVictoryPopup(false)}
+                                          className="w-full h-11 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-bold tracking-wide"
+                                       >
+                                          Claim Victory
+                                       </Button>
+                                    </div>
+                                 </div>
+                              </DialogContent>
+                           </Dialog>
+
+                           {/* Kill Switch Popup - Negative Return Warning */}
+                           <Dialog open={showKillSwitchPopup} onOpenChange={setShowKillSwitchPopup}>
+                              <DialogContent className="sm:max-w-md text-center border-l-4 border-l-red-500">
+                                 <DialogHeader>
+                                    <DialogTitle className="flex items-center justify-center gap-2 text-red-600 text-xl">
+                                       <Icons.AlertTriangle className="w-6 h-6" />
+                                       Stop Execution Warning
+                                    </DialogTitle>
+                                 </DialogHeader>
+                                 <div className="py-4 space-y-4">
+                                    <p className="text-sm text-muted-foreground">
+                                       We noticed your portfolio is currently down by <span className="font-bold text-red-500">{currentReturnPercent.toFixed(2)}%</span>.
+                                       Since you are more than halfway through the cycle, it is recommended to halt further investment to protect capital.
+                                    </p>
+                                    <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
+                                       <p className="text-xs font-semibold text-red-700 dark:text-red-400">
+                                          "Good traders know when to throttle down."
+                                       </p>
+                                    </div>
+                                 </div>
+                                 <DialogFooter className="flex-col sm:flex-row gap-2">
+                                    <Button
+                                       variant="destructive"
+                                       className="w-full sm:w-auto flex-1 shadow-md"
+                                       onClick={() => setShowKillSwitchPopup(false)}
+                                    >
+                                       <Icons.Zap className="w-4 h-4 mr-2" /> Kill Switch (Stop)
+                                    </Button>
+                                    <Button
+                                       variant="ghost"
+                                       className="w-full sm:w-auto"
+                                       onClick={() => {
+                                          setShowKillSwitchPopup(false);
+                                          // Allow implementation if user insists (optional based on strictness)
+                                          performCalculation();
+                                       }}
+                                    >
+                                       Ignore & Execute
+                                    </Button>
+                                 </DialogFooter>
+                              </DialogContent>
+                           </Dialog>
+
+                           {/* Sync Popup - Manual Calibration */}
+                           <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
+                              <DialogContent className="sm:max-w-md">
+                                 <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                       <Icons.Refresh className="w-5 h-5 text-primary" />
+                                       Sync Portfolio
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                       Manually update your total holdings to match your broker. We'll adjust the base records while keeping your current cycle intact.
+                                    </DialogDescription>
+                                 </DialogHeader>
+
+                                 <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                       <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount (₹)</Label>
+                                       <Input
+                                          type="number"
+                                          placeholder="e.g. 150000"
+                                          value={syncForm.totalInvested}
+                                          onChange={(e) => setSyncForm({ ...syncForm, totalInvested: e.target.value })}
+                                          className="h-11 font-mono text-lg"
+                                       />
+                                    </div>
+                                    <div className="space-y-2">
+                                       <Label className="text-xs font-semibold text-muted-foreground">Total Shares Quantity</Label>
+                                       <Input
+                                          type="number"
+                                          placeholder="e.g. 50.5"
+                                          value={syncForm.totalShares}
+                                          onChange={(e) => setSyncForm({ ...syncForm, totalShares: e.target.value })}
+                                          className="h-11 font-mono text-lg"
+                                       />
+                                    </div>
+
+                                    {/* Preview Diff Calculation */}
+                                    {(syncForm.totalInvested && syncForm.totalShares) && (
+                                       <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
+                                          <div className="flex justify-between">
+                                             <span className="text-muted-foreground">Calculated Avg Price:</span>
+                                             <span className="font-mono font-bold">
+                                                ₹{(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
+                                             </span>
+                                          </div>
+                                       </div>
+                                    )}
+                                 </div>
+
+                                 <DialogFooter>
+                                    <Button variant="ghost" onClick={() => setShowSyncPopup(false)}>Cancel</Button>
+                                    <Button onClick={handleSync} disabled={!syncForm.totalInvested || !syncForm.totalShares}>
+                                       Update Portfolio
+                                    </Button>
+                                 </DialogFooter>
                               </DialogContent>
                            </Dialog>
 
