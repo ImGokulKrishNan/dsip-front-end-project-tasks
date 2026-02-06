@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Icons } from '../constants';
 import { Stock } from '../types';
-import { useToast } from "@/hooks/use-toast";
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,7 +55,7 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
 const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy }) => {
    // Execution State: 'IDLE' -> 'CALCULATED' -> 'CONFIRMING'
    const [executionState, setExecutionState] = useState<'IDLE' | 'CALCULATED' | 'CONFIRMING'>('IDLE');
-   const { toast } = useToast();
+
 
    // Edit Mode State
    const [isEditing, setIsEditing] = useState(false);
@@ -68,6 +68,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    });
    const [showWarning, setShowWarning] = useState(false);
    const [showDailyLimitWarning, setShowDailyLimitWarning] = useState(false);
+   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
    // Daily Context Inputs
    const [lockInPct, setLockInPct] = useState<string>('');
@@ -171,12 +172,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       setLockInPct('');
       setConvictionOverride([50]);
       setRecommendation(null);
-      toast({
-         title: "Successfully Implemented",
-         description: "Your strategy execution has been recorded.",
-         duration: 3000,
-         className: "bg-emerald-50 border-emerald-200"
-      });
+
+      setShowSuccessPopup(true);
    };
 
    return (
@@ -372,7 +369,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                   )}
 
                </div>
-               
+
                {/* 2. Tracker Summary & Progress (Read-Only) */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Summary Card */}
@@ -593,6 +590,31 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               performCalculation();
                            }}>
                               Execute Anyway
+                           </Button>
+                        </DialogFooter>
+                     </DialogContent>
+                  </Dialog>
+
+                  {/* Success Popup */}
+                  <Dialog open={showSuccessPopup} onOpenChange={setShowSuccessPopup}>
+                     <DialogContent className="sm:max-w-md text-center">
+                        <div className="flex flex-col items-center justify-center space-y-4 py-4">
+                           <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
+                              <Icons.Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                           </div>
+                           <DialogHeader>
+                              <DialogTitle className="text-2xl text-center">Success!</DialogTitle>
+                           </DialogHeader>
+                           <DialogDescription className="text-center text-base">
+                              You have successfully invested today.
+                           </DialogDescription>
+                        </div>
+                        <DialogFooter className="sm:justify-center">
+                           <Button
+                              onClick={() => setShowSuccessPopup(false)}
+                              className="w-full sm:w-auto min-w-[120px] bg-emerald-600 hover:bg-emerald-700 text-white"
+                           >
+                              Done
                            </Button>
                         </DialogFooter>
                      </DialogContent>
