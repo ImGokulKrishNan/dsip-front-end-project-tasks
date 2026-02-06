@@ -597,26 +597,36 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                   {/* Success Popup */}
                   <Dialog open={showSuccessPopup} onOpenChange={setShowSuccessPopup}>
-                     <DialogContent className="sm:max-w-md text-center">
-                        <div className="flex flex-col items-center justify-center space-y-4 py-4">
-                           <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
-                              <Icons.Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                     <DialogContent className="sm:max-w-md text-center border-0 bg-background/95 backdrop-blur-3xl shadow-2xl p-0 overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
+
+                        <div className="flex flex-col items-center justify-center space-y-5 px-6 py-10 relative z-10">
+                           {/* Animated Icon Container */}
+                           <div className="relative">
+                              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-100 to-emerald-50 dark:from-emerald-900/40 dark:to-emerald-900/20 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)] animate-in zoom-in-50 duration-500 delay-150">
+                                 <Icons.Check className="w-10 h-10 text-emerald-600 dark:text-emerald-400 drop-shadow-sm" />
+                              </div>
+                              <div className="absolute -inset-2 rounded-full border border-emerald-500/10 animate-pulse" />
                            </div>
-                           <DialogHeader>
-                              <DialogTitle className="text-2xl text-center">Success!</DialogTitle>
-                           </DialogHeader>
-                           <DialogDescription className="text-center text-base">
-                              You have successfully invested today.
-                           </DialogDescription>
+
+                           <div className="space-y-2 max-w-xs mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
+                              <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
+                                 Order Executed!
+                              </DialogTitle>
+                              <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
+                                 Great discipline! Your investment has been successfully recorded for today.
+                              </DialogDescription>
+                           </div>
+
+                           <div className="pt-2 w-full animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
+                              <Button
+                                 onClick={() => setShowSuccessPopup(false)}
+                                 className="w-full h-11 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-semibold tracking-wide"
+                              >
+                                 Continue
+                              </Button>
+                           </div>
                         </div>
-                        <DialogFooter className="sm:justify-center">
-                           <Button
-                              onClick={() => setShowSuccessPopup(false)}
-                              className="w-full sm:w-auto min-w-[120px] bg-emerald-600 hover:bg-emerald-700 text-white"
-                           >
-                              Done
-                           </Button>
-                        </DialogFooter>
                      </DialogContent>
                   </Dialog>
 
