@@ -8,7 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from './mode-toggle';
 import { cn } from '@/lib/utils';
 import InfoTooltip from './InfoTooltip';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { logout } from '../store/slices/authSlice';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -43,7 +44,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   showDsipOnly,
   setShowDsipOnly
 }) => {
-  const { user, logout } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector(state => state.auth.user);
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
   // Sync Feature State
   const [showSyncPopup, setShowSyncPopup] = useState(false);
@@ -147,7 +153,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     <p className="text-[10px] text-muted-foreground truncate">{user?.email || ''}</p>
                   </div>
                   <ModeToggle />
-                  <Button variant="ghost" size="icon" onClick={logout} title="Sign out">
+                  <Button variant="ghost" size="icon" onClick={handleLogout} title="Sign out">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>

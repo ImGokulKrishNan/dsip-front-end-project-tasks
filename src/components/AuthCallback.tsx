@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch } from '../store/hooks';
+import { checkAuth } from '../store/slices/authSlice';
 
 const AuthCallback: React.FC = () => {
+  const dispatch = useAppDispatch();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const { checkAuth } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -41,12 +42,12 @@ const AuthCallback: React.FC = () => {
         window.close();
       } else {
         // Not in popup — validate session then redirect
-        checkAuth().then(() => {
+        dispatch(checkAuth()).then(() => {
           window.location.href = '/';
         });
       }
     }
-  }, [checkAuth]);
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center">

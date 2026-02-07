@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Stock, AppView } from './types';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { checkAuth, setAuthSuccess, setAuthError, clearAuth } from './store/slices/authSlice';
+import { addStock, updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly } from './store/slices/stocksSlice';
+import { setView, showCelebrationModal, hideCelebrationModal, navigateToDashboard, navigateToAddStock, navigateToStockDetails } from './store/slices/uiSlice';
+import { setOnUnauthorized } from './lib/api';
+import { Stock } from './types';
 import { Icons } from './constants';
+
 import LandingPage from './components/LandingPage';
 import AuthCallback from './components/AuthCallback';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-
 import Dashboard from './components/Dashboard';
 import AddStock from './components/AddStock';
 import StockDetails from './components/StockDetails';
@@ -25,34 +31,49 @@ import { Toaster } from "@/components/ui/toaster";
 
 // Main app content - single page with state-based navigation
 const MainApp: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [view, setView] = useState<AppView>('LANDING');
-  const [stocks, setStocks] = useState<Stock[]>([]);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
-  const [tempStrategyConfig, setTempStrategyConfig] = useState<Partial<Stock> | undefined>(undefined);
-  const [showDsipOnly, setShowDsipOnly] = useState(false);
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+  const { stocks, selectedStockId, tempStrategyConfig, showDsipOnly } = useAppSelector(state => state.stocks);
+  const { view, showCelebration } = useAppSelector(state => state.ui);
 
-  // Load stocks from localStorage
+  // Set up API unauthorized handler
   useEffect(() => {
-    const savedStocks = localStorage.getItem('smart_sip_stocks');
-    if (savedStocks) setStocks(JSON.parse(savedStocks));
-  }, []);
+    setOnUnauthorized(() => {
+      dispatch(clearAuth());
+    });
+  }, [dispatch]);
 
-  // Save stocks to localStorage
+  // Check auth on mount
   useEffect(() => {
-    localStorage.setItem('smart_sip_stocks', JSON.stringify(stocks));
-  }, [stocks]);
+    dispatch(checkAuth());
+  }, [dispatch]);
+
+  // Listen for messages from auth popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'AUTH_SUCCESS') {
+        dispatch(setAuthSuccess());
+        dispatch(checkAuth());
+      } else if (event.data?.type === 'AUTH_ERROR') {
+        dispatch(setAuthError('Authentication failed'));
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [dispatch]);
 
   // Auto-navigate to dashboard when authenticated
   useEffect(() => {
     if (isAuthenticated && view === 'LANDING') {
-      setView('DASHBOARD');
+      dispatch(navigateToDashboard());
     }
     if (!isAuthenticated && view !== 'LANDING') {
-      setView('LANDING');
+      dispatch(setView('LANDING'));
     }
-  }, [isAuthenticated, view]);
+  }, [isAuthenticated, view, dispatch]);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -68,18 +89,32 @@ const MainApp: React.FC = () => {
     return <LandingPage />;
   }
 
-  const addStock = (newStock: Stock) => {
+  const handleAddStock = (newStock: Stock) => {
     if (stocks.length === 0) {
-      setShowCelebration(true);
+      dispatch(showCelebrationModal());
     }
-    setStocks(prev => [...prev, newStock]);
-    setSelectedStockId(newStock.id);
-    setTempStrategyConfig(undefined);
-    setView('STOCK_DETAILS');
+    dispatch(addStock(newStock));
+    dispatch(navigateToStockDetails());
   };
 
-  const updateStock = (updatedStock: Stock) => {
-    setStocks(prev => prev.map(s => s.id === updatedStock.id ? updatedStock : s));
+  const handleUpdateStock = (updatedStock: Stock) => {
+    dispatch(updateStock(updatedStock));
+  };
+
+  const handleSelectStock = (id: string) => {
+    dispatch(setSelectedStock(id));
+    dispatch(navigateToStockDetails());
+  };
+
+  const handleCreateNew = () => {
+    dispatch(setSelectedStock(null));
+    dispatch(setTempStrategyConfig(undefined));
+    dispatch(navigateToAddStock());
+  };
+
+  const handleCopyStrategy = (config: Partial<Stock>) => {
+    dispatch(setTempStrategyConfig(config));
+    dispatch(navigateToAddStock());
   };
 
   return (
@@ -88,16 +123,9 @@ const MainApp: React.FC = () => {
         stocks={stocks}
         activeView={view}
         selectedStockId={selectedStockId}
-        onSelectStock={(id) => {
-          setSelectedStockId(id);
-          setView('STOCK_DETAILS');
-        }}
-        onCreateNew={() => {
-          setSelectedStockId(null);
-          setTempStrategyConfig(undefined);
-          setView('ADD_STOCK');
-        }}
-        onUpdateStock={updateStock}
+        onSelectStock={handleSelectStock}
+        onCreateNew={handleCreateNew}
+        onUpdateStock={handleUpdateStock}
         headerTitle={
           view === 'STOCK_DETAILS'
             ? `${stocks.find(s => s.id === selectedStockId)?.symbol || ''} Tracker`
@@ -110,25 +138,28 @@ const MainApp: React.FC = () => {
         }
         headerAction={
           view === 'STOCK_DETAILS' ? (
-            <Button variant="ghost" size="icon" onClick={() => setView('DASHBOARD')}>
+            <Button variant="ghost" size="icon" onClick={() => dispatch(navigateToDashboard())}>
               <Icons.ArrowLeft size={18} />
             </Button>
           ) : undefined
         }
         showDsipOnly={showDsipOnly}
-        setShowDsipOnly={setShowDsipOnly}
+        setShowDsipOnly={(show: boolean) => dispatch(setShowDsipOnly(show))}
       >
         {view === 'DASHBOARD' && (
           <Dashboard
             stocks={stocks}
-            onAddStock={() => { setTempStrategyConfig(undefined); setView('ADD_STOCK'); }}
-            onSelectStock={(id) => { setSelectedStockId(id); setView('STOCK_DETAILS'); }}
+            onAddStock={() => {
+              dispatch(setTempStrategyConfig(undefined));
+              dispatch(navigateToAddStock());
+            }}
+            onSelectStock={handleSelectStock}
           />
         )}
         {view === 'ADD_STOCK' && (
           <AddStock
-            onBack={() => setView('DASHBOARD')}
-            onAdd={addStock}
+            onBack={() => dispatch(navigateToDashboard())}
+            onAdd={handleAddStock}
             initialValues={tempStrategyConfig}
           />
         )}
@@ -137,12 +168,9 @@ const MainApp: React.FC = () => {
           return selectedStock ? (
             <StockDetails
               stock={selectedStock}
-              onBack={() => setView('DASHBOARD')}
-              onUpdate={updateStock}
-              onCopyStrategy={(config) => {
-                setTempStrategyConfig(config);
-                setView('ADD_STOCK');
-              }}
+              onBack={() => dispatch(navigateToDashboard())}
+              onUpdate={handleUpdateStock}
+              onCopyStrategy={handleCopyStrategy}
               showDsipOnly={showDsipOnly}
             />
           ) : (
@@ -154,7 +182,7 @@ const MainApp: React.FC = () => {
       </MainLayout>
 
       {/* First DSIP Celebration Modal */}
-      <Dialog open={showCelebration} onOpenChange={setShowCelebration}>
+      <Dialog open={showCelebration} onOpenChange={(open) => !open && dispatch(hideCelebrationModal())}>
         <DialogContent className="sm:max-w-md text-center">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center animate-bounce">
@@ -171,7 +199,7 @@ const MainApp: React.FC = () => {
             Your journey to disciplined, emotion-free investing starts now.
           </div>
           <DialogFooter className="sm:justify-center">
-            <Button size="lg" onClick={() => setShowCelebration(false)} className="w-full sm:w-auto min-w-[150px]">
+            <Button size="lg" onClick={() => dispatch(hideCelebrationModal())} className="w-full sm:w-auto min-w-[150px]">
               Let's Go!
             </Button>
           </DialogFooter>
@@ -183,9 +211,9 @@ const MainApp: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <AuthProvider>
+    <Provider store={store}>
+      <BrowserRouter>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 font-sans">
             <Routes>
               {/* OAuth callback route - required for popup redirect */}
@@ -195,9 +223,9 @@ const App: React.FC = () => {
             </Routes>
             <Toaster />
           </div>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+        </ThemeProvider>
+      </BrowserRouter>
+    </Provider>
   );
 };
 
