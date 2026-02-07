@@ -84,10 +84,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [executedAmount, setExecutedAmount] = useState<string>('');
    const [executionPrice, setExecutionPrice] = useState<string>('');
 
-   // Sync Feature State
-   const [showSyncPopup, setShowSyncPopup] = useState(false);
-   const [syncForm, setSyncForm] = useState({ totalInvested: '', totalShares: '' });
-
    // Partition State & Data Helper
    const [selectedPartition, setSelectedPartition] = useState<number | null>(null);
 
@@ -199,29 +195,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       }
    };
 
-   const handleSync = () => {
-      const userInvested = Number(syncForm.totalInvested);
-      const userShares = Number(syncForm.totalShares);
 
-      if (!userInvested || !userShares) return;
-
-      // Reverse Engineer Base Holdings
-      // Total = Base + Cycle(SIPs)
-      // Base = Total - Cycle
-
-      const newBaseQty = userShares - sipQuantity;
-      // Avoiding divide by zero if user clears out positions (unlikely but safe)
-      const newBaseAvg = newBaseQty > 0 ? (userInvested - stock.deployedAmount) / newBaseQty : 0;
-
-      onUpdate({
-         ...stock,
-         quantityOwned: newBaseQty,
-         averagePriceOwned: newBaseAvg
-      });
-
-      setShowSyncPopup(false);
-      setSyncForm({ totalInvested: '', totalShares: '' });
-   };
 
    return (
       <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
@@ -578,10 +552,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                         <DialogHeader>
                            <DialogTitle className="flex items-center gap-2 text-amber-600">
                               <Icons.AlertTriangle className="w-5 h-5" />
-                              Strategy Modification Warning
+                              Stock Engine Modification Warning
                            </DialogTitle>
                            <DialogDescription className="pt-2">
-                              This change is not recommended for an existing strategy. Reducing budget, conviction, or changing structural parameters can disrupt the mathematical execution.
+                              This change is not recommended for an existing stock engine. Reducing budget, conviction, or changing structural parameters can disrupt the mathematical execution.
                            </DialogDescription>
                         </DialogHeader>
                         <DialogFooter className="gap-2 sm:gap-0">
@@ -686,16 +660,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            </div>
                            <CardTitle className="text-sm font-semibold">Live Investment Cycle</CardTitle>
                         </div>
-                        {!showDsipOnly && (
-                           <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowSyncPopup(true)}
-                              className="h-7 text-[10px] px-2.5 bg-background hover:bg-muted border-dashed"
-                           >
-                              <Icons.Refresh className="mr-1.5 w-3 h-3" /> Sync
-                           </Button>
-                        )}
+
                      </CardHeader>
                      <CardContent className="space-y-4 pb-4">
 
@@ -951,62 +916,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </DialogContent>
                            </Dialog>
 
-                           {/* Sync Popup - Manual Calibration */}
-                           <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
-                              <DialogContent className="sm:max-w-md">
-                                 <DialogHeader>
-                                    <DialogTitle className="flex items-center gap-2">
-                                       <Icons.Refresh className="w-5 h-5 text-primary" />
-                                       Sync Portfolio
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                       Manually update your total holdings to match your broker. We'll adjust the base records while keeping your current cycle intact.
-                                    </DialogDescription>
-                                 </DialogHeader>
 
-                                 <div className="grid gap-4 py-4">
-                                    <div className="space-y-2">
-                                       <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount (₹)</Label>
-                                       <Input
-                                          type="number"
-                                          placeholder="e.g. 150000"
-                                          value={syncForm.totalInvested}
-                                          onChange={(e) => setSyncForm({ ...syncForm, totalInvested: e.target.value })}
-                                          className="h-11 font-mono text-lg"
-                                       />
-                                    </div>
-                                    <div className="space-y-2">
-                                       <Label className="text-xs font-semibold text-muted-foreground">Total Shares Quantity</Label>
-                                       <Input
-                                          type="number"
-                                          placeholder="e.g. 50.5"
-                                          value={syncForm.totalShares}
-                                          onChange={(e) => setSyncForm({ ...syncForm, totalShares: e.target.value })}
-                                          className="h-11 font-mono text-lg"
-                                       />
-                                    </div>
-
-                                    {/* Preview Diff Calculation */}
-                                    {(syncForm.totalInvested && syncForm.totalShares) && (
-                                       <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
-                                          <div className="flex justify-between">
-                                             <span className="text-muted-foreground">Calculated Avg Price:</span>
-                                             <span className="font-mono font-bold">
-                                                ₹{(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
-                                             </span>
-                                          </div>
-                                       </div>
-                                    )}
-                                 </div>
-
-                                 <DialogFooter>
-                                    <Button variant="ghost" onClick={() => setShowSyncPopup(false)}>Cancel</Button>
-                                    <Button onClick={handleSync} disabled={!syncForm.totalInvested || !syncForm.totalShares}>
-                                       Update Portfolio
-                                    </Button>
-                                 </DialogFooter>
-                              </DialogContent>
-                           </Dialog>
 
                            <Separator />
 

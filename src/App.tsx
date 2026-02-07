@@ -97,6 +97,7 @@ const MainApp: React.FC = () => {
           setTempStrategyConfig(undefined);
           setView('ADD_STOCK');
         }}
+        onUpdateStock={updateStock}
         headerTitle={
           view === 'STOCK_DETAILS'
             ? `${stocks.find(s => s.id === selectedStockId)?.symbol || ''} Tracker`

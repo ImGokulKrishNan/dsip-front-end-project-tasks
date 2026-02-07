@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import LeftSidebar from './LeftSidebar';
 import { AppView, Stock } from '../types';
 import { Icons } from '../constants';
@@ -11,6 +11,8 @@ import InfoTooltip from './InfoTooltip';
 import { useAuth } from '../contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -19,6 +21,7 @@ interface MainLayoutProps {
   selectedStockId: string | null;
   onSelectStock: (id: string) => void;
   onCreateNew: () => void;
+  onUpdateStock: (stock: Stock) => void;
   headerTitle?: string;
   headerSubtitle?: string;
   headerAction?: React.ReactNode;
@@ -33,6 +36,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   selectedStockId,
   onSelectStock,
   onCreateNew,
+  onUpdateStock,
   headerTitle,
   headerSubtitle,
   headerAction,
@@ -40,6 +44,40 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   setShowDsipOnly
 }) => {
   const { user, logout } = useAuth();
+
+  // Sync Feature State
+  const [showSyncPopup, setShowSyncPopup] = useState(false);
+  const [syncForm, setSyncForm] = useState({ totalInvested: '', totalShares: '' });
+
+  const handleSync = () => {
+    const selectedStock = stocks.find(s => s.id === selectedStockId);
+    if (!selectedStock) return;
+
+    const userInvested = Number(syncForm.totalInvested);
+    const userShares = Number(syncForm.totalShares);
+
+    if (!userInvested || !userShares) return;
+
+    // Independent Calculation for SIP Quantity (Re-calculated here as we are in MainLayout)
+    const sipQuantity = selectedStock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
+
+    // Reverse Engineer Base Holdings
+    // Total = Base + Cycle(SIPs)
+    // Base = Total - Cycle
+
+    const newBaseQty = userShares - sipQuantity;
+    // Avoiding divide by zero if user clears out positions (unlikely but safe)
+    const newBaseAvg = newBaseQty > 0 ? (userInvested - selectedStock.deployedAmount) / newBaseQty : 0;
+
+    onUpdateStock({
+      ...selectedStock,
+      quantityOwned: newBaseQty,
+      averagePriceOwned: newBaseAvg
+    });
+
+    setShowSyncPopup(false);
+    setSyncForm({ totalInvested: '', totalShares: '' });
+  };
 
   // Calculate Global Stats
   const totalInvested = stocks.reduce((acc, stock) => {
@@ -171,6 +209,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                       </div>
                     </div>
 
+                    {/* Sync Button */}
+                    {!showDsipOnly && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSyncPopup(true)}
+                        className="w-full h-8 text-xs bg-background hover:bg-muted border-dashed mb-2"
+                      >
+                        <Icons.Refresh className="mr-2 w-3.5 h-3.5" /> Sync Portfolio
+                      </Button>
+                    )}
+
                     <div className="grid gap-4">
                       <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
                         <div className="flex items-center gap-1">
@@ -228,6 +278,63 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               })()}
             </div>
           </ScrollArea>
+
+          {/* Sync Popup - Manual Calibration */}
+          <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Icons.Refresh className="w-5 h-5 text-primary" />
+                  Sync Portfolio
+                </DialogTitle>
+                <DialogDescription>
+                  Manually update your total holdings to match your broker. We'll adjust the base records while keeping your current cycle intact.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount (₹)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 150000"
+                    value={syncForm.totalInvested}
+                    onChange={(e) => setSyncForm({ ...syncForm, totalInvested: e.target.value })}
+                    className="h-11 font-mono text-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">Total Shares Quantity</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 50.5"
+                    value={syncForm.totalShares}
+                    onChange={(e) => setSyncForm({ ...syncForm, totalShares: e.target.value })}
+                    className="h-11 font-mono text-lg"
+                  />
+                </div>
+
+                {/* Preview Diff Calculation */}
+                {(syncForm.totalInvested && syncForm.totalShares) && (
+                  <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Calculated Avg Price:</span>
+                      <span className="font-mono font-bold">
+                        ₹{(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setShowSyncPopup(false)}>Cancel</Button>
+                <Button onClick={handleSync} disabled={!syncForm.totalInvested || !syncForm.totalShares}>
+                  Update Portfolio
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </aside>
       )}
     </div>
