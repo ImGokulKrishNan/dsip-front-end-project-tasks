@@ -91,6 +91,11 @@ export interface Tracker {
   shares_held_so_far: number;
   is_fractional_shares_allowed: boolean;
   createdAt: string;
+  live_investment_cycle?: {
+    total_capital_invested_so_far: number;
+    partition_progress: number;
+    net_profit_percentage: number;
+  };
 }
 
 export interface TrackerSummary {
