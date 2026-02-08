@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icons } from '../constants';
 import { Stock } from '../types';
+import { useAppSelector } from '../store/hooks';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -54,6 +55,59 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
 };
 
 const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy, showDsipOnly }) => {
+   // Get tracker data from Redux store
+   const {
+      selectedTracker,
+      isLoadingTrackerDetails,
+      trackerDetailsError,
+   } = useAppSelector((state) => state.trackers);
+
+   // Debug: Log API data
+   useEffect(() => {
+      console.log('[StockDetails] API Data:', {
+         selectedTracker,
+         isLoadingTrackerDetails,
+         trackerDetailsError,
+      });
+   }, [selectedTracker, isLoadingTrackerDetails, trackerDetailsError]);
+
+   // ===== SETUP API DATA FIRST (BEFORE USING IN CALCULATIONS) =====
+   // Use API data if available, otherwise fall back to stock prop
+   const useApiData = selectedTracker !== null;
+   const trackerData = useApiData ? selectedTracker?.tracker : null;
+
+   // Log which data source we're using
+   console.log('[StockDetails] Using data:', useApiData ? 'API' : 'Hardcoded', { trackerData, stock });
+
+   // Helper function to get display values (API data takes precedence)
+   const getDisplayValue = (apiValue: any, stockValue: any) => {
+      return useApiData && trackerData ? apiValue : stockValue;
+   };
+
+   // Display values for UI
+   const displaySymbol = getDisplayValue(trackerData?.stock_symbol, stock.symbol);
+   const displayName = getDisplayValue(trackerData?.stockName, stock.name);
+   const displayConvictionYears = getDisplayValue(trackerData?.conviction_period_years, stock.convictionYears);
+   const displayTotalBudget = getDisplayValue(trackerData?.total_capital_planned, stock.totalBudget);
+   const displayConvictionLevel = getDisplayValue(trackerData?.base_conviction_score, stock.convictionLevel);
+   const displayPartitionDays = getDisplayValue(trackerData?.partition_days, stock.partitionDays);
+   const displayDeployedAmount = getDisplayValue(trackerData?.total_capital_invested_so_far, stock.deployedAmount);
+   const displaySharesHeld = getDisplayValue(trackerData?.shares_held_so_far, stock.quantityOwned);
+   const displayCurrentPrice = getDisplayValue(trackerData?.currentPrice, stock.currentPrice);
+
+   // Get deployment style as text
+   const getDeploymentStyleText = () => {
+      if (!useApiData || !trackerData) return stock.loadFactor;
+      const styleMap: Record<number, string> = {
+         0: 'Uniform',
+         1: 'Aggressive',
+         2: 'Conservative',
+      };
+      return styleMap[trackerData.deployment_style] || 'Moderate';
+   };
+   const displayLoadFactor = getDeploymentStyleText();
+   // ===== END API DATA SETUP =====
+
    // Execution State: 'IDLE' -> 'CALCULATED' -> 'CONFIRMING'
    const [executionState, setExecutionState] = useState<'IDLE' | 'CALCULATED' | 'CONFIRMING'>('IDLE');
 
@@ -105,20 +159,39 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       };
    };
 
-   // Derived Stats
-   const totalInvested = (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount;
-   const sipQuantity = stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
-   const totalShares = stock.quantityOwned + sipQuantity;
+   // Derived Stats - Use API data if available
+   const totalInvested = useApiData && trackerData
+      ? trackerData.total_capital_invested_so_far
+      : (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount;
+
+   const sipQuantity = useApiData && selectedTracker
+      ? selectedTracker.recentExecutions.reduce((acc, curr) => acc + (curr.executedAmount / (curr.executionPrice || 1)), 0)
+      : stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
+
+   const totalShares = displaySharesHeld + sipQuantity;
+
+   const currentMarketValue = totalShares * displayCurrentPrice;
+
    const currentReturnPercent = totalInvested > 0
-      ? (((totalShares * stock.currentPrice) - totalInvested) / totalInvested * 100)
+      ? ((currentMarketValue - totalInvested) / totalInvested * 100)
       : 0;
+
    const avgBuyPrice = totalShares > 0 ? totalInvested / totalShares : 0;
 
-   // Progress Mocks (In real app, comes from backend)
-   const currentCycle = stock.currentCycle || 10;
-   const totalCycles = stock.totalCycles || 20;
-   const daysInvested = stock.daysInvested || 14;
-   const cycleLength = stock.partitionDays; // e.g. 60
+   // Progress - Use API data if available
+   const currentCycle = useApiData && trackerData
+      ? trackerData.active_partition_index || 1
+      : stock.currentCycle || 10;
+
+   const totalCycles = useApiData && trackerData
+      ? Math.ceil((trackerData.conviction_period_years * 365) / trackerData.partition_days)
+      : stock.totalCycles || 20;
+
+   const daysInvested = useApiData && selectedTracker
+      ? selectedTracker.recentExecutions.length
+      : stock.daysInvested || 14;
+
+   const cycleLength = displayPartitionDays;
    const daysRemaining = cycleLength - (daysInvested % cycleLength);
 
    const performCalculation = () => {
@@ -196,6 +269,40 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    };
 
 
+
+   // Show loading state while fetching tracker details
+   if (isLoadingTrackerDetails) {
+      return (
+         <div className="flex-1 flex items-center justify-center h-full">
+            <div className="text-center space-y-4">
+               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+               <p className="text-muted-foreground">Loading tracker details...</p>
+            </div>
+         </div>
+      );
+   }
+
+   // Show error state if API call failed
+   if (trackerDetailsError) {
+      return (
+         <div className="flex-1 flex items-center justify-center h-full p-6">
+            <Card className="max-w-md border-destructive/50 bg-destructive/5">
+               <CardContent className="p-6">
+                  <div className="flex items-start gap-3 text-destructive">
+                     <Icons.AlertCircle size={24} className="shrink-0 mt-0.5" />
+                     <div>
+                        <p className="font-semibold">Failed to load tracker details</p>
+                        <p className="text-sm text-muted-foreground mt-1">{trackerDetailsError}</p>
+                        <Button onClick={onBack} variant="outline" className="mt-4" size="sm">
+                           Back to Dashboard
+                        </Button>
+                     </div>
+                  </div>
+               </CardContent>
+            </Card>
+         </div>
+      );
+   }
 
    return (
       <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
@@ -422,23 +529,23 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               <>
                                  <div>
                                     <p className="text-xs text-muted-foreground">Conviction Period</p>
-                                    <p className="font-semibold">{stock.convictionYears} years</p>
+                                    <p className="font-semibold">{displayConvictionYears} years</p>
                                  </div>
                                  <div>
                                     <p className="text-xs text-muted-foreground">Total Budget</p>
-                                    <p className="font-semibold">₹{stock.totalBudget.toLocaleString()}</p>
+                                    <p className="font-semibold">₹{displayTotalBudget.toLocaleString()}</p>
                                  </div>
                                  <div>
                                     <p className="text-xs text-muted-foreground">Overall Conviction</p>
-                                    <p className="font-semibold">{stock.convictionLevel || 50}%</p>
+                                    <p className="font-semibold">{displayConvictionLevel}%</p>
                                  </div>
                                  <div>
                                     <p className="text-xs text-muted-foreground">Load Factor</p>
-                                    <p className="font-semibold capitalize">{stock.loadFactor.toLowerCase().replace('_', ' ')}</p>
+                                    <p className="font-semibold capitalize">{displayLoadFactor}</p>
                                  </div>
                                  <div>
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
-                                    <p className="font-semibold">{stock.partitionDays} trading days</p>
+                                    <p className="font-semibold">{displayPartitionDays} trading days</p>
                                  </div>
                               </>
                            ) : (
@@ -918,9 +1025,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
 
 
-                           <Separator />
-
-                           {/* P&L Bar - Simplified & Straightforward */}
+                           <Separator />                      
 
                         </div>
 
@@ -930,11 +1035,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                   </Card>
                </div>
 
-               {/* History List (Moved to bottom) */}
-
 
             </div>
-         </ScrollArea >
+         </ScrollArea > 
       </div >
    );
 };

@@ -47,6 +47,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const dispatch = useAppDispatch();
   const user = useAppSelector(state => state.auth.user);
 
+  // Get tracker data from Redux (must be at top level, not inside callback)
+  const { selectedTracker } = useAppSelector((state) => state.trackers);
+
   const handleLogout = () => {
     dispatch(logout());
   };
@@ -177,12 +180,36 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="p-6 space-y-6">
               {selectedStockId && (() => {
                 const selectedStock = stocks.find(s => s.id === selectedStockId);
-                if (!selectedStock) return null;
 
-                // Independent Calculations
-                const sipQuantity = selectedStock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
-                const deployedAmount = selectedStock.deployedAmount; // DSIP Only Invested
-                const manualInvested = selectedStock.quantityOwned * selectedStock.averagePriceOwned;
+                // Use tracker data from Redux (already retrieved at top level)
+                const useApiData = selectedTracker !== null;
+                const trackerData = useApiData ? selectedTracker?.tracker : null;
+
+                // If neither hardcoded stock nor API data, return null
+                if (!selectedStock && !useApiData) return null;
+
+                // Calculate values from API data or hardcoded stock
+                let sipQuantity = 0;
+                let deployedAmount = 0;
+                let manualInvested = 0;
+                let currentPrice = 0;
+                let history: any[] = [];
+
+                if (useApiData && trackerData) {
+                  // Use API data
+                  sipQuantity = selectedTracker?.recentExecutions.reduce((acc, curr) => acc + (curr.executedAmount / (curr.executionPrice || 1)), 0) || 0;
+                  deployedAmount = trackerData.total_capital_invested_so_far;
+                  manualInvested = 0; // API doesn't have manual holdings
+                  currentPrice = trackerData.currentPrice || 0;
+                  history = selectedTracker?.recentExecutions || [];
+                } else if (selectedStock) {
+                  // Use hardcoded stock data
+                  sipQuantity = selectedStock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
+                  deployedAmount = selectedStock.deployedAmount;
+                  manualInvested = selectedStock.quantityOwned * selectedStock.averagePriceOwned;
+                  currentPrice = selectedStock.currentPrice;
+                  history = selectedStock.history;
+                }
 
                 // Conditional Logic based on Toggle
                 const totalInvestedStock = showDsipOnly
@@ -191,9 +218,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
                 const relevantShares = showDsipOnly
                   ? sipQuantity
-                  : (selectedStock.quantityOwned + sipQuantity);
+                  : ((selectedStock?.quantityOwned || 0) + sipQuantity);
 
-                const currentValueStock = relevantShares * selectedStock.currentPrice;
+                const currentValueStock = relevantShares * currentPrice;
                 const totalPLStock = currentValueStock - totalInvestedStock;
                 const isProfitStock = totalPLStock >= 0;
 
@@ -259,23 +286,33 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                       </h4>
                       <div className="space-y-2">
                         {(() => {
-                          let history = selectedStock.history;
-
-                          // Ensure Newest First
-                          history = history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 15);
-
                           if (history.length === 0) {
                             return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
                           }
 
-                          return history.map((tx, i) => (
-                            <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-xs font-semibold text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</span>
+                          // Sort and slice history
+                          const sortedHistory = [...history]
+                            .sort((a, b) => {
+                              const dateA = useApiData ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
+                              const dateB = useApiData ? new Date(b.createdAt).getTime() : new Date(b.date).getTime();
+                              return dateB - dateA;
+                            })
+                            .slice(0, 15);
+
+                          return sortedHistory.map((tx, i) => {
+                            // Handle both API format and hardcoded format
+                            const date = useApiData ? tx.createdAt : tx.date;
+                            const amount = useApiData ? tx.executedAmount : tx.amount;
+
+                            return (
+                              <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-xs font-semibold text-muted-foreground">{new Date(date).toLocaleDateString()}</span>
+                                </div>
+                                <span className="font-mono font-bold">₹{amount.toLocaleString()}</span>
                               </div>
-                              <span className="font-mono font-bold">₹{tx.amount.toLocaleString()}</span>
-                            </div>
-                          ));
+                            );
+                          });
                         })()}
                       </div>
                     </div>

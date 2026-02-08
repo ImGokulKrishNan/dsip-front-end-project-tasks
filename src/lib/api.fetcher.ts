@@ -83,7 +83,7 @@ export async function createTracker(
  * ```
  */
 export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
-  const response = await apiRequestPromise<GetAllTrackersResponse>(
+  const response = await apiRequestPromise<any>(
     '/api/dsip-trackers',
     undefined,
     {
@@ -92,7 +92,39 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
   );
 
   if (response.status === 'success') {
-    return response.data;
+    const data = response.data;
+
+    console.log('[API] Raw response:', data);
+
+    // Transform API response to match our expected format
+    // API returns: dsip_trackers with snake_case fields
+    // We need: trackers with camelCase fields
+    const trackers = (data.dsip_trackers || []).map((tracker: any) => ({
+      trackerId: tracker.id,
+      stockSymbol: tracker.symbol,
+      stockName: tracker.name,
+      currentPrice: tracker.total_capital_invested_so_far || 0,
+      totalCapitalPlanned: tracker.total_capital_invested_so_far || 0,
+      totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far || 0,
+      sharesHeldSoFar: 0, // Not in API response, default to 0
+      status: 1, // Default to ACTIVE
+      activePartitionIndex: 1, // Default
+      createdAt: tracker.createdAt || new Date().toISOString(),
+    }));
+
+    const transformed: GetAllTrackersResponse = {
+      trackers,
+      summary: {
+        totalTrackers: trackers.length,
+        activeTrackers: trackers.length,
+        totalCapitalPlanned: data.total_market_value || 0,
+        totalCapitalInvested: data.dsip_total_capital_invested_so_far || 0,
+        totalCurrentValue: data.dsip_total_market_value || 0,
+      },
+    };
+
+    console.log('[API] Transformed response:', transformed);
+    return transformed;
   }
 
   throw new Error(response.message || 'Failed to fetch trackers');
@@ -120,7 +152,7 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
 export async function getTrackerDetails(
   trackerId: number
 ): Promise<GetTrackerDetailsResponse> {
-  const response = await apiRequestPromise<GetTrackerDetailsResponse>(
+  const response = await apiRequestPromise<any>(
     `/api/dsip-trackers/${trackerId}`,
     undefined,
     {
@@ -129,7 +161,61 @@ export async function getTrackerDetails(
   );
 
   if (response.status === 'success') {
-    return response.data;
+    const data = response.data;
+
+    console.log('[API] Raw tracker details:', data);
+
+    // Transform API response to match our expected format
+    // API returns flat object with snake_case fields
+    const transformed: GetTrackerDetailsResponse = {
+      tracker: {
+        trackerId: data.id || trackerId,
+        userId: data.user_id || '',
+        stock_id: data.stock_id || 0,
+        stock_symbol: data.symbol || '',
+        conviction_period_years: data.conviction_period_years || 0,
+        total_capital_planned: data.total_capital_planned || 0,
+        partition_days: data.partition_days || 0,
+        deployment_style: data.deployment_style || 1,
+        base_conviction_score: data.base_conviction_score || 0,
+        initial_invested_amount: data.initial_invested_amount || 0,
+        initial_shares_held: data.initial_shares_held || 0,
+        status: data.status || 1,
+        active_partition_index: data.active_partition_index || 1,
+        total_capital_invested_so_far: data.total_capital_invested_so_far || data.dsip_total_capital_invested_so_far || 0,
+        shares_held_so_far: data.shares_held_so_far || 0,
+        is_fractional_shares_allowed: data.is_fractional_shares_allowed || false,
+        createdAt: data.created_at || new Date().toISOString(),
+        stockName: data.name || 'Unknown',
+        currentPrice: data.current_total_value || 0,
+      },
+      partitions: (data.history || []).map((h: any, index: number) => ({
+        partitionId: index + 1,
+        trackerId: data.id,
+        partitionIndex: index + 1,
+        expectedPartitionDays: data.partition_days || 0,
+        partitionCapitalAllocated: 0,
+        capitalInvestedSoFar: h.executed_amount || 0,
+        noOfSharesBought: 0,
+        successfulGrowthCount: 0,
+        status: 2, // COMPLETED
+        partitionEndDate: h.date || null,
+        createdAt: h.date || new Date().toISOString(),
+      })),
+      recentExecutions: (data.history || []).map((h: any, index: number) => ({
+        executionId: index + 1,
+        trackerId: data.id,
+        partitionId: 0,
+        lockInPercentage: 0,
+        convictionOverride: 0,
+        executedAmount: h.executed_amount || 0,
+        executionPrice: h.executed_price || 0,
+        createdAt: h.date || new Date().toISOString(),
+      })),
+    };
+
+    console.log('[API] Transformed tracker details:', transformed);
+    return transformed;
   }
 
   throw new Error(response.message || 'Failed to fetch tracker details');

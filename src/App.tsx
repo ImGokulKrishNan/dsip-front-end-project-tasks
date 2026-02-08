@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAuth, setAuthSuccess, setAuthError, clearAuth } from './store/slices/authSlice';
 import { addStock, updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly } from './store/slices/stocksSlice';
 import { setView, showCelebrationModal, hideCelebrationModal, navigateToDashboard, navigateToAddStock, navigateToStockDetails } from './store/slices/uiSlice';
+import { fetchTrackerDetails } from './store/slices/trackersSlice';
 import { setOnUnauthorized } from './lib/api';
 import { Stock } from './types';
 import { Icons } from './constants';
@@ -103,6 +104,14 @@ const MainApp: React.FC = () => {
 
   const handleSelectStock = (id: string) => {
     dispatch(setSelectedStock(id));
+
+    // Fetch tracker details from API if it's a numeric ID (from API)
+    const trackerId = parseInt(id);
+    if (!isNaN(trackerId)) {
+      console.log('[App] Fetching tracker details for ID:', trackerId);
+      dispatch(fetchTrackerDetails(trackerId));
+    }
+
     dispatch(navigateToStockDetails());
   };
 
@@ -165,9 +174,30 @@ const MainApp: React.FC = () => {
         )}
         {view === 'STOCK_DETAILS' && (() => {
           const selectedStock = stocks.find(s => s.id === selectedStockId);
-          return selectedStock ? (
+
+          // If no stock found in hardcoded data, create a dummy stock for API data
+          const stockToUse = selectedStock || {
+            id: selectedStockId || '',
+            symbol: 'Loading...',
+            name: 'Loading...',
+            convictionYears: 5,
+            partitionDays: 30,
+            loadFactor: 'Aggressive' as any,
+            totalBudget: 0,
+            deployedAmount: 0,
+            currentAverage: 0,
+            currentPrice: 0,
+            isPaused: false,
+            history: [],
+            quantityOwned: 0,
+            averagePriceOwned: 0,
+            convictionLevel: 75,
+            priceMovementPct: 0,
+          };
+
+          return stockToUse ? (
             <StockDetails
-              stock={selectedStock}
+              stock={stockToUse}
               onBack={() => dispatch(navigateToDashboard())}
               onUpdate={handleUpdateStock}
               onCopyStrategy={handleCopyStrategy}
