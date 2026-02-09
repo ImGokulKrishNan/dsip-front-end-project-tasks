@@ -9,7 +9,7 @@ export const DEV_CONFIG = {
    * Set to true to bypass authentication and work on UI without backend
    * WARNING: Only use in development! Never commit as true.
    */
-  BYPASS_AUTH: false,
+  BYPASS_AUTH: true,
 
   /**
    * Mock user data when BYPASS_AUTH is enabled
@@ -25,7 +25,7 @@ export const DEV_CONFIG = {
    * Set to true to bypass stock API calls when creating DSIP trackers
    * Returns mock stock data instead of calling /api/stocks/close
    */
-  BYPASS_STOCK_API: false,
+  BYPASS_STOCK_API: true,
 
   /**
    * Mock stock data when BYPASS_STOCK_API is enabled

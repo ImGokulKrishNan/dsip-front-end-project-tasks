@@ -150,7 +150,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    // Fetch partition details when a partition is selected
    const handlePartitionClick = async (index: number) => {
       setSelectedPartition(index);
-      
+
       // If we have API data, fetch partition details
       if (useApiData && trackerData?.trackerId) {
          setIsLoadingPartition(true);
@@ -361,7 +361,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    return (
       <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
          <ScrollArea className="flex-1">
-            <div className="p-5 md:p-6 space-y-6 pb-32">
+            <div className="px-4 py-5 md:p-6 space-y-6 pb-32">
 
                {/* 1. Daily Execution Zone */}
                <div className="space-y-3">
@@ -381,11 +381,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                         <CardContent className="space-y-3 p-4">
 
                            {/* Main Controls - Side by Side */}
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-4">
                               {/* Current Price Change */}
-                              <div className="space-y-1.5">
+                              <div className="space-y-2">
                                  <Label className="text-sm font-semibold flex items-center gap-1.5">
-                                    Current Price Change (%) [Lock in %]
+                                    Current Price Change (%)
+                                    <span className="text-muted-foreground font-normal text-xs">[Lock in %]</span>
                                     <InfoTooltip text="Enter the current percentage change in stock price. This helps calculate the optimal buy price for today's execution." />
                                  </Label>
                                  <div className="relative">
@@ -393,12 +394,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        type="number"
                                        step="0.1"
                                        placeholder="-2.4"
-                                       className="h-8 text-sm font-semibold pl-2.5 pr-8"
+                                       className="h-11 md:h-8 text-base md:text-sm font-semibold pl-3 md:pl-2.5 pr-8"
                                        value={lockInPct}
                                        onChange={e => setLockInPct(e.target.value)}
                                        autoFocus
                                     />
-                                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-xs">%</div>
+                                    <div className="absolute right-3 md:right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-xs">%</div>
                                  </div>
                                  <p className="text-[10px] text-muted-foreground leading-tight">
                                     Tip: If red, lock early. If green, you may wait closer to close.
@@ -406,18 +407,18 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </div>
 
                               {/* Conviction Adjustment */}
-                              <div className="space-y-1.5">
+                              <div className="space-y-2">
                                  <div className="flex justify-between items-center gap-2">
                                     <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                                       Daily Conviction Adjustment
+                                       Daily Conviction
                                        <InfoTooltip text="Not Recommended! Adjust your conviction level if today's market news or events significantly impact your investment thesis." />
                                     </Label>
                                     <Badge className={
-                                       convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600 h-5 px-1.5 text-[10px]" :
-                                          convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600 h-5 px-1.5 text-[10px]" :
-                                             "bg-yellow-500 hover:bg-yellow-600 h-5 px-1.5 text-[10px]"
+                                       convictionOverride[0] < 45 ? "bg-red-500 hover:bg-red-600 h-6 md:h-5 px-2 md:px-1.5 text-xs md:text-[10px]" :
+                                          convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600 h-6 md:h-5 px-2 md:px-1.5 text-xs md:text-[10px]" :
+                                             "bg-yellow-500 hover:bg-yellow-600 h-6 md:h-5 px-2 md:px-1.5 text-xs md:text-[10px]"
                                     }>
-                                       {convictionOverride[0]}% Confidence
+                                       {convictionOverride[0]}% Conf.
                                     </Badge>
                                  </div>
                                  <Slider
@@ -426,20 +427,31 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     step={1}
                                     value={convictionOverride}
                                     onValueChange={setConvictionOverride}
-                                    className="py-0.5 pt-2"
+                                    className="py-1 md:py-0.5 pt-3 md:pt-2 cursor-pointer"
                                  />
                               </div>
                            </div>
 
 
 
-                           {/* Action Buttons */}
-                           <div className="flex gap-2 pt-1">
-                              <Button size="sm" className="flex-1 h-8 text-xs" onClick={handleCalculate} disabled={!lockInPct}>
-                                 <Icons.TrendUp className="mr-1.5 w-3.5 h-3.5" /> Calculate Amount
+                           {/* Actions Footer */}
+                           <div className="mt-6 -mx-4 -mb-4 p-4 bg-muted/40 border-t flex flex-col md:flex-row gap-3 md:gap-2 rounded-b-xl">
+                              <Button
+                                 size="sm"
+                                 className="py-2 flex-1 h-16 md:h-9 text-base md:text-sm font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                                 onClick={handleCalculate}
+                                 disabled={!lockInPct}
+                              >
+                                 <Icons.TrendUp className="mr-2 w-5 h-5 md:w-4 md:h-4" />
+                                 Calculate Order
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
-                                 Skip Today
+                              
+                              <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="h-12 md:h-9 w-full md:w-auto px-4 text-sm md:text-xs border-dashed text-muted-foreground hover:text-foreground hover:bg-background"
+                              >
+                                 Skip for Today
                               </Button>
                            </div>
 
@@ -486,15 +498,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                            <Separator />
 
-                           <div className="flex gap-3">
+                           <div className="flex flex-col md:flex-row gap-3">
                               <Button
                                  size="default"
-                                 className="flex-1 h-10 bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20 shadow-md"
+                                 className="flex-1 h-11 md:h-10 bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20 shadow-md font-semibold"
                                  onClick={() => setExecutionState('CONFIRMING')}
                               >
                                  <Icons.Check className="mr-2 w-4 h-4" /> Place Order & Confirm
                               </Button>
-                              <Button variant="outline" size="default" className="h-10 px-4" onClick={() => setExecutionState('IDLE')}>
+                              <Button variant="outline" size="default" className="h-11 md:h-10 w-full md:w-auto px-4" onClick={() => setExecutionState('IDLE')}>
                                  Recalculate
                               </Button>
                            </div>
@@ -516,7 +528,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  <Label className="text-sm font-semibold">Actual Invested Amount (₹)</Label>
                                  <Input
                                     type="number"
-                                    className="h-10 text-lg font-semibold bg-background"
+                                    className="h-11 md:h-10 text-lg font-semibold bg-background"
                                     value={executedAmount}
                                     onChange={e => setExecutedAmount(e.target.value)}
                                  />
@@ -526,14 +538,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  <Input
                                     type="number"
                                     step="0.05"
-                                    className="h-10 text-lg font-semibold bg-background"
+                                    className="h-11 md:h-10 text-lg font-semibold bg-background"
                                     value={executionPrice}
                                     onChange={e => setExecutionPrice(e.target.value)}
                                  />
                               </div>
                            </div>
 
-                           <div className="flex gap-3 pt-2">
+                           <div className="flex flex-col md:flex-row gap-3 pt-2">
                               <Button
                                  size="default"
                                  className="flex-1 h-11 font-semibold shadow-lg"
@@ -541,7 +553,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               >
                                  <Icons.Check className="mr-2 w-4 h-4" /> Confirm & Record
                               </Button>
-                              <Button variant="ghost" size="default" className="h-11 px-4" onClick={() => setExecutionState('CALCULATED')}>
+                              <Button variant="ghost" size="default" className="h-11 w-full md:w-auto px-4" onClick={() => setExecutionState('CALCULATED')}>
                                  Cancel
                               </Button>
                            </div>
@@ -576,28 +588,28 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            )}
                         </div>
                      </CardHeader>
-                     <CardContent className="space-y-3.5 pb-4">
-                        <div className="grid grid-cols-2 gap-y-3.5 text-sm">
+                     <CardContent className="space-y-4 pb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-y-3.5 text-sm">
                            {!isEditing ? (
                               // READ ONLY VIEW
                               <>
-                                 <div>
+                                 <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Conviction Period</p>
                                     <p className="font-semibold">{displayConvictionYears} years</p>
                                  </div>
-                                 <div>
+                                 <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Total Budget</p>
                                     <p className="font-semibold">₹{displayTotalBudget.toLocaleString()}</p>
                                  </div>
-                                 <div>
+                                 <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Overall Conviction</p>
                                     <p className="font-semibold">{displayConvictionLevel}%</p>
                                  </div>
-                                 <div>
+                                 <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Load Factor</p>
                                     <p className="font-semibold capitalize">{displayLoadFactor}</p>
                                  </div>
-                                 <div>
+                                 <div className="flex justify-between md:block pt-1 md:pt-0">
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
                                     <p className="font-semibold">{displayPartitionDays} trading days</p>
                                  </div>
@@ -605,26 +617,26 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            ) : (
                               // EDIT VIEW
                               <>
-                                 <div className="space-y-1">
-                                    <Label className="text-xs">Conviction (Yrs)</Label>
+                                 <div className="space-y-2">
+                                    <Label className="text-xs font-semibold">Conviction (Yrs)</Label>
                                     <Input
                                        type="number"
-                                       className="h-8"
+                                       className="h-10 md:h-8"
                                        value={editConfig.convictionYears}
                                        onChange={e => setEditConfig({ ...editConfig, convictionYears: Number(e.target.value) })}
                                     />
                                  </div>
-                                 <div className="space-y-1">
-                                    <Label className="text-xs">Total Budget (₹)</Label>
+                                 <div className="space-y-2">
+                                    <Label className="text-xs font-semibold">Total Budget (₹)</Label>
                                     <Input
                                        type="number"
-                                       className="h-8"
+                                       className="h-10 md:h-8"
                                        value={editConfig.totalBudget}
                                        onChange={e => setEditConfig({ ...editConfig, totalBudget: Number(e.target.value) })}
                                     />
                                  </div>
-                                 <div className="space-y-1 col-span-2">
-                                    <Label className="text-xs flex items-center gap-1.5">
+                                 <div className="space-y-3 md:col-span-2 pt-2 md:pt-0">
+                                    <Label className="text-xs font-semibold flex items-center gap-1.5">
                                        Conviction Adjustment
                                        <InfoTooltip text="Your overall conviction strength (X-Factor). Higher values execute more aggressively." />
                                     </Label>
@@ -633,17 +645,17 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           min={0}
                                           max={100}
                                           step={1}
-                                          className="flex-1"
+                                          className="flex-1 py-1"
                                           value={[editConfig.convictionLevel || 50]}
                                           onValueChange={(val) => setEditConfig({ ...editConfig, convictionLevel: val[0] })}
                                        />
-                                       <span className="w-12 text-center text-sm font-bold">
+                                       <span className="w-12 text-center text-sm font-bold bg-muted p-1 rounded">
                                           {editConfig.convictionLevel}%
                                        </span>
                                     </div>
                                  </div>
-                                 <div className="space-y-1 col-span-2">
-                                    <Label className="text-xs flex justify-between">
+                                 <div className="space-y-2 md:col-span-2">
+                                    <Label className="text-xs font-semibold flex justify-between">
                                        Load Factor
                                        <span className="text-[10px] text-amber-600 font-normal">*Not recommended to change</span>
                                     </Label>
@@ -651,7 +663,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        value={editConfig.loadFactor}
                                        onValueChange={(val: any) => setEditConfig({ ...editConfig, loadFactor: val })}
                                     >
-                                       <SelectTrigger className="h-8">
+                                       <SelectTrigger className="h-10 md:h-8">
                                           <SelectValue />
                                        </SelectTrigger>
                                        <SelectContent>
@@ -661,11 +673,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        </SelectContent>
                                     </Select>
                                  </div>
-                                 <div className="space-y-1 col-span-2">
-                                    <Label className="text-xs">Investment Cycle Length (Days)</Label>
+                                 <div className="space-y-2 md:col-span-2">
+                                    <Label className="text-xs font-semibold">Investment Cycle Length (Days)</Label>
                                     <Input
                                        type="number"
-                                       className="h-8"
+                                       className="h-10 md:h-8"
                                        value={editConfig.partitionDays}
                                        onChange={e => setEditConfig({ ...editConfig, partitionDays: Number(e.target.value) })}
                                     />
@@ -841,44 +853,42 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                      </CardHeader>
                      <CardContent className="space-y-5 pb-4">
 
-                        {/* Key Metrics Grid */}
-                        <div className="grid grid-cols-3 gap-3">
+                        {/* Key Metrics Grid - Mobile Optimized */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                            {/* Current Value */}
-                           <div className="space-y-1 p-3 rounded-lg bg-gradient-to-br from-blue-500/5 to-blue-600/10 border border-blue-500/10">
-                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                                 <Icons.TrendingUp size={10} className="text-blue-500" />
+                           <div className="space-y-1 p-4 md:p-3 rounded-lg bg-gradient-to-br from-blue-500/5 to-blue-600/10 border border-blue-500/10 shadow-sm">
+                              <div className="flex items-center gap-2 text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                                 <Icons.TrendingUp size={12} className="text-blue-500" />
                                  Current Value
                               </div>
-                              <div className="text-xl font-black tracking-tight">
+                              <div className="text-2xl md:text-xl font-black tracking-tight text-foreground">
                                  ₹{((totalShares * stock.currentPrice)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                               </div>
                            </div>
 
                            {/* Total P&L */}
-                           <div className={`space-y-1 p-3 rounded-lg border ${
-                              currentReturnPercent >= 0 
-                                 ? 'bg-gradient-to-br from-emerald-500/5 to-emerald-600/10 border-emerald-500/10' 
-                                 : 'bg-gradient-to-br from-red-500/5 to-red-600/10 border-red-500/10'
-                           }`}>
-                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                                 <Icons.DollarSign size={10} className={currentReturnPercent >= 0 ? 'text-emerald-500' : 'text-red-500'} />
+                           <div className={`space-y-1 p-4 md:p-3 rounded-lg border shadow-sm ${currentReturnPercent >= 0
+                              ? 'bg-gradient-to-br from-emerald-500/5 to-emerald-600/10 border-emerald-500/10'
+                              : 'bg-gradient-to-br from-red-500/5 to-red-600/10 border-red-500/10'
+                              }`}>
+                              <div className="flex items-center gap-2 text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                                 <Icons.DollarSign size={12} className={currentReturnPercent >= 0 ? 'text-emerald-500' : 'text-red-500'} />
                                  Total P&L
                               </div>
-                              <div className={`text-xl font-black tracking-tight ${
-                                 currentReturnPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                              }`}>
+                              <div className={`text-2xl md:text-xl font-black tracking-tight ${currentReturnPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                                 }`}>
                                  {currentReturnPercent >= 0 ? '+' : ''}{currentReturnPercent.toFixed(2)}%
                               </div>
                            </div>
 
                            {/* Investment Cycle Progress */}
-                           <div className="space-y-1 p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-purple-600/10 border border-purple-500/10">
-                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                                 <Icons.PieChart size={10} className="text-purple-500" />
+                           <div className="space-y-1 p-4 md:p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-purple-600/10 border border-purple-500/10 shadow-sm">
+                              <div className="flex items-center gap-2 text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                                 <Icons.PieChart size={12} className="text-purple-500" />
                                  Cycle Progress
                               </div>
-                              <div className="text-xl font-black tracking-tight">
-                                 {useApiData && selectedTracker?.tracker?.live_investment_cycle?.partition_progress 
+                              <div className="text-2xl md:text-xl font-black tracking-tight text-foreground">
+                                 {useApiData && selectedTracker?.tracker?.live_investment_cycle?.partition_progress
                                     ? selectedTracker.tracker.live_investment_cycle.partition_progress.toFixed(1)
                                     : ((daysInvested % cycleLength) / cycleLength * 100).toFixed(1)
                                  }%
@@ -906,18 +916,18 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     const maxPills = 10;
                                     const pillsToShow = Math.min(totalCycles, maxPills);
                                     const partitionsPerPill = Math.ceil(totalCycles / pillsToShow);
-                                    
+
                                     return Array.from({ length: pillsToShow }).map((_, pillIndex) => {
                                        // Calculate which partitions this pill represents
                                        const startPartition = pillIndex * partitionsPerPill;
                                        const endPartition = Math.min(startPartition + partitionsPerPill - 1, totalCycles - 1);
                                        const representedPartitions = endPartition - startPartition + 1;
-                                       
+
                                        // Determine pill state based on represented partitions
                                        const allCompleted = endPartition < currentCycle;
                                        const hasActive = startPartition <= currentCycle && currentCycle <= endPartition;
                                        const allUpcoming = startPartition > currentCycle;
-                                       
+
                                        // Calculate completion percentage for this pill
                                        let completionPercentage = 0;
                                        if (allCompleted) {
@@ -926,43 +936,42 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           const completedInGroup = currentCycle - startPartition;
                                           completionPercentage = (completedInGroup / representedPartitions) * 100;
                                        }
-                                       
+
                                        return (
                                           <TooltipProvider key={pillIndex} delayDuration={0}>
                                              <Tooltip>
                                                 <TooltipTrigger asChild>
                                                    <button
                                                       onClick={() => handlePartitionClick(hasActive ? currentCycle : startPartition)}
-                                                      className={`flex-1 h-8 rounded-full cursor-pointer transition-all duration-300 relative group overflow-hidden ${
-                                                         allCompleted
-                                                            ? "bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105"
-                                                            : hasActive
-                                                               ? "bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105"
-                                                               : "bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-600"
-                                                      }`}
+                                                      className={`flex-1 h-8 rounded-full cursor-pointer transition-all duration-300 relative group overflow-hidden ${allCompleted
+                                                         ? "bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105"
+                                                         : hasActive
+                                                            ? "bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105"
+                                                            : "bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-600"
+                                                         }`}
                                                    >
                                                       {/* Active Glow Effect */}
                                                       {hasActive && (
                                                          <>
                                                             <span className="absolute -inset-0.5 rounded-full bg-cyan-400/20 animate-pulse" />
                                                             {/* Partial completion fill */}
-                                                            <span 
+                                                            <span
                                                                className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400/40 to-blue-500/40 transition-all duration-500"
                                                                style={{ width: `${completionPercentage}%` }}
                                                             />
                                                          </>
                                                       )}
-                                                      
+
                                                       {/* Completed Shine Effect */}
                                                       {allCompleted && (
                                                          <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
                                                       )}
-                                                      
+
                                                       {/* Future Dot Indicator */}
                                                       {allUpcoming && (
                                                          <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-slate-500 transition-colors" />
                                                       )}
-                                                      
+
                                                       {/* Pill Label for grouped partitions */}
                                                       {representedPartitions > 1 && (hasActive || allCompleted) && (
                                                          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white/80 z-10">
@@ -974,16 +983,16 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                 <TooltipContent side="top" className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5">
                                                    <div className="text-center">
                                                       <div className="font-bold">
-                                                         {representedPartitions === 1 
+                                                         {representedPartitions === 1
                                                             ? `Partition #${startPartition + 1}`
                                                             : `Partitions #${startPartition + 1}-${endPartition + 1}`
                                                          }
                                                       </div>
                                                       <div className="text-[10px] text-slate-400 mt-0.5">
-                                                         {allCompleted 
-                                                            ? "Completed" 
-                                                            : hasActive 
-                                                               ? `Active (${Math.round(completionPercentage)}% done)` 
+                                                         {allCompleted
+                                                            ? "Completed"
+                                                            : hasActive
+                                                               ? `Active (${Math.round(completionPercentage)}% done)`
                                                                : "Upcoming"
                                                          }
                                                       </div>
@@ -1019,37 +1028,37 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               {/* Header */}
                               <div className="relative bg-gradient-to-br from-indigo-600/20 via-purple-600/10 to-transparent p-6 pb-8">
                                  {/* Close Button - Absolute Top Right */}
-                                 <button 
+                                 <button
                                     onClick={() => setSelectedPartition(null)}
                                     className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all z-10 backdrop-blur-sm"
                                  >
                                     ✕
                                  </button>
-                                 
+
                                  <div className="flex items-start gap-4 pr-8">
                                     {/* Partition Badge */}
                                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
                                        <span className="font-mono font-black text-2xl text-white">P{partitionDetails?.partition_index || (selectedPartition + 1)}</span>
                                     </div>
-                                    
+
                                     {/* Title and Info */}
                                     <div className="flex-1 min-w-0">
                                        {/* Title with Status Badge */}
                                        <div className="flex items-center gap-2 mb-1.5">
                                           <h3 className="font-bold text-xl text-white leading-none">Investment Cycle</h3>
-                                          <Badge 
-                                             variant={partitionDetails?.status === 2 ? "default" : "outline"} 
-                                             className={partitionDetails?.status === 2 
-                                                ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30 px-3 py-0.5 text-xs font-semibold" 
+                                          <Badge
+                                             variant={partitionDetails?.status === 2 ? "default" : "outline"}
+                                             className={partitionDetails?.status === 2
+                                                ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30 px-3 py-0.5 text-xs font-semibold"
                                                 : partitionDetails?.status === 1
-                                                ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 border-cyan-500/30 px-3 py-0.5 text-xs font-semibold"
-                                                : "bg-slate-700/50 text-slate-400 border-slate-600 px-3 py-0.5 text-xs font-semibold"
+                                                   ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 border-cyan-500/30 px-3 py-0.5 text-xs font-semibold"
+                                                   : "bg-slate-700/50 text-slate-400 border-slate-600 px-3 py-0.5 text-xs font-semibold"
                                              }
                                           >
                                              {partitionDetails?.status === 2 ? 'COMPLETED ✓' : partitionDetails?.status === 1 ? 'ACTIVE' : 'PENDING'}
                                           </Badge>
                                        </div>
-                                       
+
                                        {/* Phase Info */}
                                        <p className="text-sm text-slate-400 font-mono">
                                           Phase {partitionDetails?.partition_index || (selectedPartition + 1)} • {partitionDetails?.expected_days || displayPartitionDays} days
@@ -1107,20 +1116,18 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           </div>
 
                                           {/* Net Return */}
-                                          <div className={`p-4 rounded-2xl border ${
-                                             (partitionDetails?.net_profit_percentage || 0) >= 0
-                                                ? 'bg-emerald-500/10 border-emerald-500/30'
-                                                : 'bg-red-500/10 border-red-500/30'
-                                          }`}>
+                                          <div className={`p-4 rounded-2xl border ${(partitionDetails?.net_profit_percentage || 0) >= 0
+                                             ? 'bg-emerald-500/10 border-emerald-500/30'
+                                             : 'bg-red-500/10 border-red-500/30'
+                                             }`}>
                                              <div className="flex items-center gap-2 text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
                                                 <Icons.Activity size={14} />
                                                 Net Return
                                              </div>
-                                             <div className={`text-3xl font-black tracking-tight ${
-                                                (partitionDetails?.net_profit_percentage || 0) >= 0
-                                                   ? 'text-emerald-400'
-                                                   : 'text-red-400'
-                                             }`}>
+                                             <div className={`text-3xl font-black tracking-tight ${(partitionDetails?.net_profit_percentage || 0) >= 0
+                                                ? 'text-emerald-400'
+                                                : 'text-red-400'
+                                                }`}>
                                                 {(partitionDetails?.net_profit_percentage || 0) >= 0 ? '+' : ''}{(partitionDetails?.net_profit_percentage || 0).toFixed(2)}%
                                              </div>
                                           </div>
@@ -1169,142 +1176,142 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                      </DialogContent>
                   </Dialog>
 
-                           {/* Victory Popup - Completing a Cycle */}
-                           <Dialog open={showVictoryPopup} onOpenChange={setShowVictoryPopup}>
-                              <DialogContent className="sm:max-w-md text-center border-0 bg-background/95 backdrop-blur-3xl shadow-2xl p-0 overflow-hidden">
-                                 {/* Golden/Amber Gradient for Victory */}
-                                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent pointer-events-none" />
+                  {/* Victory Popup - Completing a Cycle */}
+                  <Dialog open={showVictoryPopup} onOpenChange={setShowVictoryPopup}>
+                     <DialogContent className="sm:max-w-md text-center border-0 bg-background/95 backdrop-blur-3xl shadow-2xl p-0 overflow-hidden">
+                        {/* Golden/Amber Gradient for Victory */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
 
-                                 <div className="flex flex-col items-center justify-center space-y-5 px-6 py-10 relative z-10">
-                                    <div className="relative">
-                                       <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-900/20 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.3)] animate-in zoom-in-50 duration-700">
-                                          <Icons.Target className="w-12 h-12 text-amber-600 dark:text-amber-400 drop-shadow-sm" />
-                                       </div>
-                                       <div className="absolute -inset-2 rounded-full border border-amber-500/20 animate-spin-slow duration-[10s]" />
-                                       <div className="absolute -inset-4 rounded-full border border-amber-500/10 animate-pulse duration-[3s]" />
-                                    </div>
+                        <div className="flex flex-col items-center justify-center space-y-5 px-6 py-10 relative z-10">
+                           <div className="relative">
+                              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-900/20 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.3)] animate-in zoom-in-50 duration-700">
+                                 <Icons.Target className="w-12 h-12 text-amber-600 dark:text-amber-400 drop-shadow-sm" />
+                              </div>
+                              <div className="absolute -inset-2 rounded-full border border-amber-500/20 animate-spin-slow duration-[10s]" />
+                              <div className="absolute -inset-4 rounded-full border border-amber-500/10 animate-pulse duration-[3s]" />
+                           </div>
 
-                                    <div className="space-y-2 max-w-sm mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
-                                       <DialogTitle className="text-2xl font-black tracking-tight text-foreground uppercase">
-                                          Partition Completed!
-                                       </DialogTitle>
-                                       <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
-                                          Outstanding discipline! You have successfully completed a full investment cycle.
-                                       </DialogDescription>
-                                    </div>
+                           <div className="space-y-2 max-w-sm mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
+                              <DialogTitle className="text-2xl font-black tracking-tight text-foreground uppercase">
+                                 Partition Completed!
+                              </DialogTitle>
+                              <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
+                                 Outstanding discipline! You have successfully completed a full investment cycle.
+                              </DialogDescription>
+                           </div>
 
-                                    <div className="pt-2 w-full animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
-                                       <Button
-                                          onClick={() => setShowVictoryPopup(false)}
-                                          className="w-full h-11 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-bold tracking-wide"
-                                       >
-                                          Proceed to Next Cycle
-                                       </Button>
-                                    </div>
+                           <div className="pt-2 w-full animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
+                              <Button
+                                 onClick={() => setShowVictoryPopup(false)}
+                                 className="w-full h-11 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-bold tracking-wide"
+                              >
+                                 Proceed to Next Cycle
+                              </Button>
+                           </div>
+                        </div>
+                     </DialogContent>
+                  </Dialog>
+
+                  {/* Kill Switch Popup - Negative Return Warning */}
+                  <Dialog open={showKillSwitchPopup} onOpenChange={setShowKillSwitchPopup}>
+                     <DialogContent className="sm:max-w-md text-center border-l-4 border-l-red-500">
+                        <DialogHeader>
+                           <DialogTitle className="flex items-center justify-center gap-2 text-red-600 text-xl">
+                              <Icons.AlertTriangle className="w-6 h-6" />
+                              Stop Execution Warning
+                           </DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                           <p className="text-sm text-muted-foreground">
+                              We noticed your portfolio is currently down by <span className="font-bold text-red-500">{currentReturnPercent.toFixed(2)}%</span>.
+                              Since you are more than halfway through the cycle, it is recommended to halt further investment to protect capital.
+                           </p>
+                           <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
+                              <p className="text-xs font-semibold text-red-700 dark:text-red-400">
+                                 "Good traders know when to throttle down."
+                              </p>
+                           </div>
+                        </div>
+                        <DialogFooter className="flex-col sm:flex-row gap-2">
+                           <Button
+                              variant="destructive"
+                              className="w-full sm:w-auto flex-1 shadow-md"
+                              onClick={() => setShowKillSwitchPopup(false)}
+                           >
+                              <Icons.Zap className="w-4 h-4 mr-2" /> Kill Switch (Stop)
+                           </Button>
+                           <Button
+                              variant="ghost"
+                              className="w-full sm:w-auto"
+                              onClick={() => {
+                                 setShowKillSwitchPopup(false);
+                                 // Allow implementation if user insists (optional based on strictness)
+                                 performCalculation();
+                              }}
+                           >
+                              Ignore & Execute
+                           </Button>
+                        </DialogFooter>
+                     </DialogContent>
+                  </Dialog>
+
+                  {/* Sync Popup - Manual Calibration */}
+                  <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
+                     <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                           <DialogTitle className="flex items-center gap-2">
+                              <Icons.Refresh className="w-5 h-5 text-primary" />
+                              Sync Portfolio
+                           </DialogTitle>
+                           <DialogDescription>
+                              Manually update your total holdings to match your broker. We'll adjust the base records while keeping your current cycle intact.
+                           </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-4 py-4">
+                           <div className="space-y-2">
+                              <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount (₹)</Label>
+                              <Input
+                                 type="number"
+                                 placeholder="e.g. 150000"
+                                 value={syncForm.totalInvested}
+                                 onChange={(e) => setSyncForm({ ...syncForm, totalInvested: e.target.value })}
+                                 className="h-11 font-mono text-lg"
+                              />
+                           </div>
+                           <div className="space-y-2">
+                              <Label className="text-xs font-semibold text-muted-foreground">Total Shares Quantity</Label>
+                              <Input
+                                 type="number"
+                                 placeholder="e.g. 50.5"
+                                 value={syncForm.totalShares}
+                                 onChange={(e) => setSyncForm({ ...syncForm, totalShares: e.target.value })}
+                                 className="h-11 font-mono text-lg"
+                              />
+                           </div>
+
+                           {/* Preview Diff Calculation */}
+                           {(syncForm.totalInvested && syncForm.totalShares) && (
+                              <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Calculated Avg Price:</span>
+                                    <span className="font-mono font-bold">
+                                       ₹{(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
+                                    </span>
                                  </div>
-                              </DialogContent>
-                           </Dialog>
+                              </div>
+                           )}
+                        </div>
 
-                           {/* Kill Switch Popup - Negative Return Warning */}
-                           <Dialog open={showKillSwitchPopup} onOpenChange={setShowKillSwitchPopup}>
-                              <DialogContent className="sm:max-w-md text-center border-l-4 border-l-red-500">
-                                 <DialogHeader>
-                                    <DialogTitle className="flex items-center justify-center gap-2 text-red-600 text-xl">
-                                       <Icons.AlertTriangle className="w-6 h-6" />
-                                       Stop Execution Warning
-                                    </DialogTitle>
-                                 </DialogHeader>
-                                 <div className="py-4 space-y-4">
-                                    <p className="text-sm text-muted-foreground">
-                                       We noticed your portfolio is currently down by <span className="font-bold text-red-500">{currentReturnPercent.toFixed(2)}%</span>.
-                                       Since you are more than halfway through the cycle, it is recommended to halt further investment to protect capital.
-                                    </p>
-                                    <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
-                                       <p className="text-xs font-semibold text-red-700 dark:text-red-400">
-                                          "Good traders know when to throttle down."
-                                       </p>
-                                    </div>
-                                 </div>
-                                 <DialogFooter className="flex-col sm:flex-row gap-2">
-                                    <Button
-                                       variant="destructive"
-                                       className="w-full sm:w-auto flex-1 shadow-md"
-                                       onClick={() => setShowKillSwitchPopup(false)}
-                                    >
-                                       <Icons.Zap className="w-4 h-4 mr-2" /> Kill Switch (Stop)
-                                    </Button>
-                                    <Button
-                                       variant="ghost"
-                                       className="w-full sm:w-auto"
-                                       onClick={() => {
-                                          setShowKillSwitchPopup(false);
-                                          // Allow implementation if user insists (optional based on strictness)
-                                          performCalculation();
-                                       }}
-                                    >
-                                       Ignore & Execute
-                                    </Button>
-                                 </DialogFooter>
-                              </DialogContent>
-                           </Dialog>
-
-                           {/* Sync Popup - Manual Calibration */}
-                           <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
-                              <DialogContent className="sm:max-w-md">
-                                 <DialogHeader>
-                                    <DialogTitle className="flex items-center gap-2">
-                                       <Icons.Refresh className="w-5 h-5 text-primary" />
-                                       Sync Portfolio
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                       Manually update your total holdings to match your broker. We'll adjust the base records while keeping your current cycle intact.
-                                    </DialogDescription>
-                                 </DialogHeader>
-
-                                 <div className="grid gap-4 py-4">
-                                    <div className="space-y-2">
-                                       <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount (₹)</Label>
-                                       <Input
-                                          type="number"
-                                          placeholder="e.g. 150000"
-                                          value={syncForm.totalInvested}
-                                          onChange={(e) => setSyncForm({ ...syncForm, totalInvested: e.target.value })}
-                                          className="h-11 font-mono text-lg"
-                                       />
-                                    </div>
-                                    <div className="space-y-2">
-                                       <Label className="text-xs font-semibold text-muted-foreground">Total Shares Quantity</Label>
-                                       <Input
-                                          type="number"
-                                          placeholder="e.g. 50.5"
-                                          value={syncForm.totalShares}
-                                          onChange={(e) => setSyncForm({ ...syncForm, totalShares: e.target.value })}
-                                          className="h-11 font-mono text-lg"
-                                       />
-                                    </div>
-
-                                    {/* Preview Diff Calculation */}
-                                    {(syncForm.totalInvested && syncForm.totalShares) && (
-                                       <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
-                                          <div className="flex justify-between">
-                                             <span className="text-muted-foreground">Calculated Avg Price:</span>
-                                             <span className="font-mono font-bold">
-                                                ₹{(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
-                                             </span>
-                                          </div>
-                                       </div>
-                                    )}
-                                 </div>
-
-                                 <DialogFooter>
-                                    <Button variant="ghost" onClick={() => setShowSyncPopup(false)}>Cancel</Button>
-                                    <Button onClick={handleSync} disabled={!syncForm.totalInvested || !syncForm.totalShares}>
-                                       Update Portfolio
-                                    </Button>
-                                 </DialogFooter>
-                              </DialogContent>
-                           </Dialog>
+                        <DialogFooter>
+                           <Button variant="ghost" onClick={() => setShowSyncPopup(false)}>Cancel</Button>
+                           <Button onClick={handleSync} disabled={!syncForm.totalInvested || !syncForm.totalShares}>
+                              Update Portfolio
+                           </Button>
+                        </DialogFooter>
+                     </DialogContent>
+                  </Dialog>
 
                </div>
 

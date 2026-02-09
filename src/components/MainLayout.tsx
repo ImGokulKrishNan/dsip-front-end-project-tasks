@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LeftSidebar from './LeftSidebar';
 import { AppView, Stock } from '../types';
 import { Icons } from '../constants';
@@ -58,6 +58,39 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const [showSyncPopup, setShowSyncPopup] = useState(false);
   const [syncForm, setSyncForm] = useState({ totalInvested: '', totalShares: '' });
 
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu when screen size increases
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
+  // Handle stock selection and close mobile menu
+  const handleSelectStock = (id: string) => {
+    onSelectStock(id);
+    setIsMobileMenuOpen(false);
+  };
+
   const handleSync = () => {
     const selectedStock = stocks.find(s => s.id === selectedStockId);
     if (!selectedStock) return;
@@ -106,14 +139,42 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div className="flex h-screen w-screen bg-background overflow-hidden font-sans">
-      {/* 1. Left Sidebar */}
-      <LeftSidebar
-        stocks={stocks}
-        activeView={activeView}
-        selectedStockId={selectedStockId}
-        onSelectStock={onSelectStock}
-        onCreateNew={onCreateNew}
-      />
+      {/* 1. Left Sidebar - Desktop */}
+      <div className="hidden md:flex h-full w-[300px] shrink-0">
+        <LeftSidebar
+          stocks={stocks}
+          activeView={activeView}
+          selectedStockId={selectedStockId}
+          onSelectStock={onSelectStock}
+          onCreateNew={onCreateNew}
+        />
+      </div>
+
+      {/* 1b. Left Sidebar - Mobile Drawer */}
+      {/* Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Drawer */}
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-50 w-3/4 max-w-sm bg-background border-r shadow-lg transition-transform duration-300 ease-in-out md:hidden",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <LeftSidebar
+          stocks={stocks}
+          activeView={activeView}
+          selectedStockId={selectedStockId}
+          onSelectStock={handleSelectStock}
+          onCreateNew={() => {
+            onCreateNew();
+            setIsMobileMenuOpen(false);
+          }}
+        />
+      </div>
 
       {/* 2. Center Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-background relative">
@@ -122,9 +183,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           <>
             <div className="px-6 py-4 flex items-center justify-between bg-background">
               <div className="flex items-center gap-3">
+                {/* Mobile Hamburger Menu */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden -ml-2"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Icons.Menu className="h-6 w-6" />
+                </Button>
+
                 {headerAction}
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                  <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
                     {headerTitle || 'Dashboard'}
                   </h1>
                   <p className="text-muted-foreground text-xs">
@@ -134,11 +205,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               </div>
 
               {/* Right side: User Profile + Theme Toggle + Action Button */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 {activeView === 'DASHBOARD' && (
-                  <Button onClick={onCreateNew} className="shadow-lg">
-                    <Icons.Plus />
-                    <span className="ml-2">Activate Stock Engine</span>
+                  <Button onClick={onCreateNew} className="shadow-lg h-9 w-9 p-0 md:h-10 md:w-auto md:px-4 rounded-full md:rounded-md">
+                    <Icons.Plus className="h-5 w-5" />
+                    <span className="ml-2 hidden md:inline">Activate Stock Engine</span>
                   </Button>
                 )}
 
