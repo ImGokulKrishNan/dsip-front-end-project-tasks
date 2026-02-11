@@ -1,10 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stock } from '../types';
 import { Icons } from '../constants';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchAllTrackers } from '../store/slices/trackersSlice';
+import {
+   DropdownMenu,
+   DropdownMenuContent,
+   DropdownMenuItem,
+   DropdownMenuSeparator,
+   DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogFooter,
+   DialogHeader,
+   DialogTitle,
+} from '@/components/ui/dialog';
 
 // import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import InfoTooltip from './InfoTooltip';
@@ -17,6 +32,11 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock }) => {
    const dispatch = useAppDispatch();
+
+   // Delete confirmation state
+   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+   const [trackerToDelete, setTrackerToDelete] = useState<{ id: number; symbol: string } | null>(null);
+   const [isDeleting, setIsDeleting] = useState(false);
 
    // Get tracker data from Redux store
    const {
@@ -40,6 +60,37 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
          portfolioSummary,
       });
    }, [trackers, isLoadingTrackers, trackersError, portfolioSummary]);
+
+   // Handle delete tracker
+   const handleDeleteClick = (trackerId: number, symbol: string, e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click
+      setTrackerToDelete({ id: trackerId, symbol });
+      setDeleteDialogOpen(true);
+   };
+
+   const handleDeleteConfirm = async () => {
+      if (!trackerToDelete) return;
+
+      setIsDeleting(true);
+      try {
+         const { deleteTracker } = await import('../lib/api.fetcher');
+         await deleteTracker(trackerToDelete.id);
+
+         // Refresh trackers list
+         dispatch(fetchAllTrackers());
+
+         // Close dialog
+         setDeleteDialogOpen(false);
+         setTrackerToDelete(null);
+
+         console.log('[Dashboard] Tracker deleted successfully:', trackerToDelete.symbol);
+      } catch (error) {
+         console.error('[Dashboard] Failed to delete tracker:', error);
+         alert(`Failed to delete tracker ${trackerToDelete.symbol}. Please try again.`);
+      } finally {
+         setIsDeleting(false);
+      }
+   };
 
    // Calculate portfolio metrics from API data if available, otherwise use hardcoded stocks
    const useApiData = trackers.length > 0;
@@ -84,10 +135,11 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
    });
 
    return (
-      <div className="h-full p-4 md:p-6 space-y-6">
+      <>
+         <div className="h-full p-4 md:p-6 space-y-6">
 
-         {/* Main Content */}
-         <div className="space-y-6">
+            {/* Main Content */}
+            <div className="space-y-6">
 
             {/* Actions are removed as per request. 
             If we need to access them, we might need a dedicated page or a different entry point. 
@@ -219,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                            return (
                               <Card
                                  key={tracker.trackerId}
-                                 className="cursor-pointer hover:bg-accent/50 transition-colors group"
+                                 className="cursor-pointer hover:bg-accent/50 transition-colors group relative"
                                  onClick={() => onSelectStock(tracker.trackerId.toString())}
                               >
                                  <CardContent className="p-4">
@@ -235,7 +287,43 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                                              </span>
                                           </div>
                                        </div>
-                                       {isPaused && <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">Paused</span>}
+                                       <div className="flex items-center gap-2">
+                                          {isPaused && <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">Paused</span>}
+
+                                          {/* 3-Dot Menu */}
+                                          <DropdownMenu>
+                                             <DropdownMenuTrigger asChild>
+                                                <Button
+                                                   variant="ghost"
+                                                   size="sm"
+                                                   className="h-8 w-8 p-0 hover:bg-accent"
+                                                   onClick={(e) => e.stopPropagation()}
+                                                >
+                                                   <Icons.MoreVertical size={16} />
+                                                   <span className="sr-only">Open menu</span>
+                                                </Button>
+                                             </DropdownMenuTrigger>
+                                             <DropdownMenuContent align="end" className="w-48">
+                                                <DropdownMenuItem
+                                                   onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      onSelectStock(tracker.trackerId.toString());
+                                                   }}
+                                                >
+                                                   <Icons.Settings className="mr-2 h-4 w-4" />
+                                                   <span>View Details</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                   className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                                   onClick={(e) => handleDeleteClick(tracker.trackerId, tracker.stockSymbol, e)}
+                                                >
+                                                   <Icons.Trash className="mr-2 h-4 w-4" />
+                                                   <span>Delete Tracker</span>
+                                                </DropdownMenuItem>
+                                             </DropdownMenuContent>
+                                          </DropdownMenu>
+                                       </div>
                                     </div>
                                     <div className="space-y-2 pt-2">
                                        <div className="flex justify-between items-end text-xs">
@@ -345,7 +433,44 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
 
             </div>
          </div>
-      </div>
+         </div>
+
+         {/* Delete Confirmation Dialog */}
+         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+               <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-destructive">
+                     <Icons.AlertTriangle className="w-5 h-5" />
+                     Delete Tracker
+                  </DialogTitle>
+                  <DialogDescription className="pt-2">
+                     Are you sure you want to delete the tracker for <strong>{trackerToDelete?.symbol}</strong>?
+                     <br /><br />
+                     This action cannot be undone. All execution history and configuration will be permanently removed.
+                  </DialogDescription>
+               </DialogHeader>
+               <DialogFooter className="gap-2 sm:gap-0">
+                  <Button
+                     variant="outline"
+                     onClick={() => {
+                        setDeleteDialogOpen(false);
+                        setTrackerToDelete(null);
+                     }}
+                     disabled={isDeleting}
+                  >
+                     Cancel
+                  </Button>
+                  <Button
+                     variant="destructive"
+                     onClick={handleDeleteConfirm}
+                     disabled={isDeleting}
+                  >
+                     {isDeleting ? 'Deleting...' : 'Delete Tracker'}
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
+      </>
    );
 };
 
