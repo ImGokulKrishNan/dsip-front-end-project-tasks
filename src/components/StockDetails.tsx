@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from '../constants';
 import { Stock } from '../types';
-import { useAppSelector } from '../store/hooks';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -55,6 +55,9 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
 };
 
 const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy, showDsipOnly }) => {
+   // Redux dispatch
+   const dispatch = useAppDispatch();
+
    // Get tracker data from Redux store
    const {
       selectedTracker,
@@ -98,10 +101,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    // Get deployment style as text
    const getDeploymentStyleText = () => {
       if (!useApiData || !trackerData) return stock.loadFactor;
+      // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
       const styleMap: Record<number, string> = {
-         0: 'Uniform',
-         1: 'Aggressive',
-         2: 'Conservative',
+         1: 'Gradual',
+         2: 'Moderate',
+         3: 'Aggressive',
       };
       return styleMap[trackerData.deployment_style] || 'Moderate';
    };
@@ -114,6 +118,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
    // Edit Mode State
    const [isEditing, setIsEditing] = useState(false);
+   const [isSaving, setIsSaving] = useState(false);
    const [editConfig, setEditConfig] = useState({
       totalBudget: stock.totalBudget,
       convictionYears: stock.convictionYears,
@@ -126,6 +131,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
    const [showVictoryPopup, setShowVictoryPopup] = useState(false);
    const [showKillSwitchPopup, setShowKillSwitchPopup] = useState(false);
+   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
    // Daily Context Inputs
    const [lockInPct, setLockInPct] = useState<string>('');
@@ -582,7 +588,26 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </div>
                            </div>
                            {!isEditing && (
-                              <Button variant="ghost" size="sm" className="h-7 text-xs px-2.5" onClick={() => setIsEditing(true)}>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs px-2.5" onClick={() => {
+                                 // Initialize edit form with current display values (API or hardcoded)
+                                 // Map displayLoadFactor to correct uppercase format for dropdown
+                                 // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
+                                 const loadFactorMap: Record<string, string> = {
+                                    'Gradual': 'GRADUAL',
+                                    'Moderate': 'MODERATE',
+                                    'Aggressive': 'AGGRESSIVE',
+                                 };
+
+                                 setEditConfig({
+                                    totalBudget: displayTotalBudget,
+                                    convictionYears: displayConvictionYears,
+                                    loadFactor: (loadFactorMap[displayLoadFactor] || displayLoadFactor) as any,
+                                    partitionDays: displayPartitionDays,
+                                    convictionLevel: displayConvictionLevel,
+                                 });
+                                 setValidationErrors({});
+                                 setIsEditing(true);
+                              }}>
                                  Edit
                               </Button>
                            )}
@@ -631,8 +656,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
-                                       value={editConfig.totalBudget}
-                                       onChange={e => setEditConfig({ ...editConfig, totalBudget: Number(e.target.value) })}
+                                       value={editConfig.totalBudget || ''}
+                                       onChange={e => setEditConfig({ ...editConfig, totalBudget: e.target.value === '' ? 0 : Number(e.target.value) })}
+                                       placeholder="Enter total budget"
                                     />
                                  </div>
                                  <div className="space-y-3 md:col-span-2 pt-2 md:pt-0">
@@ -664,12 +690,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        onValueChange={(val: any) => setEditConfig({ ...editConfig, loadFactor: val })}
                                     >
                                        <SelectTrigger className="h-10 md:h-8">
-                                          <SelectValue />
+                                          <SelectValue placeholder="Select load factor" />
                                        </SelectTrigger>
-                                       <SelectContent>
-                                          <SelectItem value="AGGRESSIVE">Aggressive</SelectItem>
-                                          <SelectItem value="MODERATE">Moderate</SelectItem>
-                                          <SelectItem value="GRADUAL">Gradual</SelectItem>
+                                       <SelectContent>   
+                                           <SelectItem value="GRADUAL">Gradual</SelectItem>   
+                                           <SelectItem value="MODERATE">Moderate</SelectItem>                        
+                                           <SelectItem value="AGGRESSIVE">Aggressive</SelectItem>
+                                                                                
+                                         
                                        </SelectContent>
                                     </Select>
                                  </div>
@@ -687,9 +715,92 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                         </div>
 
                         {isEditing && (
-                           <div className="flex gap-2 pt-2">
-                              <Button size="sm" onClick={() => {
-                                 // Validation Logic
+                           <div className="space-y-3 pt-2">
+                              {/* Validation Errors/Info */}
+                              {Object.keys(validationErrors).length > 0 && (
+                                 <div className={`p-3 rounded-lg border ${
+                                    validationErrors['Info']
+                                       ? 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800'
+                                       : 'bg-destructive/10 border-destructive/20'
+                                 }`}>
+                                    <div className={`flex items-start gap-2 ${
+                                       validationErrors['Info']
+                                          ? 'text-blue-700 dark:text-blue-300'
+                                          : 'text-destructive'
+                                    }`}>
+                                       <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                       <div className="space-y-1 text-xs">
+                                          {Object.entries(validationErrors).map(([field, error]) => (
+                                             <p key={field}>{field === 'Info' ? error : <><strong>{field}:</strong> {error}</>}</p>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 </div>
+                              )}
+
+                              <div className="flex gap-2">
+                              <Button
+                                 size="sm"
+                                 disabled={isSaving}
+                                 onClick={async () => {
+                                 // Frontend Validation (matching backend rules)
+                                 const errors: Record<string, string> = {};
+
+                                 // Get current values for comparison
+                                 const currentTotalBudget = displayTotalBudget;
+                                 const currentConvictionYears = displayConvictionYears;
+                                 const currentPartitionDays = displayPartitionDays;
+
+                                 // Rule 1: total_capital_planned can only INCREASE
+                                 if (editConfig.totalBudget < currentTotalBudget) {
+                                    errors['Total Budget'] = `Can only increase (current: ₹${currentTotalBudget.toLocaleString()})`;
+                                 }
+
+                                 // Rule 2: conviction_period_years can only INCREASE
+                                 if (editConfig.convictionYears < currentConvictionYears) {
+                                    errors['Conviction Period'] = `Can only increase (current: ${currentConvictionYears} years)`;
+                                 }
+
+                                 // Rule 3: partition_days can only INCREASE
+                                 if (editConfig.partitionDays < currentPartitionDays) {
+                                    errors['Investment Cycle Length'] = `Can only increase (current: ${currentPartitionDays} days)`;
+                                 }
+
+                                 // Rule 4: base_conviction_score must be 0-100
+                                 if (editConfig.convictionLevel < 0 || editConfig.convictionLevel > 100) {
+                                    errors['Overall Conviction'] = 'Must be between 0-100%';
+                                 }
+
+                                 // If there are validation errors, show them and stop
+                                 if (Object.keys(errors).length > 0) {
+                                    setValidationErrors(errors);
+                                    return;
+                                 }
+
+                                 // Clear validation errors if all pass
+                                 setValidationErrors({});
+
+                                 // Check if any values have actually changed
+                                 const currentLoadFactor = useApiData && trackerData ?
+                                    (['GRADUAL', 'MODERATE', 'AGGRESSIVE'][trackerData.deployment_style - 1] || 'MODERATE') :
+                                    stock.loadFactor;
+
+                                 const hasChanges =
+                                    editConfig.totalBudget !== currentTotalBudget ||
+                                    editConfig.convictionYears !== currentConvictionYears ||
+                                    editConfig.partitionDays !== currentPartitionDays ||
+                                    editConfig.loadFactor !== currentLoadFactor ||
+                                    editConfig.convictionLevel !== displayConvictionLevel;
+
+                                 // If no changes, show info message and exit
+                                 if (!hasChanges) {
+                                    setValidationErrors({
+                                       'Info': 'No changes detected. Please update at least one value to save.'
+                                    });
+                                    return;
+                                 }
+
+                                 // Legacy validation for warning modal
                                  const isSafe =
                                     editConfig.totalBudget >= stock.totalBudget &&
                                     editConfig.convictionYears >= stock.convictionYears &&
@@ -697,13 +808,51 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     editConfig.loadFactor === stock.loadFactor &&
                                     editConfig.convictionLevel === stock.convictionLevel;
 
-                                 if (isSafe) {
+                                 if (isSafe || useApiData) {
+                                    // If using API data, call the update API
+                                    if (useApiData && trackerData?.trackerId) {
+                                       setIsSaving(true);
+                                       try {
+                                          const { updateTracker } = await import('../lib/api.fetcher');
+
+                                          // Map loadFactor to deployment_style number
+                                          // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
+                                          const deploymentStyleMap: Record<string, number> = {
+                                             'GRADUAL': 1,
+                                             'MODERATE': 2,
+                                             'AGGRESSIVE': 3,
+                                          };
+
+                                          await updateTracker(trackerData.trackerId, {
+                                             total_capital_planned: editConfig.totalBudget,
+                                             conviction_period_years: editConfig.convictionYears,
+                                             partition_days: editConfig.partitionDays,
+                                             deployment_style: deploymentStyleMap[editConfig.loadFactor] ?? 1,
+                                             base_conviction_score: editConfig.convictionLevel,
+                                          });
+
+                                          // Refresh tracker data
+                                          const { fetchTrackerDetails } = await import('../store/slices/trackersSlice');
+                                          dispatch(fetchTrackerDetails(trackerData.trackerId));
+
+                                          console.log('[StockDetails] Tracker updated successfully');
+                                       } catch (error) {
+                                          console.error('[StockDetails] Failed to update tracker:', error);
+                                          alert('Failed to update tracker. Please try again.');
+                                          return;
+                                       } finally {
+                                          setIsSaving(false);
+                                       }
+                                    }
+
                                     onUpdate({ ...stock, ...editConfig });
                                     setIsEditing(false);
                                  } else {
                                     setShowWarning(true);
                                  }
-                              }}>Save Changes</Button>
+                              }}>
+                                 {isSaving ? 'Saving...' : 'Save Changes'}
+                              </Button>
                               <Button size="sm" variant="ghost" onClick={() => {
                                  setEditConfig({
                                     totalBudget: stock.totalBudget,
@@ -712,8 +861,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     partitionDays: stock.partitionDays,
                                     convictionLevel: stock.convictionLevel
                                  });
+                                 setValidationErrors({});
                                  setIsEditing(false);
                               }}>Cancel</Button>
+                           </div>
                            </div>
                         )}
                      </CardContent>
