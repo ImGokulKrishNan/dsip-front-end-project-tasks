@@ -976,7 +976,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            <div className="space-y-1 p-4 md:p-3 rounded-lg bg-gradient-to-br from-blue-500/5 to-blue-600/10 border border-blue-500/10 shadow-sm">
                               <div className="flex items-center gap-2 text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                                  <Icons.TrendingUp size={12} className="text-blue-500" />
-                                 Current Value
+                                 Invested Amount
                               </div>
                               <div className="text-2xl md:text-xl font-black tracking-tight text-foreground">
                                  ₹{((totalShares * stock.currentPrice)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -1018,7 +1018,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            <div className="flex justify-between items-center">
                               <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
                                  <Icons.Target size={14} className="text-cyan-500" />
-                                 Investment Progress
+                                 Deployment Progress
                               </h3>
                               <span className="text-xs font-mono font-medium text-muted-foreground">
                                  {((currentCycle / totalCycles) * 100).toFixed(1)}% Complete
@@ -1176,9 +1176,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           </Badge>
                                        </div>
 
-                                       {/* Phase Info */}
+                                       {/* Current Cycle Info */}
                                        <p className="text-sm text-slate-400 font-mono">
-                                          Phase {partitionDetails?.partition_index || (selectedPartition + 1)} • {partitionDetails?.expected_days || displayPartitionDays} days
+                                          Current Cycle {partitionDetails?.partition_index || (selectedPartition + 1)} • {partitionDetails?.expected_days || displayPartitionDays} days
                                        </p>
                                     </div>
                                  </div>
@@ -1204,33 +1204,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                              </div>
                                           </div>
 
-                                          {/* Avg Buy Price */}
-                                          <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800">
-                                             <div className="flex items-center gap-2 text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
-                                                <Icons.Target size={14} />
-                                                Avg Buy Price
-                                             </div>
-                                             <div className="text-3xl font-black text-white tracking-tight">
-                                                ₹{partitionDetails?.capital_deployed && partitionDetails?.shares_bought
-                                                   ? (partitionDetails.capital_deployed / partitionDetails.shares_bought).toFixed(2)
-                                                   : '0.00'
-                                                }
-                                             </div>
-                                          </div>
 
-                                          {/* Current Value */}
-                                          <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800">
-                                             <div className="flex items-center gap-2 text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
-                                                <Icons.TrendUp size={14} />
-                                                End Price
-                                             </div>
-                                             <div className="text-3xl font-black text-white tracking-tight">
-                                                ₹{partitionDetails?.current_market_value && partitionDetails?.shares_bought
-                                                   ? (partitionDetails.current_market_value / partitionDetails.shares_bought).toFixed(2)
-                                                   : '0.00'
-                                                }
-                                             </div>
-                                          </div>
+
+
 
                                           {/* Net Return */}
                                           <div className={`p-4 rounded-2xl border ${(partitionDetails?.net_profit_percentage || 0) >= 0
@@ -1252,10 +1228,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                                        {/* Additional Details */}
                                        <div className="space-y-3 pt-2">
-                                          <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
-                                             <span className="text-sm text-slate-400">Phase</span>
-                                             <span className="text-sm font-semibold text-white">Phase {partitionDetails?.partition_index || 1}</span>
-                                          </div>
+                                          {partitionDetails?.end_date && (
+                                             <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
+                                                <span className="text-sm text-slate-400">End Date</span>
+                                                <span className="text-sm font-semibold text-white font-mono">
+                                                   {new Date(partitionDetails.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </span>
+                                             </div>
+                                          )}
                                           <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
                                              <span className="text-sm text-slate-400">Days Active</span>
                                              <span className="text-sm font-semibold text-white">{partitionDetails?.expected_days || displayPartitionDays} days</span>
