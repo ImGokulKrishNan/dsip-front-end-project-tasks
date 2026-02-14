@@ -507,3 +507,71 @@ export async function syncTrackerData(data: {
   throw new Error(response.message || 'Failed to sync tracker data');
 }
 
+// ============================================================================
+// 10. Get Investment Recommendation
+// ============================================================================
+
+/**
+ * Get daily investment recommendation with calculation breakdown
+ *
+ * @param trackerId - The ID of the tracker
+ * @param lockInPct - Lock-in percentage (e.g., -5.0 for 5% below previous close)
+ * @returns Recommendation with breakdown and signals
+ *
+ * @example
+ * ```ts
+ * const recommendation = await getRecommendation(1, -5.0);
+ * console.log(`Recommended amount: $${recommendation.recommended_amount}`);
+ * console.log(`Opportunity multiplier: ${recommendation.breakdown.opportunity_multiplier}x`);
+ * ```
+ */
+export async function getRecommendation(
+  trackerId: number,
+  lockInPct: number
+): Promise<{
+  tracker_id: number;
+  recommended_amount: number;
+  breakdown: {
+    neutral_capital: number;
+    opportunity_multiplier: number;
+    contingency_multiplier: number;
+    final_multiplier: number;
+  };
+  signals: {
+    avg_holding_price: number;
+    avg_deviation_pct: number;
+    avg_signal: number;
+    lock_in_pct: number;
+    lock_in_signal: number;
+    raw_opportunity_signal: number;
+    conviction_amplifier: number;
+    is_abnormal_dip: boolean;
+  };
+  partition_status: {
+    partition_index: number;
+    partition_progress_pct: number;
+    return_progress_pct: number;
+    growth_persistence_pct: number;
+    time_progress_pct: number;
+    capital_progress_pct: number;
+    capital_deployed: number;
+    capital_remaining: number;
+    cumulative_return_pct: number;
+  };
+}> {
+  const response = await apiRequestPromise<any>(
+    `/api/dsip-trackers/${trackerId}/recommendation?lock_in_pct=${lockInPct}`,
+    undefined,
+    {
+      method: 'GET',
+    }
+  );
+
+  if (response.status === 'success') {
+    return response.data;
+  }
+
+  throw new Error(response.message || 'Failed to get recommendation');
+}
+
+

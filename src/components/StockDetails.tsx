@@ -137,8 +137,41 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [lockInPct, setLockInPct] = useState<string>('');
    const [convictionOverride, setConvictionOverride] = useState<number[]>([50]); // 50 means neutral (1.0x)
 
-   // Calculated Recommendation (Mock)
-   const [recommendation, setRecommendation] = useState<{ amount: number; price: number; shares: number } | null>(null);
+   // Calculated Recommendation from API
+   type RecommendationResponse = {
+      tracker_id: number;
+      recommended_amount: number;
+      breakdown: {
+         neutral_capital: number;
+         opportunity_multiplier: number;
+         contingency_multiplier: number;
+         final_multiplier: number;
+      };
+      signals: {
+         avg_holding_price: number;
+         avg_deviation_pct: number;
+         avg_signal: number;
+         lock_in_pct: number;
+         lock_in_signal: number;
+         raw_opportunity_signal: number;
+         conviction_amplifier: number;
+         is_abnormal_dip: boolean;
+      };
+      partition_status: {
+         partition_index: number;
+         partition_progress_pct: number;
+         return_progress_pct: number;
+         growth_persistence_pct: number;
+         time_progress_pct: number;
+         capital_progress_pct: number;
+         capital_deployed: number;
+         capital_remaining: number;
+         cumulative_return_pct: number;
+      };
+   };
+   const [recommendation, setRecommendation] = useState<RecommendationResponse | null>(null);
+   const [isCalculating, setIsCalculating] = useState(false);
+   const [calculationError, setCalculationError] = useState<string | null>(null);
 
    // Final Confirmation Inputs
    const [executedAmount, setExecutedAmount] = useState<string>('');
@@ -229,26 +262,38 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const cycleLength = displayPartitionDays;
    const daysRemaining = cycleLength - (daysInvested % cycleLength);
 
-   const performCalculation = () => {
-      // Mock Calculation Logic based on spec
-      // In reality, this would call the "Daily Calculation API"
-      const refPrice = stock.currentPrice * (1 + (Number(lockInPct) / 100)); // Apply lock-in context
-      const baseAmount = stock.totalBudget / (stock.convictionYears * 250); // Daily spread roughly
+   const performCalculation = async () => {
+      setIsCalculating(true);
+      setCalculationError(null);
 
-      // Confidence Logic: 0 -> 0x, 50 -> 1x, 100 -> 2x
-      const confidenceFactor = (convictionOverride[0] - 50) / 50;
-      const adjustedAmount = Math.round(baseAmount * (1 + confidenceFactor));
+      try {
+         // Get tracker ID from Redux state
+         const trackerId = trackerData?.trackerId;
+         if (!trackerId) {
+            throw new Error('No tracker selected. Please select a tracker first.');
+         }
 
-      setRecommendation({
-         amount: Math.max(500, adjustedAmount), // Min floor
-         price: refPrice,
-         shares: adjustedAmount / refPrice
-      });
-      setExecutionState('CALCULATED');
+         const lockIn = Number(lockInPct);
+         if (isNaN(lockIn) || lockInPct === '') {
+            throw new Error('Please enter a valid lock-in percentage');
+         }
 
-      // Pre-fill confirmation inputs for UX convenience
-      setExecutedAmount(Math.max(500, adjustedAmount).toString());
-      setExecutionPrice(refPrice.toFixed(2));
+         // Import and call the API
+         const { getRecommendation } = await import('../lib/api.fetcher');
+         const result = await getRecommendation(trackerId, lockIn);
+         
+         setRecommendation(result);
+         setExecutionState('CALCULATED');
+
+         // Pre-fill confirmation inputs for UX convenience
+         setExecutedAmount(result.recommended_amount.toString());
+         setExecutionPrice(result.signals.avg_holding_price.toFixed(2));
+      } catch (error: any) {
+         setCalculationError(error.message || 'Failed to calculate recommendation');
+         setExecutionState('IDLE');
+      } finally {
+         setIsCalculating(false);
+      }
    };
 
    const handleCalculate = () => {
@@ -422,10 +467,19 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  size="sm"
                                  className="py-2 flex-1 h-16 md:h-9 text-base md:text-sm font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
                                  onClick={handleCalculate}
-                                 disabled={!lockInPct}
+                                 disabled={!lockInPct || isCalculating}
                               >
-                                 <Icons.TrendUp className="mr-2 w-5 h-5 md:w-4 md:h-4" />
-                                 Calculate Order
+                                 {isCalculating ? (
+                                    <>
+                                       <Icons.Refresh className="mr-2 w-5 h-5 md:w-4 md:h-4 animate-spin" />
+                                       Calculating...
+                                    </>
+                                 ) : (
+                                    <>
+                                       <Icons.TrendUp className="mr-2 w-5 h-5 md:w-4 md:h-4" />
+                                       Calculate Order
+                                    </>
+                                 )}
                               </Button>
                               
                               <Button
@@ -441,6 +495,16 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                      </Card>
                   )}
 
+                  {/* Error Display */}
+                  {calculationError && (
+                     <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+                        <div className="flex items-start gap-2">
+                           <Icons.AlertCircle size={14} className="mt-0.5 shrink-0" />
+                           <span>{calculationError}</span>
+                        </div>
+                     </div>
+                  )}
+
                   {executionState === 'CALCULATED' && recommendation && (
                      <Card className="border-l-4 border-l-emerald-500 shadow-xl animate-in fade-in zoom-in-95 duration-300">
                         <CardHeader className="bg-emerald-500/5 pb-3">
@@ -454,26 +518,26 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               <div className="space-y-1">
                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Recommended Amount</p>
                                  <div className="text-4xl font-black text-foreground tracking-tight">
-                                    ₹{recommendation.amount.toLocaleString()}
+                                    ₹{recommendation.recommended_amount.toLocaleString()}
                                  </div>
                                  <p className="text-xs text-muted-foreground flex items-center gap-2 leading-tight">
-                                    <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-medium">Ref Price: ₹{recommendation.price.toFixed(2)}</span>
-                                    <span>~ {recommendation.shares.toFixed(2)} shares</span>
+                                    <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-medium">Ref Price: ₹{recommendation.signals.avg_holding_price.toFixed(2)}</span>
+                                    <span>~ {(recommendation.recommended_amount / recommendation.signals.avg_holding_price).toFixed(2)} shares</span>
                                  </p>
                               </div>
 
                               <div className="border rounded-lg p-3.5 bg-muted/30 space-y-2">
                                  <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground text-xs">New Projected Avg</span>
-                                    <span className="font-bold">₹{((totalInvested + recommendation.amount) / (totalShares + recommendation.shares)).toFixed(2)}</span>
+                                    <span className="font-bold">₹{((totalInvested + recommendation.recommended_amount) / (totalShares + (recommendation.recommended_amount / recommendation.signals.avg_holding_price))).toFixed(2)}</span>
                                  </div>
                                  <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground text-xs">Remaining in Cycle</span>
-                                    <span className="font-bold">₹{(stock.totalBudget / 4 - stock.deployedAmount % (stock.totalBudget / 4)).toLocaleString()}</span>
+                                    <span className="font-bold">₹{recommendation.partition_status.capital_remaining.toLocaleString()}</span>
                                  </div>
                                  <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground text-xs">Cycle Days Left</span>
-                                    <span className="font-bold">{daysRemaining - 1}</span>
+                                    <span className="font-bold">{trackerData ? Math.ceil((100 - recommendation.partition_status.time_progress_pct) * trackerData.partition_days / 100) : 'N/A'}</span>
                                  </div>
                               </div>
                            </div>
