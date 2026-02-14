@@ -14,6 +14,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { syncTrackerData } from '../lib/api.fetcher';
+import { fetchTrackerDetails } from '../store/slices/trackersSlice';
+import { useToast } from '@/hooks/use-toast';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -57,6 +60,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   // Sync Feature State
   const [showSyncPopup, setShowSyncPopup] = useState(false);
   const [syncForm, setSyncForm] = useState({ totalInvested: '', totalShares: '' });
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -91,34 +97,67 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     setIsMobileMenuOpen(false);
   };
 
-  const handleSync = () => {
-    const selectedStock = stocks.find(s => s.id === selectedStockId);
-    if (!selectedStock) return;
-
+  const handleSync = async () => {
     const userInvested = Number(syncForm.totalInvested);
     const userShares = Number(syncForm.totalShares);
 
-    if (!userInvested || !userShares) return;
+    if (!userInvested || !userShares) {
+      return;
+    }
 
-    // Independent Calculation for SIP Quantity (Re-calculated here as we are in MainLayout)
-    const sipQuantity = selectedStock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
+    // Get tracker ID from Redux state
+    const trackerId = selectedTracker?.tracker?.trackerId;
+    
+    if (!trackerId) {
+      setSyncError('No tracker selected. Please select a tracker first.');
+      return;
+    }
 
-    // Reverse Engineer Base Holdings
-    // Total = Base + Cycle(SIPs)
-    // Base = Total - Cycle
+    setIsSyncing(true);
+    setSyncError(null);
 
-    const newBaseQty = userShares - sipQuantity;
-    // Avoiding divide by zero if user clears out positions (unlikely but safe)
-    const newBaseAvg = newBaseQty > 0 ? (userInvested - selectedStock.deployedAmount) / newBaseQty : 0;
+    try {
+      // Call the sync API
+      const result = await syncTrackerData({
+        tracker_id: trackerId,
+        current_total_shares: userShares,
+        current_total_invested_amount: userInvested,
+        reason: 'Manual sync from broker statement', // Hardcoded reason
+      });
 
-    onUpdateStock({
-      ...selectedStock,
-      quantityOwned: newBaseQty,
-      averagePriceOwned: newBaseAvg
-    });
+      if (result.success) {
+        // Show success toast
+        toast({
+          title: 'Sync Successful',
+          description: result.message,
+          variant: 'default',
+        });
 
-    setShowSyncPopup(false);
-    setSyncForm({ totalInvested: '', totalShares: '' });
+        // Refresh tracker details to get updated data
+        dispatch(fetchTrackerDetails(trackerId));
+
+        // Close popup and reset form
+        setShowSyncPopup(false);
+        setSyncForm({ totalInvested: '', totalShares: '' });
+      } else {
+        setSyncError(result.message || 'Sync failed');
+        toast({
+          title: 'Sync Failed',
+          description: result.message || 'Unable to sync portfolio data',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sync portfolio data';
+      setSyncError(errorMessage);
+      toast({
+        title: 'Sync Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // Calculate Global Stats
@@ -439,12 +478,35 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     </div>
                   </div>
                 )}
+
+                {/* Error Message */}
+                {syncError && (
+                  <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+                    <div className="flex items-start gap-2">
+                      <Icons.AlertCircle size={14} className="mt-0.5 shrink-0" />
+                      <span>{syncError}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setShowSyncPopup(false)}>Cancel</Button>
-                <Button onClick={handleSync} disabled={!syncForm.totalInvested || !syncForm.totalShares}>
-                  Update Portfolio
+                <Button variant="ghost" onClick={() => {
+                  setShowSyncPopup(false);
+                  setSyncError(null);
+                }}>Cancel</Button>
+                <Button 
+                  onClick={handleSync} 
+                  disabled={!syncForm.totalInvested || !syncForm.totalShares || isSyncing}
+                >
+                  {isSyncing ? (
+                    <>
+                      <Icons.Refresh className="mr-2 h-4 w-4 animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    'Update Portfolio'
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>

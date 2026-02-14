@@ -454,3 +454,56 @@ export async function getTrackerExecutions(
 
   throw new Error(response.message || 'Failed to fetch tracker executions');
 }
+
+// ============================================================================
+// 9. Sync Tracker Data
+// ============================================================================
+
+/**
+ * Syncs tracker data with external holdings (e.g., from broker)
+ * Updates initial holdings to match current total holdings
+ *
+ * @param data - Sync request data
+ * @returns Sync response with updated values
+ *
+ * @example
+ * ```ts
+ * const result = await syncTrackerData({
+ *   tracker_id: 1,
+ *   current_total_shares: 150.5,
+ *   current_total_invested_amount: 75000,
+ *   reason: 'Manual sync from broker statement'
+ * });
+ * console.log(`Sync ${result.success ? 'successful' : 'failed'}`);
+ * console.log(result.message);
+ * ```
+ */
+export async function syncTrackerData(data: {
+  tracker_id: number;
+  current_total_shares: number;
+  current_total_invested_amount: number;
+  reason?: string;
+}): Promise<{
+  success: boolean;
+  message: string;
+  dsip_shares?: number;
+  dsip_capital_deployed?: number;
+  total_shares?: number;
+  total_invested_amount?: number;
+}> {
+  const response = await apiRequestPromise<any>(
+    '/api/dsip/sync',
+    data,
+    {
+      method: 'POST',
+      isJSON: true,
+    }
+  );
+
+  if (response.status === 'success') {
+    return response.data;
+  }
+
+  throw new Error(response.message || 'Failed to sync tracker data');
+}
+
