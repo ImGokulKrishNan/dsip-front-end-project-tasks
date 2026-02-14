@@ -483,8 +483,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 {syncError && (
                   <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
                     <div className="flex items-start gap-2">
-                      <Icons.AlertCircle size={14} className="mt-0.5 shrink-0" />
-                      <span>{syncError}</span>
+                      <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />
+                      <div className="flex-1 space-y-1">
+                        <p className="font-semibold">Sync Error</p>
+                        <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">{syncError}</p>
+                      </div>
                     </div>
                   </div>
                 )}

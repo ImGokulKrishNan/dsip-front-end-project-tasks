@@ -505,7 +505,11 @@ export async function syncTrackerData(data: {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to sync tracker data');
+  // Extract detailed error message from response data if available
+  const errorData = response.data as any;
+  const detailedMessage = errorData?.message || response.message || 'Failed to sync tracker data';
+  
+  throw new Error(detailedMessage);
 }
 
 // ============================================================================
