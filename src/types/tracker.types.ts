@@ -159,13 +159,12 @@ export interface GetTrackerDetailsResponse {
 }
 
 export interface ExecuteTradeResponse {
-  executionId: number;
-  trackerId: number;
-  partitionId: number;
-  sharesBought: number;
-  newTotalShares: number;
-  newTotalCapitalInvested: number;
-  message: string;
+  status: 'EXECUTED';
+  code: 'SUCCESS' | 'ONGOING' | 'KILL_SWITCH_STAGNATION' | 'KILL_SWITCH_POOR_GROWTH' | 'NEUTRAL_PARTITION';
+  title?: string;
+  message?: string;
+  deployed_amount: number;
+  profit_pct: number;
 }
 
 export interface StockPrice {
@@ -178,6 +177,12 @@ export interface StockPrice {
 
 export interface DeleteTrackerResponse {
   message: string;
+}
+
+export interface EndActionResponse {
+  action: 'ALREADY_PROCESSED' | 'PARTITION_ENDED';
+  message: string;
+  partition_index: number;
 }
 
 // ============================================================================

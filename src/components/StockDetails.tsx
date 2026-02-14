@@ -119,6 +119,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    // Edit Mode State
    const [isEditing, setIsEditing] = useState(false);
    const [isSaving, setIsSaving] = useState(false);
+   const [isConfirming, setIsConfirming] = useState(false);
    const [editConfig, setEditConfig] = useState({
       totalBudget: stock.totalBudget,
       convictionYears: stock.convictionYears,
@@ -131,11 +132,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
    const [showVictoryPopup, setShowVictoryPopup] = useState(false);
    const [showKillSwitchPopup, setShowKillSwitchPopup] = useState(false);
+   const [confirmError, setConfirmError] = useState<string | null>(null);
    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
    // Daily Context Inputs
    const [lockInPct, setLockInPct] = useState<string>('');
-   const [convictionOverride, setConvictionOverride] = useState<number[]>([50]); // 50 means neutral (1.0x)
+   // Initialize with base_conviction_score from tracker data, default to 50 if not available
+   const [convictionOverride, setConvictionOverride] = useState<number[]>(
+      trackerData?.base_conviction_score ? [trackerData.base_conviction_score] : [50]
+   );
 
    // Calculated Recommendation from API
    type RecommendationResponse = {
@@ -286,8 +291,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
          setExecutionState('CALCULATED');
 
          // Pre-fill confirmation inputs for UX convenience
+         // Actual Invested Amount is auto-filled from recommendation
          setExecutedAmount(result.recommended_amount.toString());
-         setExecutionPrice(result.signals.avg_holding_price.toFixed(2));
+         // Execution Price will be blank for user to fill
+         setExecutionPrice('');
       } catch (error: any) {
          setCalculationError(error.message || 'Failed to calculate recommendation');
          setExecutionState('IDLE');
@@ -317,35 +324,93 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
 
 
-   const handleConfirm = () => {
-      // Mock Execution API
-      const newTx = {
-         date: new Date().toISOString(),
-         amount: Number(executedAmount),
-         price: Number(executionPrice),
-         type: 'SIP' as const
-      };
+   const handleConfirm = async () => {
+      setIsConfirming(true);
+      setConfirmError(null);
 
-      const updatedStock = {
-         ...stock,
-         deployedAmount: stock.deployedAmount + newTx.amount,
-         daysInvested: (stock.daysInvested || 0) + 1,
-         history: [...stock.history, newTx]
-      };
+      try {
+         // Validate inputs
+         const trackerId = trackerData?.trackerId;
+         const partitionIndex = trackerData?.active_partition_index;
+         
+         if (!trackerId || !partitionIndex) {
+            throw new Error('Missing tracker or partition information');
+         }
 
-      onUpdate(updatedStock);
-      setExecutionState('IDLE');
-      setLockInPct('');
-      setConvictionOverride([50]);
-      setRecommendation(null);
+         const amount = Number(executedAmount);
+         const price = Number(executionPrice);
+         const lockInPercentage = Number(lockInPct);
+         const conviction = convictionOverride[0];
 
-      // Victory Check: If this completes a partition cycle
-      // (daysInvested + 1 because we just added one, but local var isn't updated same tick, so check newDaysInvested)
-      const newDaysInvested = (stock.daysInvested || 0) + 1;
-      if (newDaysInvested % stock.partitionDays === 0) {
-         setShowVictoryPopup(true);
-      } else {
-         setShowSuccessPopup(true);
+         if (isNaN(amount) || amount <= 0) {
+            throw new Error('Please enter a valid invested amount');
+         }
+
+         if (isNaN(price) || price <= 0) {
+            throw new Error('Please enter a valid execution price');
+         }
+
+         if (isNaN(lockInPercentage)) {
+            throw new Error('Please enter a valid lock-in percentage');
+         }
+
+         // Call the execute trade API
+         const { executeTrade } = await import('../lib/api.fetcher');
+         const result = await executeTrade(trackerId, {
+            lock_in_percentage: lockInPercentage,
+            conviction_override: conviction,
+            executed_amount: amount,
+            execution_price: price,
+         });
+
+         console.log('[Execute Trade Response]', result);
+
+         // Reset form state
+         setExecutionState('IDLE');
+         setLockInPct('');
+         setConvictionOverride(trackerData?.base_conviction_score ? [trackerData.base_conviction_score] : [50]);
+         setRecommendation(null);
+         setExecutedAmount('');
+         setExecutionPrice('');
+
+         // Handle the response scenarios based on code
+         if (result.code === 'SUCCESS' || result.code === 'ONGOING') {
+            // SUCCESS or ONGOING: Show Order Executed popup immediately
+            setShowSuccessPopup(true);
+         } else if (result.code === 'KILL_SWITCH_STAGNATION' || result.code === 'KILL_SWITCH_POOR_GROWTH' || result.code === 'NEUTRAL_PARTITION') {
+            // KILL_SWITCH_* or NEUTRAL_PARTITION: Show alert with response details, then call endPartitionAction
+            if (result.title && result.message) {
+               const shouldEndPartition = window.confirm(
+                  `${result.title}\n\n${result.message}\n\nCapital Deployed: ₹${result.deployed_amount.toLocaleString()}\nNet Return: ${result.profit_pct}%\n\nClick OK to acknowledge and end this partition.`
+               );
+
+               if (shouldEndPartition) {
+                  // Call end-action API to finalize the partition
+                  const { endPartitionAction } = await import('../lib/api.fetcher');
+                  await endPartitionAction(trackerId, partitionIndex);
+                  console.log('[Partition Ended]');
+                  
+                  // Show appropriate popup based on code
+                  if (result.code === 'KILL_SWITCH_STAGNATION' || result.code === 'KILL_SWITCH_POOR_GROWTH') {
+                     setShowKillSwitchPopup(true);
+                  } else if (result.code === 'NEUTRAL_PARTITION') {
+                     setShowSuccessPopup(true);
+                  }
+               }
+            }
+         } else {
+            // Fallback: Show success popup for any unknown response
+            setShowSuccessPopup(true);
+         }
+
+         // Refresh tracker details to get updated data
+         // This will be handled by Redux if you have the action set up
+         // For now, we'll rely on the parent component to refresh
+      } catch (error: any) {
+         console.error('[Confirm Error]', error);
+         setConfirmError(error.message || 'Failed to confirm execution');
+      } finally {
+         setIsConfirming(false);
       }
    };
 
@@ -561,52 +626,80 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                      </Card>
                   )}
 
-                  {executionState === 'CONFIRMING' && recommendation && (
-                     <Card className="border-2 border-primary shadow-2xl animate-in slide-in-from-right-4 duration-300">
-                        <CardHeader className="border-b bg-muted/20 pb-3">
-                           <CardTitle className="text-lg">Final Confirmation</CardTitle>
-                           <CardDescription className="text-xs">Enter the actual executed values from your broker.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-6 space-y-5 p-5">
+                   {executionState === 'CONFIRMING' && recommendation && (
+                      <Card className="border-2 border-primary shadow-2xl animate-in slide-in-from-right-4 duration-300">
+                         <CardHeader className="border-b bg-muted/20 pb-3">
+                            <CardTitle className="text-lg">Final Confirmation</CardTitle>
+                            <CardDescription className="text-xs">Enter the actual executed values from your broker.</CardDescription>
+                         </CardHeader>
+                         <CardContent className="pt-6 space-y-5 p-5">
 
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                              <div className="space-y-2">
-                                 <Label className="text-sm font-semibold">Actual Invested Amount (₹)</Label>
-                                 <Input
-                                    type="number"
-                                    className="h-11 md:h-10 text-lg font-semibold bg-background"
-                                    value={executedAmount}
-                                    onChange={e => setExecutedAmount(e.target.value)}
-                                 />
-                              </div>
-                              <div className="space-y-2">
-                                 <Label className="text-sm font-semibold">Execution Price (₹)</Label>
-                                 <Input
-                                    type="number"
-                                    step="0.05"
-                                    className="h-11 md:h-10 text-lg font-semibold bg-background"
-                                    value={executionPrice}
-                                    onChange={e => setExecutionPrice(e.target.value)}
-                                 />
-                              </div>
-                           </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                               <div className="space-y-2">
+                                  <Label className="text-sm font-semibold">Actual Invested Amount (₹)</Label>
+                                  <Input
+                                     type="number"
+                                     className="h-11 md:h-10 text-lg font-semibold bg-background"
+                                     value={executedAmount}
+                                     onChange={e => setExecutedAmount(e.target.value)}
+                                     disabled={isConfirming}
+                                  />
+                               </div>
+                               <div className="space-y-2">
+                                  <Label className="text-sm font-semibold">Execution Price (₹)</Label>
+                                  <Input
+                                     type="number"
+                                     step="0.05"
+                                     className="h-11 md:h-10 text-lg font-semibold bg-background"
+                                     value={executionPrice}
+                                     onChange={e => setExecutionPrice(e.target.value)}
+                                     disabled={isConfirming}
+                                  />
+                               </div>
+                            </div>
 
-                           <div className="flex flex-col md:flex-row gap-3 pt-2">
-                              <Button
-                                 size="default"
-                                 className="flex-1 h-11 font-semibold shadow-lg"
-                                 onClick={handleConfirm}
-                              >
-                                 <Icons.Check className="mr-2 w-4 h-4" /> Confirm & Record
-                              </Button>
-                              <Button variant="ghost" size="default" className="h-11 w-full md:w-auto px-4" onClick={() => setExecutionState('CALCULATED')}>
-                                 Cancel
-                              </Button>
-                           </div>
+                            {/* Error Display */}
+                            {confirmError && (
+                               <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+                                  <div className="flex items-start gap-2">
+                                     <Icons.AlertCircle size={14} className="mt-0.5 shrink-0" />
+                                     <span>{confirmError}</span>
+                                  </div>
+                               </div>
+                            )}
 
-                        </CardContent>
-                     </Card>
-                  )}
+                            <div className="flex flex-col md:flex-row gap-3 pt-2">
+                               <Button
+                                  size="default"
+                                  className="flex-1 h-11 font-semibold shadow-lg"
+                                  onClick={handleConfirm}
+                                  disabled={isConfirming || !executedAmount || !executionPrice}
+                               >
+                                  {isConfirming ? (
+                                     <>
+                                        <Icons.Refresh className="mr-2 w-4 h-4 animate-spin" />
+                                        Confirming...
+                                     </>
+                                  ) : (
+                                     <>
+                                        <Icons.Check className="mr-2 w-4 h-4" /> Confirm & Record
+                                     </>
+                                  )}
+                               </Button>
+                               <Button 
+                                  variant="ghost" 
+                                  size="default" 
+                                  className="h-11 w-full md:w-auto px-4" 
+                                  onClick={() => setExecutionState('CALCULATED')}
+                                  disabled={isConfirming}
+                               >
+                                  Cancel
+                               </Button>
+                            </div>
+
+                         </CardContent>
+                      </Card>
+                   )}
 
                </div>
 

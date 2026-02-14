@@ -22,6 +22,7 @@ import type {
   StockPrice,
   DeleteTrackerResponse,
   Execution,
+  EndActionResponse,
 } from '../types/tracker.types';
 
 // ============================================================================
@@ -572,6 +573,45 @@ export async function getRecommendation(
   }
 
   throw new Error(response.message || 'Failed to get recommendation');
+}
+
+// ============================================================================
+// 11. End Partition Action
+// ============================================================================
+
+/**
+ * Manually end a partition action
+ * This is called after confirming and recording an execution
+ *
+ * @param trackerId - The ID of the tracker
+ * @param partitionIndex - The partition index to end
+ * @returns End action response with status and end reason
+ *
+ * @example
+ * ```ts
+ * const result = await endPartitionAction(1, 3);
+ * if (result.end_reason === 'SUCCESS') {
+ *   console.log('Partition completed successfully!');
+ * }
+ * ```
+ */
+export async function endPartitionAction(
+  trackerId: number,
+  partitionIndex: number
+): Promise<EndActionResponse> {
+  const response = await apiRequestPromise<EndActionResponse>(
+    `/api/dsip-trackers/end-action?trackerId=${trackerId}&partitionIndex=${partitionIndex}`,
+    undefined,
+    {
+      method: 'POST',
+    }
+  );
+
+  if (response.status === 'success') {
+    return response.data;
+  }
+
+  throw new Error(response.message || 'Failed to end partition action');
 }
 
 
