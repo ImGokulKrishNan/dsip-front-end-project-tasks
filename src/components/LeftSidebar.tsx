@@ -103,7 +103,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     <div className="flex justify-between items-end">
                       <div>
                         <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider block">Invested</span>
-                        <span className="text-xs font-mono font-medium">₹{stock.deployedAmount.toLocaleString()}</span>
+                        <span className="text-xs font-mono font-medium">${stock.deployedAmount.toLocaleString()}</span>
                       </div>
                       <span className={cn(
                         "text-[10px] font-bold px-1.5 py-0.5 rounded-sm",

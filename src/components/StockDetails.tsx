@@ -286,7 +286,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
          // Import and call the API
          const { getRecommendation } = await import('../lib/api.fetcher');
          const result = await getRecommendation(trackerId, lockIn);
-         
+
          setRecommendation(result);
          setExecutionState('CALCULATED');
 
@@ -332,7 +332,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
          // Validate inputs
          const trackerId = trackerData?.trackerId;
          const partitionIndex = trackerData?.active_partition_index;
-         
+
          if (!trackerId || !partitionIndex) {
             throw new Error('Missing tracker or partition information');
          }
@@ -381,7 +381,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
             // KILL_SWITCH_* or NEUTRAL_PARTITION: Show alert with response details, then call endPartitionAction
             if (result.title && result.message) {
                const shouldEndPartition = window.confirm(
-                  `${result.title}\n\n${result.message}\n\nCapital Deployed: ₹${result.deployed_amount.toLocaleString()}\nNet Return: ${result.profit_pct}%\n\nClick OK to acknowledge and end this partition.`
+                  `${result.title}\n\n${result.message}\n\nCapital Deployed: $${result.deployed_amount.toLocaleString()}\nNet Return: ${result.profit_pct}%\n\nClick OK to acknowledge and end this partition.`
                );
 
                if (shouldEndPartition) {
@@ -389,7 +389,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                   const { endPartitionAction } = await import('../lib/api.fetcher');
                   await endPartitionAction(trackerId, partitionIndex);
                   console.log('[Partition Ended]');
-                  
+
                   // Show appropriate popup based on code
                   if (result.code === 'KILL_SWITCH_STAGNATION' || result.code === 'KILL_SWITCH_POOR_GROWTH') {
                      setShowKillSwitchPopup(true);
@@ -546,7 +546,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     </>
                                  )}
                               </Button>
-                              
+
                               <Button
                                  variant="outline"
                                  size="sm"
@@ -583,10 +583,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               <div className="space-y-1">
                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Recommended Amount</p>
                                  <div className="text-4xl font-black text-foreground tracking-tight">
-                                    ₹{recommendation.recommended_amount.toLocaleString()}
+                                    ${recommendation.recommended_amount.toLocaleString()}
                                  </div>
                                  <p className="text-xs text-muted-foreground flex items-center gap-2 leading-tight">
-                                    <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-medium">Ref Price: ₹{recommendation.signals.avg_holding_price.toFixed(2)}</span>
+                                    <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-medium">Ref Price: ${recommendation.signals.avg_holding_price.toFixed(2)}</span>
                                     <span>~ {(recommendation.recommended_amount / recommendation.signals.avg_holding_price).toFixed(2)} shares</span>
                                  </p>
                               </div>
@@ -594,11 +594,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               <div className="border rounded-lg p-3.5 bg-muted/30 space-y-2">
                                  <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground text-xs">New Projected Avg</span>
-                                    <span className="font-bold">₹{((totalInvested + recommendation.recommended_amount) / (totalShares + (recommendation.recommended_amount / recommendation.signals.avg_holding_price))).toFixed(2)}</span>
+                                    <span className="font-bold">${((totalInvested + recommendation.recommended_amount) / (totalShares + (recommendation.recommended_amount / recommendation.signals.avg_holding_price))).toFixed(2)}</span>
                                  </div>
                                  <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground text-xs">Remaining in Cycle</span>
-                                    <span className="font-bold">₹{recommendation.partition_status.capital_remaining.toLocaleString()}</span>
+                                    <span className="font-bold">${recommendation.partition_status.capital_remaining.toLocaleString()}</span>
                                  </div>
                                  <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground text-xs">Cycle Days Left</span>
@@ -626,80 +626,80 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                      </Card>
                   )}
 
-                   {executionState === 'CONFIRMING' && recommendation && (
-                      <Card className="border-2 border-primary shadow-2xl animate-in slide-in-from-right-4 duration-300">
-                         <CardHeader className="border-b bg-muted/20 pb-3">
-                            <CardTitle className="text-lg">Final Confirmation</CardTitle>
-                            <CardDescription className="text-xs">Enter the actual executed values from your broker.</CardDescription>
-                         </CardHeader>
-                         <CardContent className="pt-6 space-y-5 p-5">
+                  {executionState === 'CONFIRMING' && recommendation && (
+                     <Card className="border-2 border-primary shadow-2xl animate-in slide-in-from-right-4 duration-300">
+                        <CardHeader className="border-b bg-muted/20 pb-3">
+                           <CardTitle className="text-lg">Final Confirmation</CardTitle>
+                           <CardDescription className="text-xs">Enter the actual executed values from your broker.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-6 space-y-5 p-5">
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                               <div className="space-y-2">
-                                  <Label className="text-sm font-semibold">Actual Invested Amount (₹)</Label>
-                                  <Input
-                                     type="number"
-                                     className="h-11 md:h-10 text-lg font-semibold bg-background"
-                                     value={executedAmount}
-                                     onChange={e => setExecutedAmount(e.target.value)}
-                                     disabled={isConfirming}
-                                  />
-                               </div>
-                               <div className="space-y-2">
-                                  <Label className="text-sm font-semibold">Execution Price (₹)</Label>
-                                  <Input
-                                     type="number"
-                                     step="0.05"
-                                     className="h-11 md:h-10 text-lg font-semibold bg-background"
-                                     value={executionPrice}
-                                     onChange={e => setExecutionPrice(e.target.value)}
-                                     disabled={isConfirming}
-                                  />
-                               </div>
-                            </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                              <div className="space-y-2">
+                                 <Label className="text-sm font-semibold">Actual Invested Amount ($)</Label>
+                                 <Input
+                                    type="number"
+                                    className="h-11 md:h-10 text-lg font-semibold bg-background"
+                                    value={executedAmount}
+                                    onChange={e => setExecutedAmount(e.target.value)}
+                                    disabled={isConfirming}
+                                 />
+                              </div>
+                              <div className="space-y-2">
+                                 <Label className="text-sm font-semibold">Execution Price ($)</Label>
+                                 <Input
+                                    type="number"
+                                    step="0.05"
+                                    className="h-11 md:h-10 text-lg font-semibold bg-background"
+                                    value={executionPrice}
+                                    onChange={e => setExecutionPrice(e.target.value)}
+                                    disabled={isConfirming}
+                                 />
+                              </div>
+                           </div>
 
-                            {/* Error Display */}
-                            {confirmError && (
-                               <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
-                                  <div className="flex items-start gap-2">
-                                     <Icons.AlertCircle size={14} className="mt-0.5 shrink-0" />
-                                     <span>{confirmError}</span>
-                                  </div>
-                               </div>
-                            )}
+                           {/* Error Display */}
+                           {confirmError && (
+                              <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+                                 <div className="flex items-start gap-2">
+                                    <Icons.AlertCircle size={14} className="mt-0.5 shrink-0" />
+                                    <span>{confirmError}</span>
+                                 </div>
+                              </div>
+                           )}
 
-                            <div className="flex flex-col md:flex-row gap-3 pt-2">
-                               <Button
-                                  size="default"
-                                  className="flex-1 h-11 font-semibold shadow-lg"
-                                  onClick={handleConfirm}
-                                  disabled={isConfirming || !executedAmount || !executionPrice}
-                               >
-                                  {isConfirming ? (
-                                     <>
-                                        <Icons.Refresh className="mr-2 w-4 h-4 animate-spin" />
-                                        Confirming...
-                                     </>
-                                  ) : (
-                                     <>
-                                        <Icons.Check className="mr-2 w-4 h-4" /> Confirm & Record
-                                     </>
-                                  )}
-                               </Button>
-                               <Button 
-                                  variant="ghost" 
-                                  size="default" 
-                                  className="h-11 w-full md:w-auto px-4" 
-                                  onClick={() => setExecutionState('CALCULATED')}
-                                  disabled={isConfirming}
-                               >
-                                  Cancel
-                               </Button>
-                            </div>
+                           <div className="flex flex-col md:flex-row gap-3 pt-2">
+                              <Button
+                                 size="default"
+                                 className="flex-1 h-11 font-semibold shadow-lg"
+                                 onClick={handleConfirm}
+                                 disabled={isConfirming || !executedAmount || !executionPrice}
+                              >
+                                 {isConfirming ? (
+                                    <>
+                                       <Icons.Refresh className="mr-2 w-4 h-4 animate-spin" />
+                                       Confirming...
+                                    </>
+                                 ) : (
+                                    <>
+                                       <Icons.Check className="mr-2 w-4 h-4" /> Confirm & Record
+                                    </>
+                                 )}
+                              </Button>
+                              <Button
+                                 variant="ghost"
+                                 size="default"
+                                 className="h-11 w-full md:w-auto px-4"
+                                 onClick={() => setExecutionState('CALCULATED')}
+                                 disabled={isConfirming}
+                              >
+                                 Cancel
+                              </Button>
+                           </div>
 
-                         </CardContent>
-                      </Card>
-                   )}
+                        </CardContent>
+                     </Card>
+                  )}
 
                </div>
 
@@ -757,7 +757,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  </div>
                                  <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Total Budget</p>
-                                    <p className="font-semibold">₹{displayTotalBudget.toLocaleString()}</p>
+                                    <p className="font-semibold">${displayTotalBudget.toLocaleString()}</p>
                                  </div>
                                  <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Overall Conviction</p>
@@ -785,7 +785,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     />
                                  </div>
                                  <div className="space-y-2">
-                                    <Label className="text-xs font-semibold">Total Budget (₹)</Label>
+                                    <Label className="text-xs font-semibold">Total Budget ($)</Label>
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
@@ -825,17 +825,17 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        <SelectTrigger className="h-10 md:h-8">
                                           <SelectValue placeholder="Select load factor" />
                                        </SelectTrigger>
-                                       <SelectContent>   
-                                           <SelectItem value="GRADUAL">Gradual</SelectItem>   
-                                           <SelectItem value="MODERATE">Moderate</SelectItem>                        
-                                           <SelectItem value="AGGRESSIVE">Aggressive</SelectItem>
-                                                                                
-                                         
+                                       <SelectContent>
+                                          <SelectItem value="GRADUAL">Gradual</SelectItem>
+                                          <SelectItem value="MODERATE">Moderate</SelectItem>
+                                          <SelectItem value="AGGRESSIVE">Aggressive</SelectItem>
+
+
                                        </SelectContent>
                                     </Select>
                                  </div>
                                  <div className="space-y-2 md:col-span-2">
-                                    <Label className="text-xs font-semibold">Investment Cycle Length (Days)</Label>
+                                    <Label className="text-xs font-semibold">Investment Cycle Length (Months)</Label>
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
@@ -851,16 +851,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                            <div className="space-y-3 pt-2">
                               {/* Validation Errors/Info */}
                               {Object.keys(validationErrors).length > 0 && (
-                                 <div className={`p-3 rounded-lg border ${
-                                    validationErrors['Info']
-                                       ? 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800'
-                                       : 'bg-destructive/10 border-destructive/20'
-                                 }`}>
-                                    <div className={`flex items-start gap-2 ${
-                                       validationErrors['Info']
-                                          ? 'text-blue-700 dark:text-blue-300'
-                                          : 'text-destructive'
+                                 <div className={`p-3 rounded-lg border ${validationErrors['Info']
+                                    ? 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800'
+                                    : 'bg-destructive/10 border-destructive/20'
                                     }`}>
+                                    <div className={`flex items-start gap-2 ${validationErrors['Info']
+                                       ? 'text-blue-700 dark:text-blue-300'
+                                       : 'text-destructive'
+                                       }`}>
                                        <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />
                                        <div className="space-y-1 text-xs">
                                           {Object.entries(validationErrors).map(([field, error]) => (
@@ -872,132 +870,132 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               )}
 
                               <div className="flex gap-2">
-                              <Button
-                                 size="sm"
-                                 disabled={isSaving}
-                                 onClick={async () => {
-                                 // Frontend Validation (matching backend rules)
-                                 const errors: Record<string, string> = {};
+                                 <Button
+                                    size="sm"
+                                    disabled={isSaving}
+                                    onClick={async () => {
+                                       // Frontend Validation (matching backend rules)
+                                       const errors: Record<string, string> = {};
 
-                                 // Get current values for comparison
-                                 const currentTotalBudget = displayTotalBudget;
-                                 const currentConvictionYears = displayConvictionYears;
-                                 const currentPartitionDays = displayPartitionDays;
+                                       // Get current values for comparison
+                                       const currentTotalBudget = displayTotalBudget;
+                                       const currentConvictionYears = displayConvictionYears;
+                                       const currentPartitionDays = displayPartitionDays;
 
-                                 // Rule 1: total_capital_planned can only INCREASE
-                                 if (editConfig.totalBudget < currentTotalBudget) {
-                                    errors['Total Budget'] = `Can only increase (current: ₹${currentTotalBudget.toLocaleString()})`;
-                                 }
-
-                                 // Rule 2: conviction_period_years can only INCREASE
-                                 if (editConfig.convictionYears < currentConvictionYears) {
-                                    errors['Conviction Period'] = `Can only increase (current: ${currentConvictionYears} years)`;
-                                 }
-
-                                 // Rule 3: partition_days can only INCREASE
-                                 if (editConfig.partitionDays < currentPartitionDays) {
-                                    errors['Investment Cycle Length'] = `Can only increase (current: ${currentPartitionDays} days)`;
-                                 }
-
-                                 // Rule 4: base_conviction_score must be 0-100
-                                 if (editConfig.convictionLevel < 0 || editConfig.convictionLevel > 100) {
-                                    errors['Overall Conviction'] = 'Must be between 0-100%';
-                                 }
-
-                                 // If there are validation errors, show them and stop
-                                 if (Object.keys(errors).length > 0) {
-                                    setValidationErrors(errors);
-                                    return;
-                                 }
-
-                                 // Clear validation errors if all pass
-                                 setValidationErrors({});
-
-                                 // Check if any values have actually changed
-                                 const currentLoadFactor = useApiData && trackerData ?
-                                    (['GRADUAL', 'MODERATE', 'AGGRESSIVE'][trackerData.deployment_style - 1] || 'MODERATE') :
-                                    stock.loadFactor;
-
-                                 const hasChanges =
-                                    editConfig.totalBudget !== currentTotalBudget ||
-                                    editConfig.convictionYears !== currentConvictionYears ||
-                                    editConfig.partitionDays !== currentPartitionDays ||
-                                    editConfig.loadFactor !== currentLoadFactor ||
-                                    editConfig.convictionLevel !== displayConvictionLevel;
-
-                                 // If no changes, show info message and exit
-                                 if (!hasChanges) {
-                                    setValidationErrors({
-                                       'Info': 'No changes detected. Please update at least one value to save.'
-                                    });
-                                    return;
-                                 }
-
-                                 // Legacy validation for warning modal
-                                 const isSafe =
-                                    editConfig.totalBudget >= stock.totalBudget &&
-                                    editConfig.convictionYears >= stock.convictionYears &&
-                                    editConfig.partitionDays === stock.partitionDays &&
-                                    editConfig.loadFactor === stock.loadFactor &&
-                                    editConfig.convictionLevel === stock.convictionLevel;
-
-                                 if (isSafe || useApiData) {
-                                    // If using API data, call the update API
-                                    if (useApiData && trackerData?.trackerId) {
-                                       setIsSaving(true);
-                                       try {
-                                          const { updateTracker } = await import('../lib/api.fetcher');
-
-                                          // Map loadFactor to deployment_style number
-                                          // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
-                                          const deploymentStyleMap: Record<string, number> = {
-                                             'GRADUAL': 1,
-                                             'MODERATE': 2,
-                                             'AGGRESSIVE': 3,
-                                          };
-
-                                          await updateTracker(trackerData.trackerId, {
-                                             total_capital_planned: editConfig.totalBudget,
-                                             conviction_period_years: editConfig.convictionYears,
-                                             partition_days: editConfig.partitionDays,
-                                             deployment_style: deploymentStyleMap[editConfig.loadFactor] ?? 1,
-                                             base_conviction_score: editConfig.convictionLevel,
-                                          });
-
-                                          // Refresh tracker data
-                                          const { fetchTrackerDetails } = await import('../store/slices/trackersSlice');
-                                          dispatch(fetchTrackerDetails(trackerData.trackerId));
-
-                                          console.log('[StockDetails] Tracker updated successfully');
-                                       } catch (error) {
-                                          console.error('[StockDetails] Failed to update tracker:', error);
-                                          alert('Failed to update tracker. Please try again.');
-                                          return;
-                                       } finally {
-                                          setIsSaving(false);
+                                       // Rule 1: total_capital_planned can only INCREASE
+                                       if (editConfig.totalBudget < currentTotalBudget) {
+                                          errors['Total Budget'] = `Can only increase (current: $${currentTotalBudget.toLocaleString()})`;
                                        }
-                                    }
 
-                                    onUpdate({ ...stock, ...editConfig });
+                                       // Rule 2: conviction_period_years can only INCREASE
+                                       if (editConfig.convictionYears < currentConvictionYears) {
+                                          errors['Conviction Period'] = `Can only increase (current: ${currentConvictionYears} years)`;
+                                       }
+
+                                       // Rule 3: partition_days can only INCREASE
+                                       if (editConfig.partitionDays < currentPartitionDays) {
+                                          errors['Investment Cycle Length'] = `Can only increase (current: ${currentPartitionDays} days)`;
+                                       }
+
+                                       // Rule 4: base_conviction_score must be 0-100
+                                       if (editConfig.convictionLevel < 0 || editConfig.convictionLevel > 100) {
+                                          errors['Overall Conviction'] = 'Must be between 0-100%';
+                                       }
+
+                                       // If there are validation errors, show them and stop
+                                       if (Object.keys(errors).length > 0) {
+                                          setValidationErrors(errors);
+                                          return;
+                                       }
+
+                                       // Clear validation errors if all pass
+                                       setValidationErrors({});
+
+                                       // Check if any values have actually changed
+                                       const currentLoadFactor = useApiData && trackerData ?
+                                          (['GRADUAL', 'MODERATE', 'AGGRESSIVE'][trackerData.deployment_style - 1] || 'MODERATE') :
+                                          stock.loadFactor;
+
+                                       const hasChanges =
+                                          editConfig.totalBudget !== currentTotalBudget ||
+                                          editConfig.convictionYears !== currentConvictionYears ||
+                                          editConfig.partitionDays !== currentPartitionDays ||
+                                          editConfig.loadFactor !== currentLoadFactor ||
+                                          editConfig.convictionLevel !== displayConvictionLevel;
+
+                                       // If no changes, show info message and exit
+                                       if (!hasChanges) {
+                                          setValidationErrors({
+                                             'Info': 'No changes detected. Please update at least one value to save.'
+                                          });
+                                          return;
+                                       }
+
+                                       // Legacy validation for warning modal
+                                       const isSafe =
+                                          editConfig.totalBudget >= stock.totalBudget &&
+                                          editConfig.convictionYears >= stock.convictionYears &&
+                                          editConfig.partitionDays === stock.partitionDays &&
+                                          editConfig.loadFactor === stock.loadFactor &&
+                                          editConfig.convictionLevel === stock.convictionLevel;
+
+                                       if (isSafe || useApiData) {
+                                          // If using API data, call the update API
+                                          if (useApiData && trackerData?.trackerId) {
+                                             setIsSaving(true);
+                                             try {
+                                                const { updateTracker } = await import('../lib/api.fetcher');
+
+                                                // Map loadFactor to deployment_style number
+                                                // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
+                                                const deploymentStyleMap: Record<string, number> = {
+                                                   'GRADUAL': 1,
+                                                   'MODERATE': 2,
+                                                   'AGGRESSIVE': 3,
+                                                };
+
+                                                await updateTracker(trackerData.trackerId, {
+                                                   total_capital_planned: editConfig.totalBudget,
+                                                   conviction_period_years: editConfig.convictionYears,
+                                                   partition_days: editConfig.partitionDays,
+                                                   deployment_style: deploymentStyleMap[editConfig.loadFactor] ?? 1,
+                                                   base_conviction_score: editConfig.convictionLevel,
+                                                });
+
+                                                // Refresh tracker data
+                                                const { fetchTrackerDetails } = await import('../store/slices/trackersSlice');
+                                                dispatch(fetchTrackerDetails(trackerData.trackerId));
+
+                                                console.log('[StockDetails] Tracker updated successfully');
+                                             } catch (error) {
+                                                console.error('[StockDetails] Failed to update tracker:', error);
+                                                alert('Failed to update tracker. Please try again.');
+                                                return;
+                                             } finally {
+                                                setIsSaving(false);
+                                             }
+                                          }
+
+                                          onUpdate({ ...stock, ...editConfig });
+                                          setIsEditing(false);
+                                       } else {
+                                          setShowWarning(true);
+                                       }
+                                    }}>
+                                    {isSaving ? 'Saving...' : 'Save Changes'}
+                                 </Button>
+                                 <Button size="sm" variant="ghost" onClick={() => {
+                                    setEditConfig({
+                                       totalBudget: stock.totalBudget,
+                                       convictionYears: stock.convictionYears,
+                                       loadFactor: stock.loadFactor,
+                                       partitionDays: stock.partitionDays,
+                                       convictionLevel: stock.convictionLevel
+                                    });
+                                    setValidationErrors({});
                                     setIsEditing(false);
-                                 } else {
-                                    setShowWarning(true);
-                                 }
-                              }}>
-                                 {isSaving ? 'Saving...' : 'Save Changes'}
-                              </Button>
-                              <Button size="sm" variant="ghost" onClick={() => {
-                                 setEditConfig({
-                                    totalBudget: stock.totalBudget,
-                                    convictionYears: stock.convictionYears,
-                                    loadFactor: stock.loadFactor,
-                                    partitionDays: stock.partitionDays,
-                                    convictionLevel: stock.convictionLevel
-                                 });
-                                 setValidationErrors({});
-                                 setIsEditing(false);
-                              }}>Cancel</Button>
-                           </div>
+                                 }}>Cancel</Button>
+                              </div>
                            </div>
                         )}
                      </CardContent>
@@ -1136,7 +1134,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  Invested Amount
                               </div>
                               <div className="text-2xl md:text-xl font-black tracking-tight text-foreground">
-                                 ₹{((totalShares * stock.currentPrice)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                 ${((totalShares * stock.currentPrice)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                               </div>
                            </div>
 
@@ -1354,10 +1352,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                 Capital Invested
                                              </div>
                                              <div className="text-3xl font-black text-white tracking-tight">
-                                                ₹{(partitionDetails?.capital_deployed || 0).toLocaleString()}
+                                                ${(partitionDetails?.capital_deployed || 0).toLocaleString()}
                                              </div>
                                              <div className="text-xs text-slate-500 mt-1">
-                                                of ₹{(partitionDetails?.capital_allocated || 0).toLocaleString()} allocated
+                                                of ${(partitionDetails?.capital_allocated || 0).toLocaleString()} allocated
                                              </div>
                                           </div>
 

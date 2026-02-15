@@ -193,7 +193,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                                              setAveragePriceOwned((total / Number(quantityOwned)).toString());
                                           }
                                        }}
-                                       placeholder="₹ Total"
+                                       placeholder="$ Total"
                                        className="bg-background"
                                     />
                                  </div>
@@ -207,7 +207,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                                     />
                                  </div>
                                  <p className="text-xs text-muted-foreground col-span-2">
-                                    *Inferred Avg Price: ₹{quantityOwned && averagePriceOwned ? Number(averagePriceOwned).toFixed(2) : '0.00'}
+                                    *Inferred Avg Price: ${quantityOwned && averagePriceOwned ? Number(averagePriceOwned).toFixed(2) : '0.00'}
                                  </p>
                               </CardContent>
                            </Card>
@@ -254,8 +254,8 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
 
                         <div className="grid gap-2">
                            <div className="flex items-center gap-2">
-                              <Label>Investment Cycle Length (Days)</Label>
-                              <InfoTooltip text="How often do you expect this stock to show meaningful growth phases? (Trading Days)" />
+                              <Label>Investment Cycle Length (Months)</Label>
+                              <InfoTooltip text="How often do you expect this stock to show meaningful growth phases? (Trading Months)" />
                            </div>
                            <Input
                               type="number"

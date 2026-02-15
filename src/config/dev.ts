@@ -9,7 +9,7 @@ export const DEV_CONFIG = {
    * Set to true to bypass authentication and work on UI without backend
    * WARNING: Only use in development! Never commit as true.
    */
-  BYPASS_AUTH: false,
+  BYPASS_AUTH: true,
 
   /**
    * Mock user data when BYPASS_AUTH is enabled

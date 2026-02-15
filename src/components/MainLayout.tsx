@@ -40,7 +40,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   selectedStockId,
   onSelectStock,
   onCreateNew,
-  onUpdateStock,
+
   headerTitle,
   headerSubtitle,
   headerAction,
@@ -107,7 +107,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
     // Get tracker ID from Redux state
     const trackerId = selectedTracker?.tracker?.trackerId;
-    
+
     if (!trackerId) {
       setSyncError('No tracker selected. Please select a tracker first.');
       return;
@@ -160,21 +160,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     }
   };
 
-  // Calculate Global Stats
-  const totalInvested = stocks.reduce((acc, stock) => {
-    const historicalInvested = stock.history.reduce((hAcc, t) => hAcc + t.amount, 0);
-    const initialInvested = stock.quantityOwned * stock.averagePriceOwned;
-    return acc + historicalInvested + initialInvested;
-  }, 0);
 
-  const currentValue = stocks.reduce((acc, stock) => {
-    const sipQuantity = stock.history.reduce((qAcc, t) => qAcc + (t.amount / t.price), 0);
-    const totalQuantity = stock.quantityOwned + sipQuantity;
-    return acc + (totalQuantity * stock.currentPrice);
-  }, 0);
 
-  const totalPL = currentValue - totalInvested;
-  const isProfit = totalPL >= 0;
 
   return (
     <div className="flex h-screen w-screen bg-background overflow-hidden font-sans">
@@ -370,22 +357,24 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {showDsipOnly ? "DSIP Invested" : "Total Invested"}
                           </span>
-                          <InfoTooltip text={showDsipOnly ? "Amount invested strictly through the DSIP Tracker." : "Total amount invested including manual holdings."} />
+                          
                         </div>
-                        <div className="text-2xl font-bold">₹{totalInvestedStock.toLocaleString()}</div>
+                        <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString()}</div>
                       </div>
 
                       <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
                         <div className="flex items-center gap-1">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
+                          <InfoTooltip text={showDsipOnly ? "Amount invested strictly through the DSIP Tracker." : "Total amount invested including manual holdings."} />
                         </div>
-                        <div className="text-2xl font-bold">₹{Math.round(currentValueStock).toLocaleString()}</div>
+                        
+                        <div className="text-2xl font-bold">${Math.round(currentValueStock).toLocaleString()}</div>
                       </div>
 
                       <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfitStock ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
                         <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
                         <div className="text-3xl font-black tracking-tight">
-                          {isProfitStock ? '+' : ''}₹{Math.round(totalPLStock).toLocaleString()}
+                          {isProfitStock ? '+' : ''}${Math.round(totalPLStock).toLocaleString()}
                         </div>
                       </div>
                     </div>
@@ -419,7 +408,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                 <div className="flex flex-col gap-0.5">
                                   <span className="text-xs font-semibold text-muted-foreground">{new Date(date).toLocaleDateString()}</span>
                                 </div>
-                                <span className="font-mono font-bold">₹{amount.toLocaleString()}</span>
+                                <span className="font-mono font-bold">${amount.toLocaleString()}</span>
                               </div>
                             );
                           });
@@ -447,7 +436,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount (₹)</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount ($)</Label>
                   <Input
                     type="number"
                     placeholder="e.g. 150000"
@@ -473,7 +462,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Calculated Avg Price:</span>
                       <span className="font-mono font-bold">
-                        ₹{(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
+                        ${(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -498,8 +487,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   setShowSyncPopup(false);
                   setSyncError(null);
                 }}>Cancel</Button>
-                <Button 
-                  onClick={handleSync} 
+                <Button
+                  onClick={handleSync}
                   disabled={!syncForm.totalInvested || !syncForm.totalShares || isSyncing}
                 >
                   {isSyncing ? (
