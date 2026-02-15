@@ -780,8 +780,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
-                                       value={editConfig.convictionYears}
-                                       onChange={e => setEditConfig({ ...editConfig, convictionYears: Number(e.target.value) })}
+                                       value={editConfig.convictionYears || ''}
+                                       onChange={e => setEditConfig({ ...editConfig, convictionYears: e.target.value === '' ? 0 : Number(e.target.value) })}
                                     />
                                  </div>
                                  <div className="space-y-2">
@@ -839,8 +839,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
-                                       value={editConfig.partitionDays}
-                                       onChange={e => setEditConfig({ ...editConfig, partitionDays: Number(e.target.value) })}
+                                       value={editConfig.partitionDays || ''}
+                                       onChange={e => setEditConfig({ ...editConfig, partitionDays: e.target.value === '' ? 0 : Number(e.target.value) })}
                                     />
                                  </div>
                               </>
