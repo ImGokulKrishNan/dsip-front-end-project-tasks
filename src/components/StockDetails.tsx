@@ -542,7 +542,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  ) : (
                                     <>
                                        <Icons.TrendUp className="mr-2 w-5 h-5 md:w-4 md:h-4" />
-                                       Calculate Order
+                                       Calculate Amount
                                     </>
                                  )}
                               </Button>
@@ -769,7 +769,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  </div>
                                  <div className="flex justify-between md:block pt-1 md:pt-0">
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
-                                    <p className="font-semibold">{displayPartitionDays} trading days</p>
+                                    <p className="font-semibold">{displayPartitionDays} trading months</p>
                                  </div>
                               </>
                            ) : (
@@ -1310,7 +1310,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  <div className="flex items-start gap-4 pr-8">
                                     {/* Partition Badge */}
                                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
-                                       <span className="font-mono font-black text-2xl text-white">P{partitionDetails?.partition_index || (selectedPartition + 1)}</span>
+                                       <span className="font-mono font-black text-2xl text-white">I{partitionDetails?.partition_index || (selectedPartition + 1)}</span>
                                     </div>
 
                                     {/* Title and Info */}

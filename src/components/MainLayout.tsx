@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from './mode-toggle';
 import { cn } from '@/lib/utils';
-import InfoTooltip from './InfoTooltip';
+
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
 import { Switch } from '@/components/ui/switch';
@@ -357,7 +357,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {showDsipOnly ? "DSIP Invested" : "Total Invested"}
                           </span>
-                          
+
                         </div>
                         <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString()}</div>
                       </div>
@@ -365,9 +365,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                       <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
                         <div className="flex items-center gap-1">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
-                          <InfoTooltip text={showDsipOnly ? "Amount invested strictly through the DSIP Tracker." : "Total amount invested including manual holdings."} />
+                          {isProfitStock ? (
+                            <Icons.ArrowUp className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <Icons.ArrowDown className="w-4 h-4 text-red-500" />
+                          )}
                         </div>
-                        
+
                         <div className="text-2xl font-bold">${Math.round(currentValueStock).toLocaleString()}</div>
                       </div>
 
