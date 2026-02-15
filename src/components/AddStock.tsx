@@ -261,7 +261,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                               type="number"
                               value={partition}
                               onChange={e => setPartition(e.target.value)}
-                              placeholder="e.g. 60"
+                              placeholder="e.g. 6"
                            />
                         </div>
                      </div>
