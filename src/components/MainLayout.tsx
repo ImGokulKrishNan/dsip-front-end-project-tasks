@@ -295,7 +295,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 if (useApiData && trackerData) {
                   // Use API data
                   sipQuantity = selectedTracker?.recentExecutions.reduce((acc, curr) => acc + (curr.executedAmount / (curr.executionPrice || 1)), 0) || 0;
-                  deployedAmount = trackerData.total_capital_invested_so_far;
+                  
+                  // Use toggle to select between base and DSIP metrics
+                  deployedAmount = showDsipOnly 
+                    ? (trackerData.dsip_total_capital_invested_so_far || 0)
+                    : (trackerData.total_capital_invested_so_far || 0);
+                  
                   manualInvested = 0; // API doesn't have manual holdings
                   currentPrice = trackerData.currentPrice || 0;
                   history = selectedTracker?.recentExecutions || [];
@@ -317,7 +322,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   ? sipQuantity
                   : ((selectedStock?.quantityOwned || 0) + sipQuantity);
 
-                const currentValueStock = relevantShares * currentPrice;
+                const currentValueStock = useApiData && trackerData
+                  ? (showDsipOnly 
+                      ? (trackerData.dsip_total_market_value || 0)
+                      : (trackerData.total_market_value || 0))
+                  : relevantShares * currentPrice;
                 const totalPLStock = currentValueStock - totalInvestedStock;
                 const isProfitStock = totalPLStock >= 0;
 

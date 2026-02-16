@@ -195,7 +195,12 @@ export async function getTrackerDetails(
         initial_shares_held: data.initial_shares_held || 0,
         status: data.status || 1,
         active_partition_index: data.active_partition_index || 1,
-        total_capital_invested_so_far: data.total_capital_invested_so_far || data.dsip_total_capital_invested_so_far || 0,
+        total_capital_invested_so_far: data.total_capital_invested_so_far || 0,
+        total_market_value: data.total_market_value || 0,
+        net_profit_percentage: data.net_profit_percentage || 0,
+        dsip_total_capital_invested_so_far: data.dsip_total_capital_invested_so_far || 0,
+        dsip_total_market_value: data.dsip_total_market_value || 0,
+        dsip_net_profit_percentage: data.dsip_net_profit_percentage || 0,
         shares_held_so_far: data.shares_held_so_far || 0,
         total_cycles: data.total_cycles || 0,
         is_fractional_shares_allowed: data.is_fractional_shares_allowed || false,
@@ -526,7 +531,7 @@ export async function syncTrackerData(data: {
   // Extract detailed error message from response data if available
   const errorData = response.data as any;
   const detailedMessage = errorData?.message || response.message || 'Failed to sync tracker data';
-  
+
   throw new Error(detailedMessage);
 }
 

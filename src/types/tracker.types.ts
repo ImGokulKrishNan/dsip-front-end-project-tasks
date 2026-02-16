@@ -90,6 +90,11 @@ export interface Tracker {
   status: TrackerStatus;
   active_partition_index: number;
   total_capital_invested_so_far: number;
+  total_market_value: number;
+  net_profit_percentage: number;
+  dsip_total_capital_invested_so_far: number;
+  dsip_total_market_value: number;
+  dsip_net_profit_percentage: number;
   shares_held_so_far: number;
   total_cycles: number; // Added for API compatibility
   is_fractional_shares_allowed: boolean;
