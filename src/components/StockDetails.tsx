@@ -14,6 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 interface StockDetailsProps {
    stock: Stock;
@@ -21,6 +23,7 @@ interface StockDetailsProps {
    onUpdate: (stock: Stock) => void;
    onCopyStrategy?: (config: Partial<Stock>) => void;
    showDsipOnly?: boolean;
+   setShowDsipOnly?: (show: boolean) => void;
 }
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
@@ -54,9 +57,15 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
    );
 };
 
-const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy, showDsipOnly }) => {
+const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy, showDsipOnly, setShowDsipOnly }) => {
    // Redux dispatch
    const dispatch = useAppDispatch();
+
+   // Sync Feature State (for Investment Performance section)
+   const [showSyncPopup, setShowSyncPopup] = useState(false);
+   const [syncForm, setSyncForm] = useState({ totalInvested: '', totalShares: '' });
+   const [isSyncing, setIsSyncing] = useState(false);
+   const [syncError, setSyncError] = useState<string | null>(null);
 
    // Get tracker data from Redux store
    const {
@@ -271,6 +280,51 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
    const cycleLength = displayPartitionMonths;
    const daysRemaining = cycleLength - (daysInvested % cycleLength);
+
+   // Handle sync portfolio
+   const handleSync = async () => {
+      const userInvested = Number(syncForm.totalInvested);
+      const userShares = Number(syncForm.totalShares);
+
+      if (!userInvested || !userShares) {
+         return;
+      }
+
+      const trackerId = trackerData?.trackerId;
+
+      if (!trackerId) {
+         setSyncError('No tracker selected. Please select a tracker first.');
+         return;
+      }
+
+      setIsSyncing(true);
+      setSyncError(null);
+
+      try {
+         const { syncTrackerData } = await import('../lib/api.fetcher');
+         const result = await syncTrackerData({
+            tracker_id: trackerId,
+            current_total_shares: userShares,
+            current_total_invested_amount: userInvested,
+            reason: 'Manual sync from broker statement',
+         });
+
+         if (result.success) {
+            const { fetchTrackerDetails } = await import('../store/slices/trackersSlice');
+            dispatch(fetchTrackerDetails(trackerId));
+
+            setShowSyncPopup(false);
+            setSyncForm({ totalInvested: '', totalShares: '' });
+         } else {
+            setSyncError(result.message || 'Sync failed');
+         }
+      } catch (error: any) {
+         const errorMessage = error.message || 'Failed to sync portfolio data';
+         setSyncError(errorMessage);
+      } finally {
+         setIsSyncing(false);
+      }
+   };
 
    const performCalculation = async () => {
       setIsCalculating(true);
@@ -1508,7 +1562,154 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                         </div>
                      </CardContent>
                   </Card>
+               </div>
 
+               {/* Investment Performance Section - Mobile/Tablet View */}
+               <Card className="xl:hidden border-primary/10 shadow-sm bg-background">
+                  <CardHeader className="pb-3">
+                     <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                           <h3 className="text-lg font-bold tracking-tight">Investment</h3>
+                           <p className="text-sm text-muted-foreground">Performance</p>
+                        </div>
+                        {setShowDsipOnly && (
+                           <div className="flex items-center gap-2">
+                              <Label htmlFor="dsip-toggle-mobile" className="text-[10px] uppercase font-bold text-muted-foreground">DSIP Only</Label>
+                              <Switch
+                                 id="dsip-toggle-mobile"
+                                 checked={showDsipOnly}
+                                 onCheckedChange={setShowDsipOnly}
+                                 className="scale-75"
+                              />
+                           </div>
+                        )}
+                     </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6 pb-4">
+                     {(() => {
+                        // Calculate values from API data or hardcoded stock
+                        let sipQuantity = 0;
+                        let deployedAmount = 0;
+                        let manualInvested = 0;
+                        let currentPrice = 0;
+                        let history: any[] = [];
+
+                        if (useApiData && trackerData) {
+                           // Use API data
+                           sipQuantity = selectedTracker?.recentExecutions.reduce((acc, curr) => acc + (curr.executedAmount / (curr.executionPrice || 1)), 0) || 0;
+                           deployedAmount = trackerData.total_capital_invested_so_far;
+                           manualInvested = 0; // API doesn't have manual holdings
+                           currentPrice = trackerData.currentPrice || 0;
+                           history = selectedTracker?.recentExecutions || [];
+                        } else {
+                           // Use hardcoded stock data
+                           sipQuantity = stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
+                           deployedAmount = stock.deployedAmount;
+                           manualInvested = stock.quantityOwned * stock.averagePriceOwned;
+                           currentPrice = stock.currentPrice;
+                           history = stock.history;
+                        }
+
+                        // Conditional Logic based on Toggle
+                        const totalInvestedStock = showDsipOnly
+                           ? deployedAmount
+                           : (manualInvested + deployedAmount);
+
+                        const relevantShares = showDsipOnly
+                           ? sipQuantity
+                           : ((stock?.quantityOwned || 0) + sipQuantity);
+
+                        const currentValueStock = relevantShares * currentPrice;
+                        const totalPLStock = currentValueStock - totalInvestedStock;
+                        const isProfitStock = totalPLStock >= 0;
+
+                        return (
+                           <>
+                              {/* Sync Button */}
+                              {!showDsipOnly && (
+                                 <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowSyncPopup(true)}
+                                    className="w-full h-10 text-sm bg-background hover:bg-muted border-dashed"
+                                 >
+                                    <Icons.Refresh className="mr-2 w-4 h-4" /> Sync Portfolio
+                                 </Button>
+                              )}
+
+                              <div className="grid gap-4">
+                                 <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
+                                    <div className="flex items-center gap-1">
+                                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                          {showDsipOnly ? "DSIP Invested" : "Total Invested"}
+                                       </span>
+                                    </div>
+                                    <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString()}</div>
+                                 </div>
+
+                                 <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
+                                    <div className="flex items-center gap-1">
+                                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
+                                       {isProfitStock ? (
+                                          <Icons.ArrowUp className="w-4 h-4 text-emerald-500" />
+                                       ) : (
+                                          <Icons.ArrowDown className="w-4 h-4 text-red-500" />
+                                       )}
+                                    </div>
+                                    <div className="text-2xl font-bold">${Math.round(currentValueStock).toLocaleString()}</div>
+                                 </div>
+
+                                 <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfitStock ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
+                                    <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
+                                    <div className="text-3xl font-black tracking-tight">
+                                       {isProfitStock ? '+' : ''}${Math.round(totalPLStock).toLocaleString()}
+                                    </div>
+                                 </div>
+                              </div>
+
+                              <div className="space-y-3 pt-4">
+                                 <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                    Recent History
+                                 </h4>
+                                 <div className="space-y-2">
+                                    {(() => {
+                                       if (history.length === 0) {
+                                          return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
+                                       }
+
+                                       // Sort and slice history
+                                       const sortedHistory = [...history]
+                                          .sort((a, b) => {
+                                             const dateA = useApiData ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
+                                             const dateB = useApiData ? new Date(b.createdAt).getTime() : new Date(b.date).getTime();
+                                             return dateB - dateA;
+                                          })
+                                          .slice(0, 15);
+
+                                       return sortedHistory.map((tx, i) => {
+                                          // Handle both API format and hardcoded format
+                                          const date = useApiData ? tx.createdAt : tx.date;
+                                          const amount = useApiData ? tx.executedAmount : tx.amount;
+
+                                          return (
+                                             <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
+                                                <div className="flex flex-col gap-0.5">
+                                                   <span className="text-xs font-semibold text-muted-foreground">{new Date(date).toLocaleDateString()}</span>
+                                                </div>
+                                                <span className="font-mono font-bold">${amount.toLocaleString()}</span>
+                                             </div>
+                                          );
+                                       });
+                                    })()}
+                                 </div>
+                              </div>
+                           </>
+                        );
+                     })()}
+                  </CardContent>
+               </Card>
+
+               <div>
                   {/* Partition Details Modal - Premium Design */}
                   <Dialog open={selectedPartition !== null} onOpenChange={(open) => !open && setSelectedPartition(null)}>
                      <DialogContent hideCloseButton className="max-w-lg p-0 overflow-hidden bg-slate-950 border-slate-800 shadow-2xl rounded-3xl">
@@ -1730,7 +1931,88 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                      </DialogContent>
                   </Dialog>
 
+                  {/* Sync Popup - Manual Calibration */}
+                  <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
+                     <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                           <DialogTitle className="flex items-center gap-2">
+                              <Icons.Refresh className="w-5 h-5 text-primary" />
+                              Sync Portfolio
+                           </DialogTitle>
+                           <DialogDescription>
+                              Manually update your total holdings to match your broker. We'll adjust the base records while keeping your current cycle intact.
+                           </DialogDescription>
+                        </DialogHeader>
 
+                        <div className="grid gap-4 py-4">
+                           <div className="space-y-2">
+                              <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount ($)</Label>
+                              <Input
+                                 type="number"
+                                 placeholder="e.g. 150000"
+                                 value={syncForm.totalInvested}
+                                 onChange={(e) => setSyncForm({ ...syncForm, totalInvested: e.target.value })}
+                                 className="h-11 font-mono text-lg"
+                              />
+                           </div>
+                           <div className="space-y-2">
+                              <Label className="text-xs font-semibold text-muted-foreground">Total Shares Quantity</Label>
+                              <Input
+                                 type="number"
+                                 placeholder="e.g. 50.5"
+                                 value={syncForm.totalShares}
+                                 onChange={(e) => setSyncForm({ ...syncForm, totalShares: e.target.value })}
+                                 className="h-11 font-mono text-lg"
+                              />
+                           </div>
+
+                           {/* Preview Diff Calculation */}
+                           {(syncForm.totalInvested && syncForm.totalShares) && (
+                              <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Calculated Avg Price:</span>
+                                    <span className="font-mono font-bold">
+                                       ${(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
+                                    </span>
+                                 </div>
+                              </div>
+                           )}
+
+                           {/* Error Message */}
+                           {syncError && (
+                              <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+                                 <div className="flex items-start gap-2">
+                                    <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                    <div className="flex-1 space-y-1">
+                                       <p className="font-semibold">Sync Error</p>
+                                       <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">{syncError}</p>
+                                    </div>
+                                 </div>
+                              </div>
+                           )}
+                        </div>
+
+                        <DialogFooter>
+                           <Button variant="ghost" onClick={() => {
+                              setShowSyncPopup(false);
+                              setSyncError(null);
+                           }}>Cancel</Button>
+                           <Button
+                              onClick={handleSync}
+                              disabled={!syncForm.totalInvested || !syncForm.totalShares || isSyncing}
+                           >
+                              {isSyncing ? (
+                                 <>
+                                    <Icons.Refresh className="mr-2 h-4 w-4 animate-spin" />
+                                    Syncing...
+                                 </>
+                              ) : (
+                                 'Update Portfolio'
+                              )}
+                           </Button>
+                        </DialogFooter>
+                     </DialogContent>
+                  </Dialog>
 
                </div>
 

@@ -278,6 +278,7 @@ const MainApp: React.FC = () => {
               onUpdate={handleUpdateStock}
               onCopyStrategy={handleCopyStrategy}
               showDsipOnly={showDsipOnly}
+              setShowDsipOnly={(show: boolean) => dispatch(setShowDsipOnly(show))}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-400">
