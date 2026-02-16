@@ -25,7 +25,9 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
       // response wasn't JSON, use statusText
     }
 
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 403) {
+      // Redirect to unauthorized page for 401/403 errors
+      window.location.href = '/unauthorized';
       onUnauthorized?.();
     }
 

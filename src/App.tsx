@@ -14,6 +14,7 @@ import { Icons } from './constants';
 
 import LandingPage from './components/LandingPage';
 import AuthCallback from './components/AuthCallback';
+import UnauthorizedAccess from './components/UnauthorizedAccess';
 import Dashboard from './components/Dashboard';
 import AddStock from './components/AddStock';
 import StockDetails from './components/StockDetails';
@@ -323,6 +324,9 @@ const App: React.FC = () => {
             <Routes>
               {/* OAuth callback route - required for popup redirect */}
               <Route path="/auth/callback" element={<AuthCallback />} />
+              {/* Unauthorized access route */}
+              <Route path="/unauthorized" element={<UnauthorizedAccess />} />
+              <Route path="/auth/unauthorized" element={<UnauthorizedAccess />} />
               {/* All other routes go to main app */}
               <Route path="*" element={<MainApp />} />
             </Routes>
