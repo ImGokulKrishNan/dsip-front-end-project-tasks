@@ -142,7 +142,7 @@ const MainApp: React.FC = () => {
         partition_months: newStock.partitionMonths,
         deployment_style: deploymentStyleMap[newStock.loadFactor],
         base_conviction_score: newStock.convictionLevel,
-        initial_invested_amount: newStock.quantityOwned * newStock.averagePriceOwned,
+        initial_invested_amount: newStock.averagePriceOwned, // This is already the total amount invested
         initial_shares_held: newStock.quantityOwned,
         is_fractional_shares_allowed: true,
       };
