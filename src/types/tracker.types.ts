@@ -55,6 +55,7 @@ export interface UpdateTrackerRequest {
   total_capital_planned?: number;
   conviction_period_years?: number;
   partition_days?: number;
+  partition_months?: number; // Added for API compatibility
 }
 
 export interface ExecuteTradeRequest {
@@ -81,6 +82,7 @@ export interface Tracker {
   conviction_period_years: number;
   total_capital_planned: number;
   partition_days: number;
+  partition_months: number; // Added for API compatibility
   deployment_style: DeploymentStyle;
   base_conviction_score: number;
   initial_invested_amount: number;
@@ -89,6 +91,7 @@ export interface Tracker {
   active_partition_index: number;
   total_capital_invested_so_far: number;
   shares_held_so_far: number;
+  total_cycles: number; // Added for API compatibility
   is_fractional_shares_allowed: boolean;
   createdAt: string;
   live_investment_cycle?: {

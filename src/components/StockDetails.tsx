@@ -93,7 +93,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const displayConvictionYears = getDisplayValue(trackerData?.conviction_period_years, stock.convictionYears);
    const displayTotalBudget = getDisplayValue(trackerData?.total_capital_planned, stock.totalBudget);
    const displayConvictionLevel = getDisplayValue(trackerData?.base_conviction_score, stock.convictionLevel);
-   const displayPartitionDays = getDisplayValue(trackerData?.partition_days, stock.partitionDays);
+   const displayPartitionMonths = getDisplayValue(trackerData?.partition_months, stock.partitionMonths);
    const displayDeployedAmount = getDisplayValue(trackerData?.total_capital_invested_so_far, stock.deployedAmount);
    const displaySharesHeld = getDisplayValue(trackerData?.shares_held_so_far, stock.quantityOwned);
    const displayCurrentPrice = getDisplayValue(trackerData?.currentPrice, stock.currentPrice);
@@ -124,7 +124,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       totalBudget: stock.totalBudget,
       convictionYears: stock.convictionYears,
       loadFactor: stock.loadFactor,
-      partitionDays: stock.partitionDays,
+      partitionMonths: stock.partitionMonths,
       convictionLevel: stock.convictionLevel,
    });
    const [showWarning, setShowWarning] = useState(false);
@@ -257,14 +257,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       : stock.currentCycle || 10;
 
    const totalCycles = useApiData && trackerData
-      ? Math.ceil((trackerData.conviction_period_years * 365) / trackerData.partition_days)
+      ? trackerData.total_cycles
       : stock.totalCycles || 20;
 
    const daysInvested = useApiData && selectedTracker
       ? selectedTracker.recentExecutions.length
       : stock.daysInvested || 14;
 
-   const cycleLength = displayPartitionDays;
+   const cycleLength = displayPartitionMonths;
    const daysRemaining = cycleLength - (daysInvested % cycleLength);
 
    const performCalculation = async () => {
@@ -735,7 +735,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     totalBudget: displayTotalBudget,
                                     convictionYears: displayConvictionYears,
                                     loadFactor: (loadFactorMap[displayLoadFactor] || displayLoadFactor) as any,
-                                    partitionDays: displayPartitionDays,
+                                    partitionMonths: displayPartitionMonths,
                                     convictionLevel: displayConvictionLevel,
                                  });
                                  setValidationErrors({});
@@ -769,19 +769,19 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  </div>
                                  <div className="flex justify-between md:block pt-1 md:pt-0">
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
-                                    <p className="font-semibold">{displayPartitionDays} trading months</p>
+                                    <p className="font-semibold">{displayPartitionMonths} trading months</p>
                                  </div>
                               </>
                            ) : (
                               // EDIT VIEW
                               <>
                                  <div className="space-y-2">
-                                    <Label className="text-xs font-semibold">Conviction (Yrs)</Label>
+                                    <Label className="text-xs font-semibold">Cycle Length (Months)</Label>
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
-                                       value={editConfig.convictionYears || ''}
-                                       onChange={e => setEditConfig({ ...editConfig, convictionYears: e.target.value === '' ? 0 : Number(e.target.value) })}
+                                       value={editConfig.partitionMonths || ''}
+                                       onChange={e => setEditConfig({ ...editConfig, partitionMonths: e.target.value === '' ? 0 : Number(e.target.value) })}
                                     />
                                  </div>
                                  <div className="space-y-2">
@@ -839,8 +839,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
-                                       value={editConfig.partitionDays || ''}
-                                       onChange={e => setEditConfig({ ...editConfig, partitionDays: e.target.value === '' ? 0 : Number(e.target.value) })}
+                                       value={editConfig.partitionMonths || ''}
+                                       onChange={e => setEditConfig({ ...editConfig, partitionMonths: e.target.value === '' ? 0 : Number(e.target.value) })}
                                     />
                                  </div>
                               </>
@@ -880,7 +880,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        // Get current values for comparison
                                        const currentTotalBudget = displayTotalBudget;
                                        const currentConvictionYears = displayConvictionYears;
-                                       const currentPartitionDays = displayPartitionDays;
+                                       const currentPartitionMonths = displayPartitionMonths;
 
                                        // Rule 1: total_capital_planned can only INCREASE
                                        if (editConfig.totalBudget < currentTotalBudget) {
@@ -892,9 +892,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           errors['Conviction Period'] = `Can only increase (current: ${currentConvictionYears} years)`;
                                        }
 
-                                       // Rule 3: partition_days can only INCREASE
-                                       if (editConfig.partitionDays < currentPartitionDays) {
-                                          errors['Investment Cycle Length'] = `Can only increase (current: ${currentPartitionDays} days)`;
+                                       // Rule 3: partition_months can only INCREASE
+                                       if (editConfig.partitionMonths < currentPartitionMonths) {
+                                          errors['Investment Cycle Length'] = `Can only increase (current: ${currentPartitionMonths} months)`;
                                        }
 
                                        // Rule 4: base_conviction_score must be 0-100
@@ -919,7 +919,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        const hasChanges =
                                           editConfig.totalBudget !== currentTotalBudget ||
                                           editConfig.convictionYears !== currentConvictionYears ||
-                                          editConfig.partitionDays !== currentPartitionDays ||
+                                          editConfig.partitionMonths !== currentPartitionMonths ||
                                           editConfig.loadFactor !== currentLoadFactor ||
                                           editConfig.convictionLevel !== displayConvictionLevel;
 
@@ -935,7 +935,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        const isSafe =
                                           editConfig.totalBudget >= stock.totalBudget &&
                                           editConfig.convictionYears >= stock.convictionYears &&
-                                          editConfig.partitionDays === stock.partitionDays &&
+                                          editConfig.partitionMonths === stock.partitionMonths &&
                                           editConfig.loadFactor === stock.loadFactor &&
                                           editConfig.convictionLevel === stock.convictionLevel;
 
@@ -957,7 +957,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                 await updateTracker(trackerData.trackerId, {
                                                    total_capital_planned: editConfig.totalBudget,
                                                    conviction_period_years: editConfig.convictionYears,
-                                                   partition_days: editConfig.partitionDays,
+                                                   partition_months: editConfig.partitionMonths,
                                                    deployment_style: deploymentStyleMap[editConfig.loadFactor] ?? 1,
                                                    base_conviction_score: editConfig.convictionLevel,
                                                 });
@@ -989,7 +989,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        totalBudget: stock.totalBudget,
                                        convictionYears: stock.convictionYears,
                                        loadFactor: stock.loadFactor,
-                                       partitionDays: stock.partitionDays,
+                                       partitionMonths: stock.partitionMonths,
                                        convictionLevel: stock.convictionLevel
                                     });
                                     setValidationErrors({});
@@ -1020,7 +1020,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  totalBudget: stock.totalBudget,
                                  convictionYears: stock.convictionYears,
                                  loadFactor: stock.loadFactor,
-                                 partitionDays: stock.partitionDays,
+                                 partitionMonths: stock.partitionMonths,
                                  convictionLevel: stock.convictionLevel
                               });
                               setShowWarning(false);
@@ -1127,29 +1127,52 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                         {/* Key Metrics Grid - Mobile Optimized */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                           {/* Current Value */}
+                           {/* Invested Amount */}
                            <div className="space-y-1 p-4 md:p-3 rounded-lg bg-gradient-to-br from-blue-500/5 to-blue-600/10 border border-blue-500/10 shadow-sm">
                               <div className="flex items-center gap-2 text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                                  <Icons.TrendingUp size={12} className="text-blue-500" />
                                  Invested Amount
                               </div>
                               <div className="text-2xl md:text-xl font-black tracking-tight text-foreground">
-                                 ${((totalShares * stock.currentPrice)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                 ${(useApiData && selectedTracker?.tracker?.live_investment_cycle?.total_capital_invested_so_far
+                                    ? selectedTracker.tracker.live_investment_cycle.total_capital_invested_so_far
+                                    : (totalShares * stock.currentPrice)
+                                 ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                               </div>
                            </div>
 
                            {/* Total P&L */}
-                           <div className={`space-y-1 p-4 md:p-3 rounded-lg border shadow-sm ${currentReturnPercent >= 0
+                           <div className={`space-y-1 p-4 md:p-3 rounded-lg border shadow-sm ${
+                              (useApiData && selectedTracker?.tracker?.live_investment_cycle?.net_profit_percentage !== undefined
+                                 ? selectedTracker.tracker.live_investment_cycle.net_profit_percentage
+                                 : currentReturnPercent
+                              ) >= 0
                               ? 'bg-gradient-to-br from-emerald-500/5 to-emerald-600/10 border-emerald-500/10'
                               : 'bg-gradient-to-br from-red-500/5 to-red-600/10 border-red-500/10'
                               }`}>
                               <div className="flex items-center gap-2 text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                                 <Icons.DollarSign size={12} className={currentReturnPercent >= 0 ? 'text-emerald-500' : 'text-red-500'} />
+                                 <Icons.DollarSign size={12} className={
+                                    (useApiData && selectedTracker?.tracker?.live_investment_cycle?.net_profit_percentage !== undefined
+                                       ? selectedTracker.tracker.live_investment_cycle.net_profit_percentage
+                                       : currentReturnPercent
+                                    ) >= 0 ? 'text-emerald-500' : 'text-red-500'
+                                 } />
                                  Total P&L
                               </div>
-                              <div className={`text-2xl md:text-xl font-black tracking-tight ${currentReturnPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                              <div className={`text-2xl md:text-xl font-black tracking-tight ${
+                                 (useApiData && selectedTracker?.tracker?.live_investment_cycle?.net_profit_percentage !== undefined
+                                    ? selectedTracker.tracker.live_investment_cycle.net_profit_percentage
+                                    : currentReturnPercent
+                                 ) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
                                  }`}>
-                                 {currentReturnPercent >= 0 ? '+' : ''}{currentReturnPercent.toFixed(2)}%
+                                 {(useApiData && selectedTracker?.tracker?.live_investment_cycle?.net_profit_percentage !== undefined
+                                    ? selectedTracker.tracker.live_investment_cycle.net_profit_percentage
+                                    : currentReturnPercent
+                                 ) >= 0 ? '+' : ''}
+                                 {(useApiData && selectedTracker?.tracker?.live_investment_cycle?.net_profit_percentage !== undefined
+                                    ? selectedTracker.tracker.live_investment_cycle.net_profit_percentage
+                                    : currentReturnPercent
+                                 ).toFixed(2)}%
                               </div>
                            </div>
 
@@ -1180,103 +1203,289 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </span>
                            </div>
 
-                           {/* Progress Bar - Smart Grouping for Better UX */}
+                           {/* Progress Bar - Smart Windowing (Max 8 Pills) */}
                            <div className="relative w-full bg-slate-900/30 rounded-full p-2 ring-1 ring-slate-800/50 shadow-inner">
                               <div className="flex gap-2 w-full">
                                  {(() => {
-                                    // Smart grouping: Show max 10 pills
-                                    const maxPills = 10;
-                                    const pillsToShow = Math.min(totalCycles, maxPills);
-                                    const partitionsPerPill = Math.ceil(totalCycles / pillsToShow);
-
-                                    return Array.from({ length: pillsToShow }).map((_, pillIndex) => {
-                                       // Calculate which partitions this pill represents
-                                       const startPartition = pillIndex * partitionsPerPill;
-                                       const endPartition = Math.min(startPartition + partitionsPerPill - 1, totalCycles - 1);
-                                       const representedPartitions = endPartition - startPartition + 1;
-
-                                       // Determine pill state based on represented partitions
-                                       const allCompleted = endPartition < currentCycle;
-                                       const hasActive = startPartition <= currentCycle && currentCycle <= endPartition;
-                                       const allUpcoming = startPartition > currentCycle;
-
-                                       // Calculate completion percentage for this pill
-                                       let completionPercentage = 0;
-                                       if (allCompleted) {
-                                          completionPercentage = 100;
-                                       } else if (hasActive) {
-                                          const completedInGroup = currentCycle - startPartition;
-                                          completionPercentage = (completedInGroup / representedPartitions) * 100;
+                                    const maxPills = 8;
+                                    const pills = [];
+                                    
+                                    // If total cycles <= 8, show all individual pills
+                                    if (totalCycles <= maxPills) {
+                                       for (let i = 1; i <= totalCycles; i++) {
+                                          const partitionIndex = i;
+                                          const isCompleted = partitionIndex < currentCycle;
+                                          const isActive = partitionIndex === currentCycle;
+                                          const isUpcoming = partitionIndex > currentCycle;
+                                          
+                                          const progressPercentage = isActive && useApiData && selectedTracker?.tracker?.live_investment_cycle?.partition_progress
+                                             ? selectedTracker.tracker.live_investment_cycle.partition_progress
+                                             : 0;
+                                          
+                                          pills.push(
+                                             <TooltipProvider key={partitionIndex} delayDuration={0}>
+                                                <Tooltip>
+                                                   <TooltipTrigger asChild>
+                                                      <button
+                                                         onClick={() => {
+                                                            if (!isUpcoming) {
+                                                               handlePartitionClick(partitionIndex);
+                                                            }
+                                                         }}
+                                                         disabled={isUpcoming}
+                                                         className={`flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden ${
+                                                            isCompleted
+                                                               ? "bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 cursor-pointer"
+                                                               : isActive
+                                                                  ? "bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105 cursor-pointer"
+                                                                  : "bg-slate-800/50 border border-slate-700 cursor-not-allowed opacity-50"
+                                                         }`}
+                                                      >
+                                                         {isActive && (
+                                                            <>
+                                                               {/* Water wave fill */}
+                                                               <span 
+                                                                  className="absolute inset-0 rounded-full overflow-hidden"
+                                                                  style={{ 
+                                                                     clipPath: 'inset(0 round 9999px)'
+                                                                  }}
+                                                               >
+                                                                  <span
+                                                                     className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500"
+                                                                     style={{ 
+                                                                        bottom: 0,
+                                                                        height: `${progressPercentage}%`,
+                                                                        top: 'auto'
+                                                                     }}
+                                                                  >
+                                                                     {/* Wave animation overlay */}
+                                                                     <span 
+                                                                        className="absolute inset-x-0 -top-2"
+                                                                        style={{
+                                                                           height: '8px',
+                                                                           background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 70%)',
+                                                                           animation: 'wave 2s ease-in-out infinite'
+                                                                        }}
+                                                                     />
+                                                                  </span>
+                                                               </span>
+                                                               
+                                                               {/* Pulsing glow */}
+                                                               <span className="absolute -inset-0.5 rounded-full bg-cyan-400/20 animate-pulse" />
+                                                               
+                                                               {/* Percentage text */}
+                                                               <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white z-20">
+                                                                  {progressPercentage.toFixed(0)}%
+                                                               </span>
+                                                            </>
+                                                         )}
+                                                         {isCompleted && (
+                                                            <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
+                                                         )}
+                                                         {isUpcoming && (
+                                                            <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-slate-600" />
+                                                         )}
+                                                      </button>
+                                                   </TooltipTrigger>
+                                                   <TooltipContent side="top" className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5">
+                                                      <div className="text-center">
+                                                         <div className="font-bold">Partition {partitionIndex}</div>
+                                                         <div className="text-[10px] text-slate-400 mt-0.5">
+                                                            {isCompleted ? "Completed" : isActive ? `Active (${progressPercentage.toFixed(1)}%)` : "Upcoming"}
+                                                         </div>
+                                                      </div>
+                                                   </TooltipContent>
+                                                </Tooltip>
+                                             </TooltipProvider>
+                                          );
                                        }
-
-                                       return (
-                                          <TooltipProvider key={pillIndex} delayDuration={0}>
+                                       return pills;
+                                    }
+                                    
+                                    // Smart windowing for > 8 total cycles
+                                    // Strategy: Show 4 previous + 1 active + 2 upcoming + 1 grouped range
+                                    const prevCount = 4;
+                                    const upcomingIndividualCount = 2;
+                                    
+                                    // Calculate window boundaries
+                                    let startIndex = Math.max(1, currentCycle - prevCount);
+                                    let endIndex = currentCycle + upcomingIndividualCount;
+                                    
+                                    // Adjust if near the start
+                                    if (currentCycle <= prevCount) {
+                                       startIndex = 1;
+                                       endIndex = Math.min(maxPills - 1, totalCycles); // Leave room for grouped pill
+                                    }
+                                    
+                                    // Adjust if near the end
+                                    if (currentCycle + upcomingIndividualCount >= totalCycles) {
+                                       endIndex = totalCycles;
+                                       startIndex = Math.max(1, totalCycles - maxPills + 1);
+                                    }
+                                    
+                                    const progressPercentage = useApiData && selectedTracker?.tracker?.live_investment_cycle?.partition_progress
+                                       ? selectedTracker.tracker.live_investment_cycle.partition_progress
+                                       : 0;
+                                    
+                                    // Add grouped pill at start if needed
+                                    if (startIndex > 1) {
+                                       const groupedStart = 1;
+                                       const groupedEnd = startIndex - 1;
+                                       pills.push(
+                                          <TooltipProvider key="start-group" delayDuration={0}>
                                              <Tooltip>
                                                 <TooltipTrigger asChild>
                                                    <button
-                                                      onClick={() => handlePartitionClick(hasActive ? currentCycle : startPartition)}
-                                                      className={`flex-1 h-8 rounded-full cursor-pointer transition-all duration-300 relative group overflow-hidden ${allCompleted
-                                                         ? "bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105"
-                                                         : hasActive
-                                                            ? "bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105"
-                                                            : "bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-600"
-                                                         }`}
+                                                      onClick={() => handlePartitionClick(groupedEnd)}
+                                                      className="flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden cursor-pointer bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105"
                                                    >
-                                                      {/* Active Glow Effect */}
-                                                      {hasActive && (
+                                                      <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
+                                                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white/90 z-10">
+                                                         {groupedStart}-{groupedEnd}
+                                                      </span>
+                                                   </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5">
+                                                   <div className="text-center">
+                                                      <div className="font-bold">Partitions {groupedStart}-{groupedEnd}</div>
+                                                      <div className="text-[10px] text-slate-400 mt-0.5">Completed · Click to view partition {groupedEnd}</div>
+                                                   </div>
+                                                </TooltipContent>
+                                             </Tooltip>
+                                          </TooltipProvider>
+                                       );
+                                    }
+                                    
+                                    // Add individual pills in the window
+                                    for (let i = startIndex; i <= Math.min(endIndex, totalCycles); i++) {
+                                       const partitionIndex = i;
+                                       const isCompleted = partitionIndex < currentCycle;
+                                       const isActive = partitionIndex === currentCycle;
+                                       const isUpcoming = partitionIndex > currentCycle;
+                                       
+                                       pills.push(
+                                          <TooltipProvider key={partitionIndex} delayDuration={0}>
+                                             <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                   <button
+                                                      onClick={() => {
+                                                         if (!isUpcoming) {
+                                                            handlePartitionClick(partitionIndex);
+                                                         }
+                                                      }}
+                                                      disabled={isUpcoming}
+                                                      className={`flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden ${
+                                                         isCompleted
+                                                            ? "bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 cursor-pointer"
+                                                            : isActive
+                                                               ? "bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105 cursor-pointer"
+                                                               : "bg-slate-800/50 border border-slate-700 cursor-not-allowed opacity-50"
+                                                      }`}
+                                                   >
+                                                      {isActive && (
                                                          <>
+                                                            {/* Water wave fill */}
+                                                            <span 
+                                                               className="absolute inset-0 rounded-full overflow-hidden"
+                                                               style={{ 
+                                                                  clipPath: 'inset(0 round 9999px)'
+                                                               }}
+                                                            >
+                                                               <span
+                                                                  className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500"
+                                                                  style={{ 
+                                                                     bottom: 0,
+                                                                     height: `${progressPercentage}%`,
+                                                                     top: 'auto'
+                                                                  }}
+                                                               >
+                                                                  {/* Wave animation overlay */}
+                                                                  <span 
+                                                                     className="absolute inset-x-0 -top-2"
+                                                                     style={{
+                                                                        height: '8px',
+                                                                        background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 70%)',
+                                                                        animation: 'wave 2s ease-in-out infinite'
+                                                                     }}
+                                                                  />
+                                                               </span>
+                                                            </span>
+                                                            
+                                                            {/* Pulsing glow */}
                                                             <span className="absolute -inset-0.5 rounded-full bg-cyan-400/20 animate-pulse" />
-                                                            {/* Partial completion fill */}
-                                                            <span
-                                                               className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400/40 to-blue-500/40 transition-all duration-500"
-                                                               style={{ width: `${completionPercentage}%` }}
-                                                            />
+                                                            
+                                                            {/* Percentage text */}
+                                                            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white z-20">
+                                                               {progressPercentage.toFixed(0)}%
+                                                            </span>
                                                          </>
                                                       )}
-
-                                                      {/* Completed Shine Effect */}
-                                                      {allCompleted && (
+                                                      {isCompleted && (
                                                          <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
                                                       )}
-
-                                                      {/* Future Dot Indicator */}
-                                                      {allUpcoming && (
-                                                         <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-slate-500 transition-colors" />
-                                                      )}
-
-                                                      {/* Pill Label for grouped partitions */}
-                                                      {representedPartitions > 1 && (hasActive || allCompleted) && (
-                                                         <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white/80 z-10">
-                                                            {representedPartitions}
-                                                         </span>
+                                                      {isUpcoming && (
+                                                         <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-slate-600" />
                                                       )}
                                                    </button>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5">
                                                    <div className="text-center">
-                                                      <div className="font-bold">
-                                                         {representedPartitions === 1
-                                                            ? `Partition #${startPartition + 1}`
-                                                            : `Partitions #${startPartition + 1}-${endPartition + 1}`
-                                                         }
-                                                      </div>
+                                                      <div className="font-bold">Partition {partitionIndex}</div>
                                                       <div className="text-[10px] text-slate-400 mt-0.5">
-                                                         {allCompleted
-                                                            ? "Completed"
-                                                            : hasActive
-                                                               ? `Active (${Math.round(completionPercentage)}% done)`
-                                                               : "Upcoming"
-                                                         }
+                                                         {isCompleted ? "Completed" : isActive ? `Active (${progressPercentage.toFixed(1)}%)` : "Upcoming"}
                                                       </div>
                                                    </div>
                                                 </TooltipContent>
                                              </Tooltip>
                                           </TooltipProvider>
                                        );
-                                    });
+                                    }
+                                    
+                                    // Add grouped pill at end if needed
+                                    if (endIndex < totalCycles) {
+                                       const groupedStart = endIndex + 1;
+                                       const groupedEnd = totalCycles;
+                                       pills.push(
+                                          <TooltipProvider key="end-group" delayDuration={0}>
+                                             <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                   <button
+                                                      disabled
+                                                      className="flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden bg-slate-800/50 border border-slate-700 cursor-not-allowed opacity-50"
+                                                   >
+                                                      <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-slate-600" />
+                                                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500">
+                                                         {groupedStart}-{groupedEnd}
+                                                      </span>
+                                                   </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5">
+                                                   <div className="text-center">
+                                                      <div className="font-bold">Partitions {groupedStart}-{groupedEnd}</div>
+                                                      <div className="text-[10px] text-slate-400 mt-0.5">Upcoming</div>
+                                                   </div>
+                                                </TooltipContent>
+                                             </Tooltip>
+                                          </TooltipProvider>
+                                       );
+                                    }
+                                    
+                                    return pills;
                                  })()}
                               </div>
                            </div>
+                           
+                           {/* Add animation keyframes */}
+                           <style>{`
+                              @keyframes wave {
+                                 0%, 100% { 
+                                    transform: translateX(-50%) translateY(0);
+                                 }
+                                 50% { 
+                                    transform: translateX(-50%) translateY(-2px);
+                                 }
+                              }
+                           `}</style>
 
                            <div className="flex justify-between text-[10px] text-muted-foreground font-mono px-1">
                               <span>START</span>
@@ -1327,13 +1536,13 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                    : "bg-slate-700/50 text-slate-400 border-slate-600 px-3 py-0.5 text-xs font-semibold"
                                              }
                                           >
-                                             {partitionDetails?.status === 2 ? 'COMPLETED ✓' : partitionDetails?.status === 1 ? 'ACTIVE' : 'PENDING'}
+                                             {partitionDetails?.status}
                                           </Badge>
                                        </div>
 
                                        {/* Current Cycle Info */}
                                        <p className="text-sm text-slate-400 font-mono">
-                                          Current Cycle {partitionDetails?.partition_index || (selectedPartition + 1)} • {partitionDetails?.expected_days || displayPartitionDays} days
+                                          Current Cycle {partitionDetails?.partition_index || (selectedPartition + 1)} • {partitionDetails?.expected_days || displayPartitionMonths} days
                                        </p>
                                     </div>
                                  </div>
@@ -1393,7 +1602,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           )}
                                           <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
                                              <span className="text-sm text-slate-400">Days Active</span>
-                                             <span className="text-sm font-semibold text-white">{partitionDetails?.expected_days || displayPartitionDays} days</span>
+                                             <span className="text-sm font-semibold text-white">{partitionDetails?.expected_days || displayPartitionMonths} days</span>
                                           </div>
                                           <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
                                              <span className="text-sm text-slate-400">Units Acquired</span>
