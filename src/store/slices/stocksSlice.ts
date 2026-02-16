@@ -15,39 +15,15 @@ const initialState: StocksState = {
   showDsipOnly: false,
 };
 
-// Load stocks from localStorage on initialization
-const loadStocksFromStorage = (): Stock[] => {
-  try {
-    const savedStocks = localStorage.getItem('smart_sip_stocks');
-    return savedStocks ? JSON.parse(savedStocks) : [];
-  } catch (error) {
-    console.error('Failed to load stocks from localStorage:', error);
-    return [];
-  }
-};
-
-// Save stocks to localStorage
-const saveStocksToStorage = (stocks: Stock[]) => {
-  try {
-    localStorage.setItem('smart_sip_stocks', JSON.stringify(stocks));
-  } catch (error) {
-    console.error('Failed to save stocks to localStorage:', error);
-  }
-};
-
 const stocksSlice = createSlice({
   name: 'stocks',
-  initialState: {
-    ...initialState,
-    stocks: loadStocksFromStorage(),
-  },
+  initialState,
   reducers: {
     // Add a new stock
     addStock: (state, action: PayloadAction<Stock>) => {
       state.stocks.push(action.payload);
       state.selectedStockId = action.payload.id;
       state.tempStrategyConfig = undefined;
-      saveStocksToStorage(state.stocks);
     },
 
     // Update an existing stock
@@ -55,7 +31,6 @@ const stocksSlice = createSlice({
       const index = state.stocks.findIndex(s => s.id === action.payload.id);
       if (index !== -1) {
         state.stocks[index] = action.payload;
-        saveStocksToStorage(state.stocks);
       }
     },
 
@@ -65,7 +40,6 @@ const stocksSlice = createSlice({
       if (state.selectedStockId === action.payload) {
         state.selectedStockId = null;
       }
-      saveStocksToStorage(state.stocks);
     },
 
     // Set selected stock
@@ -83,9 +57,9 @@ const stocksSlice = createSlice({
       state.showDsipOnly = action.payload;
     },
 
-    // Load stocks from storage (useful for manual refresh)
-    loadStocks: (state) => {
-      state.stocks = loadStocksFromStorage();
+    // Set stocks from API data (replaces loadStocks)
+    setStocks: (state, action: PayloadAction<Stock[]>) => {
+      state.stocks = action.payload;
     },
 
     // Clear all stocks
@@ -93,7 +67,6 @@ const stocksSlice = createSlice({
       state.stocks = [];
       state.selectedStockId = null;
       state.tempStrategyConfig = undefined;
-      saveStocksToStorage([]);
     },
   },
 });
@@ -105,7 +78,7 @@ export const {
   setSelectedStock,
   setTempStrategyConfig,
   setShowDsipOnly,
-  loadStocks,
+  setStocks,
   clearStocks,
 } = stocksSlice.actions;
 

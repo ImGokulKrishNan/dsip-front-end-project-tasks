@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAuth, setAuthSuccess, setAuthError, clearAuth } from './store/slices/authSlice';
-import { updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly } from './store/slices/stocksSlice';
+import { updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly, setStocks } from './store/slices/stocksSlice';
 import { setView, showCelebrationModal, hideCelebrationModal, navigateToDashboard, navigateToAddStock, navigateToStockDetails } from './store/slices/uiSlice';
 import { fetchTrackerDetails, createTracker, fetchAllTrackers } from './store/slices/trackersSlice';
 import { setOnUnauthorized } from './lib/api';
@@ -37,6 +37,7 @@ const MainApp: React.FC = () => {
   const { isAuthenticated, isLoading } = useAppSelector(state => state.auth);
   const { stocks, selectedStockId, tempStrategyConfig, showDsipOnly } = useAppSelector(state => state.stocks);
   const { view, showCelebration } = useAppSelector(state => state.ui);
+  const { trackers } = useAppSelector(state => state.trackers);
 
   // Set up API unauthorized handler
   useEffect(() => {
@@ -49,6 +50,36 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     dispatch(checkAuth());
   }, [dispatch]);
+
+  // Fetch trackers on mount when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchAllTrackers());
+    }
+  }, [isAuthenticated, dispatch]);
+
+  // Map trackers from API to Stock format for UI components
+  useMemo(() => {
+    const mappedStocks: Stock[] = trackers.map(tracker => ({
+      id: tracker.trackerId.toString(),
+      symbol: tracker.stockSymbol,
+      name: tracker.stockName,
+      convictionYears: 5, // Default, will be loaded from tracker details
+      partitionMonths: 1, // Default
+      loadFactor: 'Aggressive' as any, // Default
+      totalBudget: tracker.totalCapitalPlanned,
+      deployedAmount: tracker.totalCapitalInvestedSoFar,
+      currentAverage: tracker.sharesHeldSoFar > 0 ? tracker.totalCapitalInvestedSoFar / tracker.sharesHeldSoFar : 0,
+      currentPrice: tracker.currentPrice,
+      isPaused: tracker.status === 3, // TrackerStatus.PAUSED
+      history: [],
+      quantityOwned: tracker.sharesHeldSoFar,
+      averagePriceOwned: tracker.sharesHeldSoFar > 0 ? tracker.totalCapitalInvestedSoFar / tracker.sharesHeldSoFar : 0,
+      convictionLevel: 75, // Default
+      priceMovementPct: 0, // Will be calculated
+    }));
+    dispatch(setStocks(mappedStocks));
+  }, [trackers, dispatch]);
 
   // Listen for messages from auth popup
   useEffect(() => {
