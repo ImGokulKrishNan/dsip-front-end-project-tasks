@@ -183,27 +183,27 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                            <Card className="bg-secondary/20 border-dashed animate-in slide-in-from-top-2 fade-in duration-300">
                               <CardContent className="pt-6 grid grid-cols-2 gap-4">
                                  <div className="grid gap-2">
+                                    <Label>Total amount invested so far</Label>
+                                    <Input
+                                       type="number"
+                                       value={averagePriceOwned}
+                                       onChange={e => setAveragePriceOwned(e.target.value)}
+                                       placeholder="$ Total Amount"
+                                       className="bg-background"
+                                    />
+                                 </div>
+                                 <div className="grid gap-2">
                                     <Label>Total shares currently held</Label>
                                     <Input
                                        type="number"
                                        value={quantityOwned}
                                        onChange={e => setQuantityOwned(e.target.value)}
-                                       placeholder="Quantity"
-                                       className="bg-background"
-                                    />
-                                 </div>
-                                 <div className="grid gap-2">
-                                    <Label>Average price per share</Label>
-                                    <Input
-                                       type="number"
-                                       value={averagePriceOwned}
-                                       onChange={e => setAveragePriceOwned(e.target.value)}
-                                       placeholder="$ Average Price"
+                                       placeholder="Shares"
                                        className="bg-background"
                                     />
                                  </div>
                                  <p className="text-xs text-muted-foreground col-span-2">
-                                    *Total Invested: ${quantityOwned && averagePriceOwned ? (Number(quantityOwned) * Number(averagePriceOwned)).toFixed(2) : '0.00'}
+                                    *Inferred Avg Price: ${quantityOwned && averagePriceOwned ? (Number(averagePriceOwned) / Number(quantityOwned)).toFixed(2) : '0.00'}
                                  </p>
                               </CardContent>
                            </Card>
