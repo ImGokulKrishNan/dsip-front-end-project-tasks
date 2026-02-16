@@ -64,7 +64,11 @@ export async function createTracker(
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to create tracker');
+  // Extract detailed error message from response
+  const errorData = response.data as any;
+  const detailedMessage = errorData?.message || errorData?.error || response.message || 'Failed to create tracker';
+  
+  throw new Error(detailedMessage);
 }
 
 // ============================================================================

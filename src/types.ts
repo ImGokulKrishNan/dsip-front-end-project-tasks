@@ -10,7 +10,7 @@ export interface Stock {
   symbol: string;
   name: string;
   convictionYears: number;
-  partitionDays: number;
+  partitionMonths: number;
   loadFactor: LoadFactor;
   totalBudget: number;
   deployedAmount: number;

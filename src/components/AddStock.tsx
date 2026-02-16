@@ -56,7 +56,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
 
    const [symbol, setSymbol] = useState(initialValues?.symbol || '');
    const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '50000');
-   const [partition, setPartition] = useState(initialValues?.partitionDays?.toString() || '22');
+   const [partition, setPartition] = useState(initialValues?.partitionMonths?.toString() || '2');
    const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '3');
    const [loadFactor, setLoadFactor] = useState<LoadFactor>(initialValues?.loadFactor || LoadFactor.MODERATE);
 
@@ -117,7 +117,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
          symbol: stockData.symbol,
          name: stockData.company?.name || stockData.symbol,
          totalBudget: Number(budget),
-         partitionDays: Number(partition),
+         partitionMonths: Number(partition),
          convictionYears: Number(convictionYears),
          loadFactor,
          deployedAmount: 0,

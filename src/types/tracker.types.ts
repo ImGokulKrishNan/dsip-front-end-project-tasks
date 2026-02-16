@@ -38,13 +38,13 @@ export enum Exchange {
 
 export interface CreateTrackerRequest {
   stock_symbol: string;
-  conviction_period_years: number;
-  total_capital_planned: number;
-  partition_days: number;
-  deployment_style: DeploymentStyle;
+  conviction_period_years: number; // Now accepts decimals (e.g., 2.5)
+  total_capital_planned: number; // Double type
+  partition_months: number; // Integer - replaces partition_days
+  deployment_style: string; // String - accepts "GRADUAL", "MODERATE", "AGGRESSIVE" (uppercase)
   base_conviction_score: number;
-  initial_invested_amount?: number;
-  initial_shares_held?: number;
+  initial_invested_amount?: number; // Double type
+  initial_shares_held?: number; // Double type
   is_fractional_shares_allowed?: boolean;
 }
 

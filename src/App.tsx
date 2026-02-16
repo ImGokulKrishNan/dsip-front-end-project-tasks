@@ -4,11 +4,12 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAuth, setAuthSuccess, setAuthError, clearAuth } from './store/slices/authSlice';
-import { addStock, updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly } from './store/slices/stocksSlice';
+import { updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly } from './store/slices/stocksSlice';
 import { setView, showCelebrationModal, hideCelebrationModal, navigateToDashboard, navigateToAddStock, navigateToStockDetails } from './store/slices/uiSlice';
-import { fetchTrackerDetails } from './store/slices/trackersSlice';
+import { fetchTrackerDetails, createTracker, fetchAllTrackers } from './store/slices/trackersSlice';
 import { setOnUnauthorized } from './lib/api';
-import { Stock } from './types';
+import { Stock, LoadFactor } from './types';
+
 import { Icons } from './constants';
 
 import LandingPage from './components/LandingPage';
@@ -90,12 +91,55 @@ const MainApp: React.FC = () => {
     return <LandingPage />;
   }
 
-  const handleAddStock = (newStock: Stock) => {
-    if (stocks.length === 0) {
-      dispatch(showCelebrationModal());
+  const handleAddStock = async (newStock: Stock) => {
+    // Map LoadFactor enum to uppercase string values for the API
+    // The backend expects: "GRADUAL", "MODERATE", "AGGRESSIVE"
+    const deploymentStyleMap: Record<LoadFactor, string> = {
+      [LoadFactor.GRADUAL]: 'GRADUAL',
+      [LoadFactor.MODERATE]: 'MODERATE',
+      [LoadFactor.AGGRESSIVE]: 'AGGRESSIVE',
+    };
+
+    try {
+
+      // Call the createTracker API
+      const requestPayload = {
+        stock_symbol: newStock.symbol,
+        conviction_period_years: newStock.convictionYears,
+        total_capital_planned: newStock.totalBudget,
+        partition_months: newStock.partitionMonths,
+        deployment_style: deploymentStyleMap[newStock.loadFactor],
+        base_conviction_score: newStock.convictionLevel,
+        initial_invested_amount: newStock.quantityOwned * newStock.averagePriceOwned,
+        initial_shares_held: newStock.quantityOwned,
+        is_fractional_shares_allowed: true,
+      };
+
+      console.log('[App] Creating tracker with payload:', requestPayload);
+
+      const result = await dispatch(createTracker(requestPayload)).unwrap();
+
+      console.log('[App] Tracker created successfully:', result);
+
+      // Show celebration modal if this is the first tracker
+      if (stocks.length === 0) {
+        dispatch(showCelebrationModal());
+      }
+
+      // Refresh the trackers list to get the new tracker
+      dispatch(fetchAllTrackers());
+
+      // Navigate to dashboard to see the new tracker
+      dispatch(navigateToDashboard());
+    } catch (error: any) {
+      console.error('[App] Failed to create tracker:', error);
+      console.error('[App] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        error: error
+      });
+      alert(`Failed to create tracker: ${error.message || 'Unknown error'}`);
     }
-    dispatch(addStock(newStock));
-    dispatch(navigateToStockDetails());
   };
 
   const handleUpdateStock = (updatedStock: Stock) => {
