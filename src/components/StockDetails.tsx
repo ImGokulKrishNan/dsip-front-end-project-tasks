@@ -518,7 +518,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           convictionOverride[0] > 55 ? "bg-emerald-500 hover:bg-emerald-600 h-6 md:h-5 px-2 md:px-1.5 text-xs md:text-[10px]" :
                                              "bg-yellow-500 hover:bg-yellow-600 h-6 md:h-5 px-2 md:px-1.5 text-xs md:text-[10px]"
                                     }>
-                                       {convictionOverride[0]}% Conf.
+                                       {convictionOverride[0]}% Confidence
                                     </Badge>
                                  </div>
                                  <Slider
