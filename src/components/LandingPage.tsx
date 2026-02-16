@@ -6,7 +6,7 @@ const LandingPage: React.FC = () => {
   const isLoading = useAppSelector(state => state.auth.isLoading);
   return (
 
-    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-b from-slate-900 to-slate-950 text-white selection:bg-indigo-500/30">
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gradient-to-b from-slate-900 to-slate-950 text-white selection:bg-indigo-500/30">
 
       {/* Background Ambience */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />

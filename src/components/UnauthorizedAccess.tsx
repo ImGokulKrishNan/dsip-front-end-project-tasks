@@ -48,7 +48,7 @@ const UnauthorizedAccess: React.FC = () => {
           <Button
             variant="ghost"
             onClick={() => window.location.href = '/'}
-            className="text-slate-400 hover:text-white"
+            className="text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <Icons.ArrowLeft className="mr-2 h-4 w-4" />
             Back to Login
