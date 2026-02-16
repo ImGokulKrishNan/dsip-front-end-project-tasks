@@ -104,18 +104,25 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
     // Transform API response to match our expected format
     // API returns: dsip_trackers with snake_case fields
     // We need: trackers with camelCase fields
-    const trackers = (data.dsip_trackers || []).map((tracker: any) => ({
-      trackerId: tracker.id,
-      stockSymbol: tracker.symbol,
-      stockName: tracker.name,
-      currentPrice: tracker.total_capital_invested_so_far || 0,
-      totalCapitalPlanned: tracker.total_capital_invested_so_far || 0,
-      totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far || 0,
-      sharesHeldSoFar: 0, // Not in API response, default to 0
-      status: 1, // Default to ACTIVE
-      activePartitionIndex: 1, // Default
-      createdAt: tracker.createdAt || new Date().toISOString(),
-    }));
+    const trackers = (data.dsip_trackers || []).map((tracker: any) => {
+      // Calculate current price from total invested and shares if available
+      const sharesHeld = tracker.dsip_total_capital_invested_so_far && tracker.total_capital_invested_so_far 
+        ? (tracker.total_capital_invested_so_far / (tracker.dsip_total_capital_invested_so_far || 1))
+        : 0;
+      
+      return {
+        trackerId: tracker.id,
+        stockSymbol: tracker.symbol,
+        stockName: tracker.name,
+        currentPrice: sharesHeld > 0 ? (tracker.total_capital_invested_so_far / sharesHeld) : 0,
+        totalCapitalPlanned: tracker.total_capital_planned || 0,
+        totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far || 0,
+        sharesHeldSoFar: sharesHeld,
+        status: 1, // Default to ACTIVE
+        activePartitionIndex: 1, // Default
+        createdAt: tracker.createdAt || new Date().toISOString(),
+      };
+    });
 
     const transformed: GetAllTrackersResponse = {
       trackers,
