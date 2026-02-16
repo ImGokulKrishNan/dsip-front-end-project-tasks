@@ -203,7 +203,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
          setIsLoadingPartition(true);
          try {
             const { getPartitionDetails } = await import('../lib/api.fetcher');
-            const details = await getPartitionDetails(trackerData.trackerId, trackerData.active_partition_index);
+            const details = await getPartitionDetails(trackerData.trackerId, index);
             setPartitionDetails(details);
             console.log('[Partition Details]', details);
          } catch (error) {
