@@ -322,10 +322,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   ? sipQuantity
                   : ((selectedStock?.quantityOwned || 0) + sipQuantity);
 
-                const currentValueStock = useApiData && trackerData
+                const currentValueStock = useApiData 
                   ? (showDsipOnly 
-                      ? (trackerData.dsip_total_market_value || 0)
-                      : (trackerData.total_market_value || 0))
+                      ? (trackerData?.dsip_total_market_value || 0)
+                      : (trackerData?.total_market_value || 0))
                   : relevantShares * currentPrice;
                 const totalPLStock = currentValueStock - totalInvestedStock;
                 const isProfitStock = totalPLStock >= 0;
@@ -368,7 +368,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                           </span>
 
                         </div>
-                        <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString()}</div>
+                        <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
 
                       <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
@@ -381,13 +381,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                           )}
                         </div>
 
-                        <div className="text-2xl font-bold">${Math.round(currentValueStock).toLocaleString()}</div>
+                        <div className="text-2xl font-bold">${currentValueStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
 
                       <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfitStock ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
                         <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
                         <div className="text-3xl font-black tracking-tight">
-                          {isProfitStock ? '+' : ''}${Math.round(totalPLStock).toLocaleString()}
+                          {isProfitStock ? '+' : ''}${totalPLStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       </div>
                     </div>
