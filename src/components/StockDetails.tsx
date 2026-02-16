@@ -373,6 +373,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
          setExecutedAmount('');
          setExecutionPrice('');
 
+         // Refresh tracker details to get updated data
+         const { fetchTrackerDetails } = await import('../store/slices/trackersSlice');
+         dispatch(fetchTrackerDetails(trackerId));
+         
          // Handle the response scenarios based on code
          if (result.code === 'SUCCESS' || result.code === 'ONGOING') {
             // SUCCESS or ONGOING: Show Order Executed popup immediately
@@ -388,6 +392,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                   // Call end-action API to finalize the partition
                   const { endPartitionAction } = await import('../lib/api.fetcher');
                   await endPartitionAction(trackerId, partitionIndex);
+                  
+                  // Refresh tracker details again to show new partition state
+                  dispatch(fetchTrackerDetails(trackerId));
+                  
                   console.log('[Partition Ended]');
 
                   // Show appropriate popup based on code
