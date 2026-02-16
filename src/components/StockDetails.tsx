@@ -138,9 +138,14 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    // Daily Context Inputs
    const [lockInPct, setLockInPct] = useState<string>('');
    // Initialize with base_conviction_score from tracker data, default to 50 if not available
-   const [convictionOverride, setConvictionOverride] = useState<number[]>(
-      trackerData?.base_conviction_score ? [trackerData.base_conviction_score] : [50]
-   );
+   const [convictionOverride, setConvictionOverride] = useState<number[]>([displayConvictionLevel || 50]);
+
+   // Sync convictionOverride with API data when it loads
+   useEffect(() => {
+      if (displayConvictionLevel) {
+         setConvictionOverride([displayConvictionLevel]);
+      }
+   }, [displayConvictionLevel]);
 
    // Calculated Recommendation from API
    type RecommendationResponse = {
@@ -368,7 +373,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
          // Reset form state
          setExecutionState('IDLE');
          setLockInPct('');
-         setConvictionOverride(trackerData?.base_conviction_score ? [trackerData.base_conviction_score] : [50]);
+         setConvictionOverride([displayConvictionLevel || 50]);
          setRecommendation(null);
          setExecutedAmount('');
          setExecutionPrice('');

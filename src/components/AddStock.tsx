@@ -55,9 +55,9 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
    const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
    const [symbol, setSymbol] = useState(initialValues?.symbol || '');
-   const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '50000');
+   const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '5000');
    const [partition, setPartition] = useState(initialValues?.partitionMonths?.toString() || '2');
-   const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '3');
+   const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '1');
    const [loadFactor, setLoadFactor] = useState<LoadFactor>(initialValues?.loadFactor || LoadFactor.MODERATE);
 
    const [quantityOwned, setQuantityOwned] = useState('0');
@@ -183,31 +183,27 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                            <Card className="bg-secondary/20 border-dashed animate-in slide-in-from-top-2 fade-in duration-300">
                               <CardContent className="pt-6 grid grid-cols-2 gap-4">
                                  <div className="grid gap-2">
-                                    <Label>Total amount invested so far</Label>
-                                    <Input
-                                       type="number"
-                                       value={averagePriceOwned ? (Number(quantityOwned) * Number(averagePriceOwned)).toString() : ''}
-                                       onChange={e => {
-                                          const total = Number(e.target.value);
-                                          if (Number(quantityOwned) > 0) {
-                                             setAveragePriceOwned((total / Number(quantityOwned)).toString());
-                                          }
-                                       }}
-                                       placeholder="$ Total"
-                                       className="bg-background"
-                                    />
-                                 </div>
-                                 <div className="grid gap-2">
                                     <Label>Total shares currently held</Label>
                                     <Input
                                        type="number"
                                        value={quantityOwned}
                                        onChange={e => setQuantityOwned(e.target.value)}
+                                       placeholder="Quantity"
+                                       className="bg-background"
+                                    />
+                                 </div>
+                                 <div className="grid gap-2">
+                                    <Label>Average price per share</Label>
+                                    <Input
+                                       type="number"
+                                       value={averagePriceOwned}
+                                       onChange={e => setAveragePriceOwned(e.target.value)}
+                                       placeholder="$ Average Price"
                                        className="bg-background"
                                     />
                                  </div>
                                  <p className="text-xs text-muted-foreground col-span-2">
-                                    *Inferred Avg Price: ${quantityOwned && averagePriceOwned ? Number(averagePriceOwned).toFixed(2) : '0.00'}
+                                    *Total Invested: ${quantityOwned && averagePriceOwned ? (Number(quantityOwned) * Number(averagePriceOwned)).toFixed(2) : '0.00'}
                                  </p>
                               </CardContent>
                            </Card>
@@ -228,12 +224,15 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                               Total capital allocation
                               <InfoTooltip text="How much total capital do you want to deploy over this conviction period?" />
                            </Label>
-                           <Input
-                              type="number"
-                              className="text-lg font-bold"
-                              value={budget}
-                              onChange={e => setBudget(e.target.value)}
-                           />
+                           <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">$</span>
+                              <Input
+                                 type="number"
+                                 className="text-lg font-bold pl-8"
+                                 value={budget}
+                                 onChange={e => setBudget(e.target.value)}
+                              />
+                           </div>
                         </div>
 
                         <div className="grid gap-2">
