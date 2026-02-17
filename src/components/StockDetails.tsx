@@ -205,9 +205,28 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [selectedPartition, setSelectedPartition] = useState<number | null>(null);
    const [partitionDetails, setPartitionDetails] = useState<any>(null);
    const [isLoadingPartition, setIsLoadingPartition] = useState(false);
+   
+   // Partition Selector Popover State
+   const [showPartitionSelector, setShowPartitionSelector] = useState(false);
+   const [selectorPartitions, setSelectorPartitions] = useState<number[]>([]);
+   const [selectorAnchor, setSelectorAnchor] = useState<HTMLElement | null>(null);
+
+   // Open partition selector for grouped pills
+   const handlePartitionGroupClick = (startIndex: number, endIndex: number, event: React.MouseEvent<HTMLButtonElement>) => {
+      const partitions = [];
+      for (let i = startIndex; i <= endIndex; i++) {
+         partitions.push(i);
+      }
+      setSelectorPartitions(partitions);
+      setSelectorAnchor(event.currentTarget);
+      setShowPartitionSelector(true);
+   };
 
    // Fetch partition details when a partition is selected
    const handlePartitionClick = async (index: number) => {
+      // Close selector if open
+      setShowPartitionSelector(false);
+      
       setSelectedPartition(index);
 
       // If we have API data, fetch partition details
@@ -1282,7 +1301,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  Deployment Progress
                               </h3>
                               <span className="text-xs font-mono font-medium text-muted-foreground">
-                                 {((currentCycle / totalCycles) * 100).toFixed(1)}% Complete
+                                 {((displayDeployedAmount / displayTotalBudget) * 100).toFixed(1)}% Complete
                               </span>
                            </div>
 
@@ -1419,7 +1438,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                              <Tooltip>
                                                 <TooltipTrigger asChild>
                                                    <button
-                                                      onClick={() => handlePartitionClick(groupedEnd)}
+                                                      onClick={(e) => handlePartitionGroupClick(groupedStart, groupedEnd, e)}
                                                       className="flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden cursor-pointer bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105"
                                                    >
                                                       <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
@@ -1738,6 +1757,41 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                </Card>
 
                <div>
+                  {/* Partition Selector Dropdown */}
+                  {showPartitionSelector && selectorAnchor && (
+                     <div 
+                        className="fixed inset-0 z-50" 
+                        onClick={() => setShowPartitionSelector(false)}
+                     >
+                        <div
+                           className="absolute bg-slate-900/95 backdrop-blur-sm border border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/20 p-4 animate-in fade-in zoom-in-95 duration-200"
+                           style={{
+                              top: `${selectorAnchor.getBoundingClientRect().top - 120}px`,
+                              left: `${selectorAnchor.getBoundingClientRect().left}px`,
+                              minWidth: '280px'
+                           }}
+                           onClick={(e) => e.stopPropagation()}
+                        >
+                           <div className="text-xs font-semibold text-cyan-400 mb-3 flex items-center gap-2">
+                              <Icons.Target size={14} />
+                              Select Partition
+                           </div>
+                           <div className="grid grid-cols-4 gap-2">
+                              {selectorPartitions.map((partitionNum) => (
+                                 <button
+                                    key={partitionNum}
+                                    onClick={() => handlePartitionClick(partitionNum)}
+                                    className="h-12 rounded-xl bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 hover:from-cyan-300 hover:via-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-105 active:scale-95 flex items-center justify-center text-white font-bold text-sm relative overflow-hidden group"
+                                 >
+                                    <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-transparent to-white/20" />
+                                    <span className="relative z-10">{partitionNum}</span>
+                                 </button>
+                              ))}
+                           </div>
+                        </div>
+                     </div>
+                  )}
+                  
                   {/* Partition Details Modal - Premium Design */}
                   <Dialog open={selectedPartition !== null} onOpenChange={(open) => !open && setSelectedPartition(null)}>
                      <DialogContent hideCloseButton className="max-w-lg p-0 overflow-hidden bg-slate-950 border-slate-800 shadow-2xl rounded-3xl">
@@ -1778,7 +1832,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                    : "bg-slate-700/50 text-slate-400 border-slate-600 px-3 py-0.5 text-xs font-semibold"
                                              }
                                           >
-                                             {partitionDetails?.status === "COMPLETED" ? "Success" : partitionDetails?.status}
+                                             {partitionDetails?.status === "COMPLETED" ? "Success" : "Active"}
                                           </Badge>
                                        </div>
 
