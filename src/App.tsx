@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Toaster } from "@/components/ui/toaster";
+import NotFound from './components/NotFound';
 
 // Main app content - single page with state-based navigation
 const MainApp: React.FC = () => {
@@ -328,10 +329,11 @@ const App: React.FC = () => {
               {/* OAuth callback route - required for popup redirect */}
               <Route path="/auth/callback" element={<AuthCallback />} />
               {/* Unauthorized access route */}
-              <Route path="/unauthorized" element={<UnauthorizedAccess />} />
               <Route path="/auth/unauthorized" element={<UnauthorizedAccess />} />
-              {/* All other routes go to main app */}
-              <Route path="*" element={<MainApp />} />
+              {/* Root route goes to main app */}
+              <Route path="/" element={<MainApp />} />
+              {/* All other routes go to not found page */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
           </div>
