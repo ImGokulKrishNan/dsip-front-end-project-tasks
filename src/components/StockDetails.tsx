@@ -143,6 +143,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
    const [showVictoryPopup, setShowVictoryPopup] = useState(false);
    const [showKillSwitchPopup, setShowKillSwitchPopup] = useState(false);
+   const [executionResponse, setExecutionResponse] = useState<any>(null); // Store API response for popups
    const [confirmError, setConfirmError] = useState<string | null>(null);
    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
@@ -365,22 +366,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    };
 
    const handleCalculate = () => {
-      // Check if executed today
-      const alreadyExecutedToday = stock.history.some(h =>
-         new Date(h.date).toDateString() === new Date().toDateString()
-      );
-      // Kill Switch Logic: Check if we should stop execution
-      // Condition: > 50% through cycle AND negative return
-      if (daysInvested > (stock.partitionDays / 2) && currentReturnPercent < 0) {
-         setShowKillSwitchPopup(true);
-         return; // Block execution
-      }
-
-      if (alreadyExecutedToday) {
-         setShowDailyLimitWarning(true);
-      } else {
-         performCalculation();
-      }
+      // Let the API handle all validation and warnings
+      // The API will return appropriate response codes that control which popup to show
+      performCalculation();
    };
 
 
@@ -438,15 +426,21 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
          const { fetchTrackerDetails } = await import('../store/slices/trackersSlice');
          dispatch(fetchTrackerDetails(trackerId));
          
+         // Store the API response for use in popups
+         setExecutionResponse(result);
+
          // Handle the response scenarios based on code
-         if (result.code === 'SUCCESS' || result.code === 'ONGOING') {
-            // SUCCESS or ONGOING: Show Order Executed popup immediately
+         if (result.code === 'SUCCESS') {
+            // SUCCESS: Show victory popup with API data
+            setShowVictoryPopup(true);
+         } else if (result.code === 'ONGOING') {
+            // ONGOING: Show success popup with API data
             setShowSuccessPopup(true);
          } else if (result.code === 'KILL_SWITCH_STAGNATION' || result.code === 'KILL_SWITCH_POOR_GROWTH' || result.code === 'NEUTRAL_PARTITION') {
             // KILL_SWITCH_* or NEUTRAL_PARTITION: Show alert with response details, then call endPartitionAction
             if (result.title && result.message) {
                const shouldEndPartition = window.confirm(
-                  `${result.title}\n\n${result.message}\n\nCapital Deployed: $${result.deployed_amount.toLocaleString()}\nNet Return: ${result.profit_pct}%\n\nClick OK to acknowledge and end this partition.`
+                  `${result.title}\n\n${result.message}\n\nCapital Deployed: $${result.deployed_amount?.toLocaleString() || 'N/A'}\nNet Return: ${result.profit_pct?.toFixed(2) || 'N/A'}%\n\nClick OK to acknowledge and end this partition.`
                );
 
                if (shouldEndPartition) {
@@ -822,7 +816,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               <>
                                  <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Conviction Period</p>
-                                    <p className="font-semibold">{displayConvictionYears} years</p>
+                                    <p className="font-semibold">{displayConvictionYears} Years</p>
                                  </div>
                                  <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Total Budget</p>
@@ -838,7 +832,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  </div>
                                  <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
-                                    <p className="font-semibold">{displayPartitionMonths} trading months</p>
+                                    <p className="font-semibold">{displayPartitionMonths} Months</p>
                                  </div>
                                  {displayInitialInvestedAmount !== null && displayInitialInvestedAmount !== undefined && (
                                     <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
@@ -1168,10 +1162,18 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                            <div className="space-y-2 max-w-xs mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
                               <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
-                                 Order Executed!
+                                 {executionResponse?.title || 'Order Executed!'}
                               </DialogTitle>
                               <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
-                                 Great discipline! Your investment has been successfully recorded for today.
+                                 {executionResponse?.message || 'Great discipline! Your investment has been successfully recorded for today.'}
+                              </DialogDescription>
+                              {executionResponse?.deployed_amount !== undefined && executionResponse?.profit_pct !== undefined && (
+                                 <div className="text-xs text-center text-muted-foreground space-y-1 pt-2 border-t border-emerald-500/10 mt-3 pt-3">
+                                    <p>Capital Deployed: <span className="font-semibold">${executionResponse.deployed_amount.toLocaleString()}</span></p>
+                                    <p>Net Return: <span className={`font-semibold ${executionResponse.profit_pct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{executionResponse.profit_pct.toFixed(2)}%</span></p>
+                                 </div>
+                              )}
+                              <DialogDescription className="hidden">
                               </DialogDescription>
                            </div>
 
@@ -1372,7 +1374,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                       <div className="text-center">
                                                          <div className="font-bold">Partition {partitionIndex}</div>
                                                          <div className="text-[10px] text-slate-400 mt-0.5">
-                                                            {isCompleted ? "Completed" : isActive ? `Active (${progressPercentage.toFixed(1)}%)` : "Upcoming"}
+                                                            {isCompleted ? "Success" : isActive ? `Active (${progressPercentage.toFixed(1)}%)` : "Upcoming"}
                                                          </div>
                                                       </div>
                                                    </TooltipContent>
@@ -1776,7 +1778,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                                    : "bg-slate-700/50 text-slate-400 border-slate-600 px-3 py-0.5 text-xs font-semibold"
                                              }
                                           >
-                                             {partitionDetails?.status}
+                                             {partitionDetails?.status === "COMPLETED" ? "Success" : partitionDetails?.status}
                                           </Badge>
                                        </div>
 
@@ -1895,10 +1897,18 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
                            <div className="space-y-2 max-w-sm mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
                               <DialogTitle className="text-2xl font-black tracking-tight text-foreground uppercase">
-                                 Partition Completed!
+                                 {executionResponse?.title || 'Partition Completed!'}
                               </DialogTitle>
                               <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
-                                 Outstanding discipline! You have successfully completed a full investment cycle.
+                                 {executionResponse?.message || 'Outstanding discipline! You have successfully completed a full investment cycle.'}
+                              </DialogDescription>
+                              {executionResponse?.deployed_amount !== undefined && executionResponse?.profit_pct !== undefined && (
+                                 <div className="text-xs text-center text-muted-foreground space-y-1 pt-2 border-t border-amber-500/10 mt-3 pt-3">
+                                    <p>Capital Deployed: <span className="font-semibold">${executionResponse.deployed_amount.toLocaleString()}</span></p>
+                                    <p>Net Return: <span className={`font-semibold ${executionResponse.profit_pct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{executionResponse.profit_pct.toFixed(2)}%</span></p>
+                                 </div>
+                              )}
+                              <DialogDescription className="hidden">
                               </DialogDescription>
                            </div>
 
@@ -1925,8 +1935,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                         </DialogHeader>
                         <div className="py-4 space-y-4">
                            <p className="text-sm text-muted-foreground">
-                              We noticed your portfolio is currently down by <span className="font-bold text-red-500">{currentReturnPercent.toFixed(2)}%</span>.
-                              Since you are more than halfway through the cycle, it is recommended to halt further investment to protect capital.
+                              {executionResponse?.message || 'We noticed your portfolio is currently down. Since you are more than halfway through the cycle, it is recommended to halt further investment to protect capital.'}
+                           </p>
+                           {executionResponse?.deployed_amount !== undefined && executionResponse?.profit_pct !== undefined && (
+                              <div className="text-xs text-center text-muted-foreground space-y-1 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30 mb-3">
+                                 <p>Capital Deployed: <span className="font-semibold">${executionResponse.deployed_amount.toLocaleString()}</span></p>
+                                 <p>Net Return: <span className="font-semibold text-red-600">{executionResponse.profit_pct.toFixed(2)}%</span></p>
+                              </div>
+                           )}
+                           <p className="hidden">
                            </p>
                            <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
                               <p className="text-xs font-semibold text-red-700 dark:text-red-400">
