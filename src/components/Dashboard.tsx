@@ -259,7 +259,10 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
 
                               const totalInvested = tracker.totalCapitalInvestedSoFar;
                               const currentValue = tracker.sharesHeldSoFar * tracker.currentPrice;
-                              const pnlPct = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0;
+                              // Use net_profit_percentage from API if available, otherwise calculate
+                              const pnlPct = tracker.net_profit_percentage !== undefined
+                                 ? tracker.net_profit_percentage
+                                 : (totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0);
                               const isStockProfit = pnlPct >= 0;
                               const isPaused = tracker.status !== 1; // 1 = ACTIVE
 

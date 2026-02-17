@@ -78,6 +78,8 @@ const MainApp: React.FC = () => {
       averagePriceOwned: tracker.sharesHeldSoFar > 0 ? tracker.totalCapitalInvestedSoFar / tracker.sharesHeldSoFar : 0,
       convictionLevel: 75, // Default
       priceMovementPct: 0, // Will be calculated
+      net_profit_percentage: tracker.net_profit_percentage,
+      dsip_net_profit_percentage: tracker.dsip_net_profit_percentage,
     }));
     dispatch(setStocks(mappedStocks));
   }, [trackers, dispatch]);
@@ -257,7 +259,7 @@ const MainApp: React.FC = () => {
             symbol: 'Loading...',
             name: 'Loading...',
             convictionYears: 5,
-            partitionDays: 30,
+            partitionMonths: 1,
             loadFactor: 'Aggressive' as any,
             totalBudget: 0,
             deployedAmount: 0,

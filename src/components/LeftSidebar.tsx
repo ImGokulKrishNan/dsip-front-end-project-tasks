@@ -75,9 +75,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             ) : (
               filteredStocks.map(stock => {
                 const isActive = activeView === 'STOCK_DETAILS' && selectedStockId === stock.id;
-                const profitLossPct = stock.currentAverage > 0
-                  ? ((stock.currentPrice - stock.currentAverage) / stock.currentAverage) * 100
-                  : 0;
+                // Use net_profit_percentage from API if available, otherwise calculate
+                const profitLossPct = stock.net_profit_percentage !== undefined
+                  ? stock.net_profit_percentage
+                  : (stock.currentAverage > 0
+                      ? ((stock.currentPrice - stock.currentAverage) / stock.currentAverage) * 100
+                      : 0);
                 const isProfit = profitLossPct >= 0;
 
                 return (

@@ -117,6 +117,8 @@ export interface TrackerSummary {
   status: TrackerStatus;
   activePartitionIndex: number;
   createdAt: string;
+  net_profit_percentage: number;
+  dsip_net_profit_percentage: number;
 }
 
 export interface PortfolioSummary {

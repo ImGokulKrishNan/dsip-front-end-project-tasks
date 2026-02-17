@@ -121,6 +121,8 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
         status: 1, // Default to ACTIVE
         activePartitionIndex: 1, // Default
         createdAt: tracker.createdAt || new Date().toISOString(),
+        net_profit_percentage: tracker.net_profit_percentage || 0,
+        dsip_net_profit_percentage: tracker.dsip_net_profit_percentage || 0,
       };
     });
 

@@ -27,6 +27,9 @@ export interface Stock {
   currentCycle?: number;
   totalCycles?: number;
   daysInvested?: number;
+  // Profit/Loss percentages from API
+  net_profit_percentage?: number;
+  dsip_net_profit_percentage?: number;
 }
 
 export interface Transaction {
