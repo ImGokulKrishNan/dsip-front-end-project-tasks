@@ -113,6 +113,7 @@ export interface TrackerSummary {
   currentPrice: number;
   totalCapitalPlanned: number;
   totalCapitalInvestedSoFar: number;
+  dsipTotalCaptialInvestedSoFar: number;
   sharesHeldSoFar: number;
   status: TrackerStatus;
   activePartitionIndex: number;

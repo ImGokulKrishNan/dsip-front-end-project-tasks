@@ -117,6 +117,7 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
         currentPrice: sharesHeld > 0 ? (tracker.total_capital_invested_so_far / sharesHeld) : 0,
         totalCapitalPlanned: tracker.total_capital_planned || 0,
         totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far || 0,
+        dsipTotalCaptialInvestedSoFar: tracker.dsip_total_capital_invested_so_far || 0,
         sharesHeldSoFar: sharesHeld,
         status: 1, // Default to ACTIVE
         activePartitionIndex: 1, // Default

@@ -268,7 +268,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
 
                               // Prevent division by zero for deployment percentage
                               const deploymentPct = tracker.totalCapitalPlanned > 0
-                                 ? ((tracker.totalCapitalInvestedSoFar / tracker.totalCapitalPlanned) * 100)
+                                 ? ((tracker.dsipTotalCaptialInvestedSoFar / tracker.totalCapitalPlanned) * 100)
                                  : 0;
 
                               return (
@@ -341,7 +341,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                                                 style={{ width: `${Math.min(deploymentPct, 100)}%` }}
                                              />
                                              <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground/40 mix-blend-difference">
-                                                ${tracker.totalCapitalInvestedSoFar.toLocaleString()} / ${tracker.totalCapitalPlanned.toLocaleString()}
+                                                ${tracker.dsipTotalCaptialInvestedSoFar.toLocaleString()} / ${tracker.totalCapitalPlanned.toLocaleString()}
                                              </div>
                                           </div>
 
