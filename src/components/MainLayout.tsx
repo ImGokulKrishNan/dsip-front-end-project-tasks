@@ -329,6 +329,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   : relevantShares * currentPrice;
                 const totalPLStock = currentValueStock - totalInvestedStock;
                 const isProfitStock = totalPLStock >= 0;
+                
+                // Calculate percentage growth/loss
+                const percentageChange = useApiData && trackerData
+                  ? (showDsipOnly 
+                      ? (trackerData.dsip_net_profit_percentage || 0)
+                      : (trackerData.net_profit_percentage || 0))
+                  : totalInvestedStock > 0 
+                    ? (totalPLStock / totalInvestedStock) * 100 
+                    : 0;
 
                 return (
                   <>
@@ -372,13 +381,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                       </div>
 
                       <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
-                          {isProfitStock ? (
-                            <Icons.ArrowUp className="w-4 h-4 text-emerald-500" />
-                          ) : (
-                            <Icons.ArrowDown className="w-4 h-4 text-red-500" />
-                          )}
+                          <div className="flex items-center gap-1">
+                            {isProfitStock ? (
+                              <Icons.ArrowUp className="w-4 h-4 text-emerald-500" />
+                            ) : (
+                              <Icons.ArrowDown className="w-4 h-4 text-red-500" />
+                            )}
+                            <span className={`text-xs font-bold ${isProfitStock ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                              {isProfitStock ? '+' : ''}{percentageChange.toFixed(2)}%
+                            </span>
+                          </div>
                         </div>
 
                         <div className="text-2xl font-bold">${currentValueStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
