@@ -106,6 +106,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
    const displayDeployedAmount = getDisplayValue(trackerData?.total_capital_invested_so_far, stock.deployedAmount);
    const displaySharesHeld = getDisplayValue(trackerData?.shares_held_so_far, stock.quantityOwned);
    const displayCurrentPrice = getDisplayValue(trackerData?.currentPrice, stock.currentPrice);
+   const displayInitialInvestedAmount = getDisplayValue(trackerData?.initial_invested_amount, null);
+   const displayInitialSharesHeld = getDisplayValue(trackerData?.initial_shares_held, null);
 
    // Get deployment style as text
    const getDeploymentStyleText = () => {
@@ -834,10 +836,22 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <p className="text-xs text-muted-foreground">Load Factor</p>
                                     <p className="font-semibold capitalize">{displayLoadFactor}</p>
                                  </div>
-                                 <div className="flex justify-between md:block pt-1 md:pt-0">
+                                 <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
                                     <p className="font-semibold">{displayPartitionMonths} trading months</p>
                                  </div>
+                                 {displayInitialInvestedAmount !== null && displayInitialInvestedAmount !== undefined && (
+                                    <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
+                                       <p className="text-xs text-muted-foreground">Initial Invested Amount</p>
+                                       <p className="font-semibold">${Number(displayInitialInvestedAmount).toLocaleString()}</p>
+                                    </div>
+                                 )}
+                                 {displayInitialSharesHeld !== null && displayInitialSharesHeld !== undefined && (
+                                    <div className="flex justify-between md:block pt-1 md:pt-0">
+                                       <p className="text-xs text-muted-foreground">Initial Shares Held</p>
+                                       <p className="font-semibold">{Number(displayInitialSharesHeld).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                                    </div>
+                                 )}
                               </>
                            ) : (
                               // EDIT VIEW
