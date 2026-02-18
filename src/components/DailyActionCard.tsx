@@ -27,7 +27,7 @@ const DailyActionCard: React.FC<DailyActionCardProps> = ({ stock, onExecute }) =
   const isRedDay = Math.random() > 0.6;
   const multiplier = (isRedDay ? 1.5 : 1.0) * (isSkipped ? 1.2 : 1.0);
   const recommendedAmount = Math.round(dailyBase * multiplier);
-// Removed unused progress variable
+  // Removed unused progress variable
 
   const handleExecute = () => {
     setExecuting(true);
@@ -43,46 +43,46 @@ const DailyActionCard: React.FC<DailyActionCardProps> = ({ stock, onExecute }) =
     <Card className="overflow-hidden border-primary/20 shadow-md">
       <CardHeader className="pb-4 relative">
         <div className="flex justify-between items-start">
-            <div className="space-y-1">
-                <CardTitle>{stock.symbol}</CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    Optimal Deployment
-                </CardDescription>
-            </div>
-            <div className="text-right">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Target</p>
-                <p className="text-2xl font-bold">₹{recommendedAmount.toLocaleString()}</p>
-            </div>
+          <div className="space-y-1">
+            <CardTitle>{stock.symbol}</CardTitle>
+            <CardDescription className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              Optimal Deployment
+            </CardDescription>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Target</p>
+            <p className="text-2xl font-bold">${recommendedAmount.toLocaleString()}</p>
+          </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
-          {isSkipped && (
-             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-md text-amber-600 text-xs flex items-center gap-2">
-                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                 <span className="font-semibold">Sync Adjusted:</span> Previous gap detected.
-             </div>
-          )}
-          
-          <div className="bg-muted/50 p-4 rounded-md border text-sm italic text-muted-foreground">
-             " {insight} "
+        {isSkipped && (
+          <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-md text-amber-600 text-xs flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="font-semibold">Sync Adjusted:</span> Previous gap detected.
           </div>
+        )}
+
+        <div className="bg-muted/50 p-4 rounded-md border text-sm italic text-muted-foreground">
+          " {insight} "
+        </div>
       </CardContent>
 
       <CardFooter>
-          <Button 
-            className="w-full" 
-            size="lg" 
-            onClick={handleExecute} 
-            disabled={executing}
-          >
-             {executing ? (
-                 <>Running Strategy...</>
-             ) : (
-                 <>Execute ₹{recommendedAmount.toLocaleString()}</>
-             )}
-          </Button>
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={handleExecute}
+          disabled={executing}
+        >
+          {executing ? (
+            <>Running Strategy...</>
+          ) : (
+            <>Execute ${recommendedAmount.toLocaleString()}</>
+          )}
+        </Button>
       </CardFooter>
     </Card>
   );
