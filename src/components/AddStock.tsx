@@ -9,7 +9,24 @@ import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+
+interface StockPriceResponse {
+   symbol: string;
+   exchange: string;
+   date: string;
+   closePrice: number;
+   source: string;
+   company: {
+      name: string;
+      symbol: string;
+      exchange: string;
+      industry: string;
+      country: string;
+   } | null;
+}
 
 interface AddStockProps {
    onBack: () => void;
@@ -37,39 +54,146 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
    const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
    const [symbol, setSymbol] = useState(initialValues?.symbol || '');
-   const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '50000');
-   const [partition, setPartition] = useState(initialValues?.partitionDays?.toString() || '22');
-   const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '3');
+   const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '1200');
+   const [partition, setPartition] = useState(initialValues?.partitionMonths?.toString() || '2');
+   const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '1');
    const [loadFactor, setLoadFactor] = useState<LoadFactor>(initialValues?.loadFactor || LoadFactor.MODERATE);
 
-   const [quantityOwned, setQuantityOwned] = useState('0');
-   const [averagePriceOwned, setAveragePriceOwned] = useState('0');
+   const [quantityOwned, setQuantityOwned] = useState('');
+   const [averagePriceOwned, setAveragePriceOwned] = useState('');
+
+   // Helper functions to handle numeric input validation
+   const handlePositiveIntegerInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
+      // Allow empty string or positive integers only
+      if (value === '' || /^\d+$/.test(value)) {
+         setter(value);
+         // Clear validation error for this field when user types
+         setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            // Clear the error based on which setter is being used
+            if (setter === setBudget) delete newErrors.budget;
+            if (setter === setConvictionYears) delete newErrors.convictionYears;
+            if (setter === setPartition) delete newErrors.partition;
+            return newErrors;
+         });
+      }
+   };
+
+   const handlePositiveDecimalInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
+      // Allow empty string, positive integers, or positive decimals
+      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+         setter(value);
+         // Clear validation error for this field when user types
+         setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            if (setter === setAveragePriceOwned) delete newErrors.averagePriceOwned;
+            if (setter === setQuantityOwned) delete newErrors.quantityOwned;
+            return newErrors;
+         });
+      }
+   };
+
+   // Calculate inferred average price
+   const calculateInferredAvgPrice = () => {
+      const amount = Number(averagePriceOwned);
+      const shares = Number(quantityOwned);
+      if (amount > 0 && shares > 0) {
+         return (amount / shares).toFixed(2);
+      }
+      return '0.00';
+   };
 
    const [convictionLevel, setConvictionLevel] = useState([initialValues?.convictionLevel || 75]);
-   // const [priceMovementPct, setPriceMovementPct] = useState('0'); // Removed as requested
 
-   const handleSubmit = (e: React.FormEvent) => {
+   const [showConfirmModal, setShowConfirmModal] = useState(false);
+   const [stockData, setStockData] = useState<StockPriceResponse | null>(null);
+   const [fetchLoading, setFetchLoading] = useState(false);
+   const [fetchError, setFetchError] = useState<string | null>(null);
+   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+   const validateForm = (): boolean => {
+      const errors: Record<string, string> = {};
+
+      // Validate symbol
+      if (!symbol || symbol.trim() === '') {
+         errors.symbol = 'Stock symbol is required';
+      }
+
+      // Validate budget
+      if (!budget || budget.trim() === '' || Number(budget) <= 0) {
+         errors.budget = 'Total capital allocation must be greater than 0';
+      }
+
+      // Validate conviction years
+      if (!convictionYears || convictionYears.trim() === '' || Number(convictionYears) <= 0) {
+         errors.convictionYears = 'Conviction period must be at least 1 year';
+      }
+
+      // Validate partition months
+      if (!partition || partition.trim() === '' || Number(partition) <= 0) {
+         errors.partition = 'Investment cycle length must be at least 1 month';
+      }
+
+      // Validate already invested fields if checkbox is checked
+      if (alreadyInvested) {
+         if (!averagePriceOwned || averagePriceOwned.trim() === '' || Number(averagePriceOwned) <= 0) {
+            errors.averagePriceOwned = 'Total amount invested must be greater than 0';
+         }
+         if (!quantityOwned || quantityOwned.trim() === '' || Number(quantityOwned) <= 0) {
+            errors.quantityOwned = 'Total shares held must be greater than 0';
+         }
+      }
+
+      setValidationErrors(errors);
+      return Object.keys(errors).length === 0;
+   };
+
+   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!symbol) return;
+
+      // Validate all fields
+      if (!validateForm()) {
+         return;
+      }
+
+      setFetchLoading(true);
+      setFetchError(null);
+
+      try {
+         const data = await api<StockPriceResponse>(
+            `/api/stocks/close?symbol=${encodeURIComponent(symbol.trim())}&exchange=US`
+         );
+         setStockData(data);
+         setShowConfirmModal(true);
+      } catch {
+         setFetchError(`Could not find stock "${symbol.trim().toUpperCase()}". Please check the symbol and try again.`);
+      } finally {
+         setFetchLoading(false);
+      }
+   };
+
+   const handleConfirm = () => {
+      if (!stockData) return;
 
       const newStock: Stock = {
          id: Date.now().toString(),
-         symbol: symbol.toUpperCase(),
-         name: symbol.toUpperCase(),
+         symbol: stockData.symbol,
+         name: stockData.company?.name || stockData.symbol,
          totalBudget: Number(budget),
-         partitionDays: Number(partition),
+         partitionMonths: Number(partition),
          convictionYears: Number(convictionYears),
          loadFactor,
          deployedAmount: 0,
          currentAverage: Number(averagePriceOwned),
-         currentPrice: 1250.45, // Mock price
+         currentPrice: stockData.closePrice,
          isPaused: false,
          history: [],
          quantityOwned: alreadyInvested ? Number(quantityOwned) : 0,
          averagePriceOwned: alreadyInvested ? Number(averagePriceOwned) : 0,
          convictionLevel: convictionLevel[0],
-         priceMovementPct: 0, // Default to 0 for new strategies
+         priceMovementPct: 0,
       };
+      setShowConfirmModal(false);
       onAdd(newStock);
    };
 
@@ -102,9 +226,25 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                               autoFocus
                               placeholder="e.g. NFLX"
                               value={symbol}
-                              onChange={e => setSymbol(e.target.value)}
-                              className="text-lg font-bold uppercase tracking-wider"
+                              onChange={e => {
+                                 setSymbol(e.target.value);
+                                 setValidationErrors(prev => {
+                                    const newErrors = { ...prev };
+                                    delete newErrors.symbol;
+                                    return newErrors;
+                                 });
+                              }}
+                              className={cn(
+                                 "text-lg font-bold uppercase tracking-wider",
+                                 validationErrors.symbol && "border-red-500 focus-visible:ring-red-500"
+                              )}
                            />
+                           {validationErrors.symbol && (
+                              <p className="text-xs text-red-500 flex items-center gap-1">
+                                 <Icons.AlertCircle size={12} />
+                                 {validationErrors.symbol}
+                              </p>
+                           )}
                         </div>
 
                         <div className="flex items-center space-x-2 border p-4 rounded-lg bg-card/50">
@@ -124,29 +264,43 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                                  <div className="grid gap-2">
                                     <Label>Total amount invested so far</Label>
                                     <Input
-                                       type="number"
-                                       value={averagePriceOwned ? (Number(quantityOwned) * Number(averagePriceOwned)).toString() : ''}
-                                       onChange={e => {
-                                          const total = Number(e.target.value);
-                                          if (Number(quantityOwned) > 0) {
-                                             setAveragePriceOwned((total / Number(quantityOwned)).toString());
-                                          }
-                                       }}
-                                       placeholder="₹ Total"
-                                       className="bg-background"
+                                       inputMode="decimal"
+                                       value={averagePriceOwned}
+                                       onChange={e => handlePositiveDecimalInput(e.target.value, setAveragePriceOwned)}
+                                       placeholder="$ Total Amount"
+                                       className={cn(
+                                          "bg-background",
+                                          validationErrors.averagePriceOwned && "border-red-500 focus-visible:ring-red-500"
+                                       )}
                                     />
+                                    {validationErrors.averagePriceOwned && (
+                                       <p className="text-xs text-red-500 flex items-center gap-1">
+                                          <Icons.AlertCircle size={12} />
+                                          {validationErrors.averagePriceOwned}
+                                       </p>
+                                    )}
                                  </div>
                                  <div className="grid gap-2">
                                     <Label>Total shares currently held</Label>
                                     <Input
-                                       type="number"
+                                       inputMode="decimal"
                                        value={quantityOwned}
-                                       onChange={e => setQuantityOwned(e.target.value)}
-                                       className="bg-background"
+                                       onChange={e => handlePositiveDecimalInput(e.target.value, setQuantityOwned)}
+                                       placeholder="Shares"
+                                       className={cn(
+                                          "bg-background",
+                                          validationErrors.quantityOwned && "border-red-500 focus-visible:ring-red-500"
+                                       )}
                                     />
+                                    {validationErrors.quantityOwned && (
+                                       <p className="text-xs text-red-500 flex items-center gap-1">
+                                          <Icons.AlertCircle size={12} />
+                                          {validationErrors.quantityOwned}
+                                       </p>
+                                    )}
                                  </div>
                                  <p className="text-xs text-muted-foreground col-span-2">
-                                    *Inferred Avg Price: ₹{quantityOwned && averagePriceOwned ? Number(averagePriceOwned).toFixed(2) : '0.00'}
+                                    *Inferred Avg Price: ${calculateInferredAvgPrice()}
                                  </p>
                               </CardContent>
                            </Card>
@@ -167,12 +321,25 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                               Total capital allocation
                               <InfoTooltip text="How much total capital do you want to deploy over this conviction period?" />
                            </Label>
-                           <Input
-                              type="number"
-                              className="text-lg font-bold"
-                              value={budget}
-                              onChange={e => setBudget(e.target.value)}
-                           />
+                           <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">$</span>
+                              <Input
+                                 inputMode="numeric"
+                                 className={cn(
+                                    "text-lg font-bold pl-8",
+                                    validationErrors.budget && "border-red-500 focus-visible:ring-red-500"
+                                 )}
+                                 value={budget}
+                                 onChange={e => handlePositiveIntegerInput(e.target.value, setBudget)}
+                                 placeholder="e.g. 5000"
+                              />
+                           </div>
+                           {validationErrors.budget && (
+                              <p className="text-xs text-red-500 flex items-center gap-1">
+                                 <Icons.AlertCircle size={12} />
+                                 {validationErrors.budget}
+                              </p>
+                           )}
                         </div>
 
                         <div className="grid gap-2">
@@ -182,26 +349,44 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                               <InfoTooltip text="How long do you strongly believe in this stock?" />
                            </Label>
                            <Input
-                              type="number"
+                              inputMode="numeric"
                               value={convictionYears}
-                              onChange={e => setConvictionYears(e.target.value)}
+                              onChange={e => handlePositiveIntegerInput(e.target.value, setConvictionYears)}
                               placeholder="e.g. 3"
+                              className={cn(
+                                 validationErrors.convictionYears && "border-red-500 focus-visible:ring-red-500"
+                              )}
                            />
+                           {validationErrors.convictionYears && (
+                              <p className="text-xs text-red-500 flex items-center gap-1">
+                                 <Icons.AlertCircle size={12} />
+                                 {validationErrors.convictionYears}
+                              </p>
+                           )}
                         </div>
 
 
 
                         <div className="grid gap-2">
                            <div className="flex items-center gap-2">
-                              <Label>Investment Cycle Length (Days)</Label>
-                              <InfoTooltip text="How often do you expect this stock to show meaningful growth phases? (Trading Days)" />
+                              <Label>Investment Cycle Length (Months)</Label>
+                              <InfoTooltip text="How often do you expect this stock to show meaningful growth phases? (Trading Months)" />
                            </div>
                            <Input
-                              type="number"
+                              inputMode="numeric"
                               value={partition}
-                              onChange={e => setPartition(e.target.value)}
-                              placeholder="e.g. 60"
+                              onChange={e => handlePositiveIntegerInput(e.target.value, setPartition)}
+                              placeholder="e.g. 6"
+                              className={cn(
+                                 validationErrors.partition && "border-red-500 focus-visible:ring-red-500"
+                              )}
                            />
+                           {validationErrors.partition && (
+                              <p className="text-xs text-red-500 flex items-center gap-1">
+                                 <Icons.AlertCircle size={12} />
+                                 {validationErrors.partition}
+                              </p>
+                           )}
                         </div>
                      </div>
                   </div>
@@ -266,12 +451,24 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                         </CardContent>
                      </Card>
 
-                     <div className="pt-4">
-                        <Button type="submit" size="lg" className="w-full text-lg h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform">
-                           <Icons.TrendUp className="mr-2" />
-                           Create DSIP Tracker
+                     <div className="pt-4 space-y-3">
+                        <Button type="submit" size="lg" disabled={fetchLoading} className="w-full text-lg h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform">
+                           {fetchLoading ? (
+                              <>
+                                 <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                                 Fetching stock data...
+                              </>
+                           ) : (
+                              <>
+                                 <Icons.TrendUp className="mr-2" />
+                                 Create DSIP Tracker
+                              </>
+                           )}
                         </Button>
-                        <p className="text-center text-xs text-muted-foreground mt-4">
+                        {fetchError && (
+                           <p className="text-center text-sm text-red-500 font-medium">{fetchError}</p>
+                        )}
+                        <p className="text-center text-xs text-muted-foreground">
                            Smart deployment will be active from the next trading day.
                         </p>
                      </div>
@@ -279,6 +476,63 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                </div>
             </form>
          </div>
+         {/* Stock Confirmation Modal */}
+         <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+            <DialogContent className="sm:max-w-md">
+               <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Confirm Stock Details</DialogTitle>
+               </DialogHeader>
+
+               {stockData && (
+                  <div className="space-y-4 py-2">
+                     <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-lg">
+                           {stockData.symbol.substring(0, 2)}
+                        </div>
+                        <div>
+                           <p className="text-lg font-bold">{stockData.symbol}</p>
+                           <p className="text-sm text-muted-foreground">{stockData.company?.name || 'N/A'}</p>
+                        </div>
+                     </div>
+
+                     <Separator />
+
+                     <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Exchange</p>
+                           <p className="font-bold">{stockData.company?.exchange || stockData.exchange}</p>
+                        </div>
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Industry</p>
+                           <p className="font-bold">{stockData.company?.industry || 'N/A'}</p>
+                        </div>
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Country</p>
+                           <p className="font-bold">{stockData.company?.country || 'N/A'}</p>
+                        </div>
+                        <div>
+                           <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Close Price</p>
+                           <p className="font-bold text-lg">${stockData.closePrice?.toFixed(2)}</p>
+                        </div>
+                     </div>
+
+                     <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+                        Price as of {stockData.date} &middot; Source: {stockData.source}
+                     </div>
+                  </div>
+               )}
+
+               <DialogFooter className="gap-2 sm:gap-0">
+                  <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
+                     Cancel
+                  </Button>
+                  <Button onClick={handleConfirm}>
+                     <Icons.Check className="mr-2 w-4 h-4" />
+                     Confirm &amp; Create Tracker
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
       </div>
    );
 };
