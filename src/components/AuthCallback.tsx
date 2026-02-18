@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks';
 import { checkAuth } from '../store/slices/authSlice';
 
 const AuthCallback: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -20,34 +22,14 @@ const AuthCallback: React.FC = () => {
       } else {
         setErrorMessage('An error occurred during sign in.');
       }
-
-      if (window.opener) {
-        window.opener.postMessage(
-          { type: 'AUTH_ERROR', error },
-          window.location.origin
-        );
-        setTimeout(() => window.close(), 2000);
-      } else {
-        setTimeout(() => { window.location.href = '/'; }, 3000);
-      }
+      setTimeout(() => navigate('/', { replace: true }), 3000);
     } else {
-      // Success — session cookie is now set by the backend
       setStatus('success');
-
-      if (window.opener) {
-        window.opener.postMessage(
-          { type: 'AUTH_SUCCESS' },
-          window.location.origin
-        );
-        window.close();
-      } else {
-        // Not in popup — validate session then redirect
-        dispatch(checkAuth()).then(() => {
-          window.location.href = '/';
-        });
-      }
+      dispatch(checkAuth()).then(() => {
+        navigate('/', { replace: true });
+      });
     }
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center">

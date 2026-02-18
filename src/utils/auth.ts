@@ -1,28 +1,8 @@
 import { API_BASE_URL } from '../lib/api';
 
-/**
- * Opens a popup window for Google OAuth authentication
- */
-export const openLoginPopup = (): void => {
-  const width = 500;
-  const height = 600;
-  const left = window.screenX + (window.outerWidth - width) / 2;
-  const top = window.screenY + (window.outerHeight - height) / 2;
+const GOOGLE_LOGIN_URL = `${API_BASE_URL}/oauth2/authorization/google`;
 
-  const popup = window.open(
-    `${API_BASE_URL}/oauth2/authorization/google`,
-    'Google Sign In',
-    `width=${width},height=${height},left=${left},top=${top},popup=yes`
-  );
-
-  if (!popup) {
-    console.error('Popup was blocked. Please allow popups for this site.');
-    return;
-  }
-
-  const checkPopupClosed = setInterval(() => {
-    if (popup.closed) {
-      clearInterval(checkPopupClosed);
-    }
-  }, 500);
+/** Redirects the current tab to Google OAuth (backend → accounts.google.com → back via redirect URL). */
+export const redirectToGoogleLogin = (): void => {
+  window.location.assign(GOOGLE_LOGIN_URL);
 };

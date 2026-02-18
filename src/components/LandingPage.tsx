@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppSelector } from '../store/hooks';
-import { openLoginPopup } from '../utils/auth';
+import { redirectToGoogleLogin } from '../utils/auth';
 
 const LandingPage: React.FC = () => {
   const isLoading = useAppSelector(state => state.auth.isLoading);
@@ -35,7 +35,7 @@ const LandingPage: React.FC = () => {
 
         {/* CTA Button */}
         <button
-          onClick={openLoginPopup}
+          onClick={redirectToGoogleLogin}
           disabled={isLoading}
           className="group relative w-full md:w-auto bg-white hover:bg-slate-50 text-slate-900 font-bold py-5 px-10 rounded-2xl flex items-center justify-center gap-4 shadow-[0_20px_50px_-12px_rgba(255,255,255,0.2)] hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.3)] transition-all transform hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 mx-auto"
         >

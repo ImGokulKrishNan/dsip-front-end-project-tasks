@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { checkAuth, setAuthSuccess, setAuthError, clearAuth } from './store/slices/authSlice';
+import { checkAuth, clearAuth } from './store/slices/authSlice';
 import { updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly, setStocks } from './store/slices/stocksSlice';
 import { setView, showCelebrationModal, hideCelebrationModal, navigateToDashboard, navigateToAddStock, navigateToStockDetails } from './store/slices/uiSlice';
 import { fetchTrackerDetails, createTracker, fetchAllTrackers } from './store/slices/trackersSlice';
@@ -84,23 +84,6 @@ const MainApp: React.FC = () => {
     }));
     dispatch(setStocks(mappedStocks));
   }, [trackers, dispatch]);
-
-  // Listen for messages from auth popup
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data?.type === 'AUTH_SUCCESS') {
-        dispatch(setAuthSuccess());
-        dispatch(checkAuth());
-      } else if (event.data?.type === 'AUTH_ERROR') {
-        dispatch(setAuthError('Authentication failed'));
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [dispatch]);
 
   // Auto-navigate to dashboard when authenticated
   useEffect(() => {
