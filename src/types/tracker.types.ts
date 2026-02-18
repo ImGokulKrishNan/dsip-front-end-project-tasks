@@ -49,7 +49,7 @@ export interface CreateTrackerRequest {
 }
 
 export interface UpdateTrackerRequest {
-  deployment_style?: DeploymentStyle;
+  deployment_style?: string; // String - accepts "GRADUAL", "MODERATE", "AGGRESSIVE" (uppercase)
   base_conviction_score?: number;
   status?: TrackerStatus;
   total_capital_planned?: number;

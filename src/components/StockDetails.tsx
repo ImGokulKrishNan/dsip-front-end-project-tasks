@@ -870,12 +870,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               // EDIT VIEW
                               <>
                                  <div className="space-y-2">
-                                    <Label className="text-xs font-semibold">Cycle Length (Months)</Label>
+                                    <Label className="text-xs font-semibold">Conviction Period (Years)</Label>
                                     <Input
                                        type="number"
                                        className="h-10 md:h-8"
-                                       value={editConfig.partitionMonths || ''}
-                                       onChange={e => setEditConfig({ ...editConfig, partitionMonths: e.target.value === '' ? 0 : Number(e.target.value) })}
+                                       value={editConfig.convictionYears || ''}
+                                       onChange={e => setEditConfig({ ...editConfig, convictionYears: e.target.value === '' ? 0 : Number(e.target.value) })}
                                     />
                                  </div>
                                  <div className="space-y-2">
@@ -1040,19 +1040,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                              try {
                                                 const { updateTracker } = await import('../lib/api.fetcher');
 
-                                                // Map loadFactor to deployment_style number
-                                                // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
-                                                const deploymentStyleMap: Record<string, number> = {
-                                                   'GRADUAL': 1,
-                                                   'MODERATE': 2,
-                                                   'AGGRESSIVE': 3,
-                                                };
 
                                                 await updateTracker(trackerData.trackerId, {
                                                    total_capital_planned: editConfig.totalBudget,
                                                    conviction_period_years: editConfig.convictionYears,
                                                    partition_months: editConfig.partitionMonths,
-                                                   deployment_style: deploymentStyleMap[editConfig.loadFactor] ?? 1,
+                                                   deployment_style: editConfig.loadFactor,
                                                    base_conviction_score: editConfig.convictionLevel,
                                                 });
 
