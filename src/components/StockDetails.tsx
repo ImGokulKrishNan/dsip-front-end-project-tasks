@@ -853,13 +853,13 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
                                     <p className="font-semibold">{displayPartitionMonths} Months</p>
                                  </div>
-                                 {displayInitialInvestedAmount !== null && displayInitialInvestedAmount !== undefined && (
+                                 {displayInitialInvestedAmount !== null && displayInitialInvestedAmount !== undefined && Number(displayInitialInvestedAmount) !== 0 && (
                                     <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                        <p className="text-xs text-muted-foreground">Initial Invested Amount</p>
                                        <p className="font-semibold">${Number(displayInitialInvestedAmount).toLocaleString()}</p>
                                     </div>
                                  )}
-                                 {displayInitialSharesHeld !== null && displayInitialSharesHeld !== undefined && (
+                                 {displayInitialSharesHeld !== null && displayInitialSharesHeld !== undefined && Number(displayInitialSharesHeld) !== 0 && (
                                     <div className="flex justify-between md:block pt-1 md:pt-0">
                                        <p className="text-xs text-muted-foreground">Initial Shares Held</p>
                                        <p className="font-semibold">{Number(displayInitialSharesHeld).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
