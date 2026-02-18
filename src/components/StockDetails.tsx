@@ -114,11 +114,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       if (!useApiData || !trackerData) return stock.loadFactor;
       // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
       const styleMap: Record<number, string> = {
-         1: 'Gradual',
-         2: 'Moderate',
-         3: 'Aggressive',
+         1: 'Gradual Build',
+         2: 'Balanced Build',
+         3: 'Aggressive Early Build',
       };
-      return styleMap[trackerData.deployment_style] || 'Moderate';
+      return styleMap[trackerData.deployment_style] || 'Balanced Build';
    };
    const displayLoadFactor = getDeploymentStyleText();
    // ===== END API DATA SETUP =====
@@ -808,9 +808,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                  // Map displayLoadFactor to correct uppercase format for dropdown
                                  // API mapping: 1=GRADUAL, 2=MODERATE, 3=AGGRESSIVE
                                  const loadFactorMap: Record<string, string> = {
-                                    'Gradual': 'GRADUAL',
-                                    'Moderate': 'MODERATE',
-                                    'Aggressive': 'AGGRESSIVE',
+                                    'Gradual Build': 'GRADUAL',
+                                    'Balanced Build': 'MODERATE',
+                                    'Aggressive Early Build': 'AGGRESSIVE',
                                  };
 
                                  setEditConfig({
@@ -853,13 +853,13 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                     <p className="text-xs text-muted-foreground">Investment Cycle Length</p>
                                     <p className="font-semibold">{displayPartitionMonths} Months</p>
                                  </div>
-                                 {displayInitialInvestedAmount !== null && displayInitialInvestedAmount !== undefined && (
+                                 {displayInitialInvestedAmount !== null && displayInitialInvestedAmount !== undefined && Number(displayInitialInvestedAmount) !== 0 && (
                                     <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                                        <p className="text-xs text-muted-foreground">Initial Invested Amount</p>
                                        <p className="font-semibold">${Number(displayInitialInvestedAmount).toLocaleString()}</p>
                                     </div>
                                  )}
-                                 {displayInitialSharesHeld !== null && displayInitialSharesHeld !== undefined && (
+                                 {displayInitialSharesHeld !== null && displayInitialSharesHeld !== undefined && Number(displayInitialSharesHeld) !== 0 && (
                                     <div className="flex justify-between md:block pt-1 md:pt-0">
                                        <p className="text-xs text-muted-foreground">Initial Shares Held</p>
                                        <p className="font-semibold">{Number(displayInitialSharesHeld).toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
@@ -907,36 +907,46 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        </span>
                                     </div>
                                  </div>
-                                 <div className="space-y-2 md:col-span-2">
-                                    <Label className="text-xs font-semibold flex justify-between">
-                                       Load Factor
-                                       <span className="text-[10px] text-amber-600 font-normal">*Not recommended to change</span>
-                                    </Label>
-                                    <Select
-                                       value={editConfig.loadFactor}
-                                       onValueChange={(val: any) => setEditConfig({ ...editConfig, loadFactor: val })}
-                                    >
-                                       <SelectTrigger className="h-10 md:h-8">
-                                          <SelectValue placeholder="Select load factor" />
-                                       </SelectTrigger>
-                                       <SelectContent>
-                                          <SelectItem value="GRADUAL">Gradual</SelectItem>
-                                          <SelectItem value="MODERATE">Moderate</SelectItem>
-                                          <SelectItem value="AGGRESSIVE">Aggressive</SelectItem>
-
-
-                                       </SelectContent>
-                                    </Select>
-                                 </div>
-                                 <div className="space-y-2 md:col-span-2">
-                                    <Label className="text-xs font-semibold">Investment Cycle Length (Months)</Label>
-                                    <Input
-                                       type="number"
-                                       className="h-10 md:h-8"
-                                       value={editConfig.partitionMonths || ''}
-                                       onChange={e => setEditConfig({ ...editConfig, partitionMonths: e.target.value === '' ? 0 : Number(e.target.value) })}
-                                    />
-                                 </div>
+                                  <div className="space-y-2 md:col-span-2">
+                                     <Label className="text-xs font-semibold flex justify-between">
+                                        Load Factor
+                                        <span className="text-[10px] text-amber-600 font-normal">*Not recommended to change</span>
+                                     </Label>
+                                     <Select
+                                        value={editConfig.loadFactor}
+                                        onValueChange={(val: any) => setEditConfig({ ...editConfig, loadFactor: val })}
+                                     >
+                                        <SelectTrigger className="h-10 md:h-8">
+                                           <SelectValue placeholder="Select load factor" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                           <SelectItem value="GRADUAL">Gradual Build</SelectItem>
+                                           <SelectItem value="MODERATE">Balanced Build</SelectItem>
+                                           <SelectItem value="AGGRESSIVE">Aggressive Early Build</SelectItem>
+                                        </SelectContent>
+                                     </Select>
+                                     {editConfig.loadFactor !== (({ 'Gradual Build': 'GRADUAL', 'Balanced Build': 'MODERATE', 'Aggressive Early Build': 'AGGRESSIVE' } as Record<string, string>)[displayLoadFactor] || displayLoadFactor) && (
+                                        <div className="flex items-start gap-1.5 text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-md px-2.5 py-2">
+                                           <Icons.AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                                           <p className="text-[11px] leading-tight">These changes will affect only in the next investment cycle.</p>
+                                        </div>
+                                     )}
+                                  </div>
+                                  <div className="space-y-2 md:col-span-2">
+                                     <Label className="text-xs font-semibold">Investment Cycle Length (Months)</Label>
+                                     <Input
+                                        type="number"
+                                        className="h-10 md:h-8"
+                                        value={editConfig.partitionMonths || ''}
+                                        onChange={e => setEditConfig({ ...editConfig, partitionMonths: e.target.value === '' ? 0 : Number(e.target.value) })}
+                                     />
+                                     {editConfig.partitionMonths !== (trackerData?.partition_months ?? stock.partitionMonths) && (
+                                        <div className="flex items-start gap-1.5 text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-md px-2.5 py-2">
+                                           <Icons.AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                                           <p className="text-[11px] leading-tight">These changes will affect only in the next investment cycle.</p>
+                                        </div>
+                                     )}
+                                  </div>
                               </>
                            )}
                         </div>
@@ -986,10 +996,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                           errors['Conviction Period'] = `Can only increase (current: ${currentConvictionYears} years)`;
                                        }
 
-                                       // Rule 3: partition_months can only INCREASE
-                                       if (editConfig.partitionMonths < currentPartitionMonths) {
-                                          errors['Investment Cycle Length'] = `Can only increase (current: ${currentPartitionMonths} months)`;
-                                       }
+                                        // Rule 3: partition_months can be increased or decreased (no restriction)
 
                                        // Rule 4: base_conviction_score must be 0-100
                                        if (editConfig.convictionLevel < 0 || editConfig.convictionLevel > 100) {
@@ -1026,12 +1033,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                                        }
 
                                        // Legacy validation for warning modal
-                                       const isSafe =
-                                          editConfig.totalBudget >= stock.totalBudget &&
-                                          editConfig.convictionYears >= stock.convictionYears &&
-                                          editConfig.partitionMonths === stock.partitionMonths &&
-                                          editConfig.loadFactor === stock.loadFactor &&
-                                          editConfig.convictionLevel === stock.convictionLevel;
+                                        const isSafe =
+                                           editConfig.totalBudget >= stock.totalBudget &&
+                                           editConfig.convictionYears >= stock.convictionYears &&
+                                           editConfig.loadFactor === stock.loadFactor &&
+                                           editConfig.convictionLevel === stock.convictionLevel;
 
                                        if (isSafe || useApiData) {
                                           // If using API data, call the update API
