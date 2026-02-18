@@ -54,9 +54,9 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
    const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
    const [symbol, setSymbol] = useState(initialValues?.symbol || '');
-   const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '1200');
-   const [partition, setPartition] = useState(initialValues?.partitionMonths?.toString() || '2');
-   const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '1');
+   const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '');
+   const [partition, setPartition] = useState(initialValues?.partitionMonths?.toString() || '');
+   const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '');
    const [loadFactor, setLoadFactor] = useState<LoadFactor>(initialValues?.loadFactor || LoadFactor.MODERATE);
 
    const [quantityOwned, setQuantityOwned] = useState('');
@@ -121,7 +121,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
 
       // Validate budget
       if (!budget || budget.trim() === '' || Number(budget) <= 0) {
-         errors.budget = 'Total capital allocation must be greater than 0';
+         errors.budget = 'Total Capital Allocation must be greater than 0';
       }
 
       // Validate conviction years
@@ -224,7 +224,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                            <Input
                               required
                               autoFocus
-                              placeholder="e.g. NFLX"
+                              placeholder="NFLX"
                               value={symbol}
                               onChange={e => {
                                  setSymbol(e.target.value);
@@ -318,7 +318,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                         <div className="grid gap-2">
                            <Label className="flex items-center gap-2">
                               <Icons.Wallet size={16} />
-                              Total capital allocation
+                              Total Capital Allocation
                               <InfoTooltip text="How much total capital do you want to deploy over this conviction period?" />
                            </Label>
                            <div className="relative">
@@ -331,7 +331,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                                  )}
                                  value={budget}
                                  onChange={e => handlePositiveIntegerInput(e.target.value, setBudget)}
-                                 placeholder="e.g. 5000"
+                                 placeholder="5000"
                               />
                            </div>
                            {validationErrors.budget && (
@@ -345,14 +345,14 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                         <div className="grid gap-2">
                            <Label className="flex items-center gap-2">
                               <Icons.Clock size={16} />
-                              Conviction period (Years)
+                              Conviction Period (Years)
                               <InfoTooltip text="How long do you strongly believe in this stock?" />
                            </Label>
                            <Input
                               inputMode="numeric"
                               value={convictionYears}
                               onChange={e => handlePositiveIntegerInput(e.target.value, setConvictionYears)}
-                              placeholder="e.g. 3"
+                              placeholder="3"
                               className={cn(
                                  validationErrors.convictionYears && "border-red-500 focus-visible:ring-red-500"
                               )}
@@ -368,15 +368,15 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
 
 
                         <div className="grid gap-2">
-                           <div className="flex items-center gap-2">
-                              <Label>Investment Cycle Length (Months)</Label>
-                              <InfoTooltip text="How often do you expect this stock to show meaningful growth phases? (Trading Months)" />
-                           </div>
+                            <Label className="flex items-center gap-2">
+                               Investment Cycle Length (Months)
+                               <InfoTooltip text="How often do you expect this stock to show meaningful growth phases? (Trading Months)" />
+                            </Label>
                            <Input
                               inputMode="numeric"
                               value={partition}
                               onChange={e => handlePositiveIntegerInput(e.target.value, setPartition)}
-                              placeholder="e.g. 6"
+                              placeholder="8"
                               className={cn(
                                  validationErrors.partition && "border-red-500 focus-visible:ring-red-500"
                               )}
@@ -403,7 +403,7 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
 
                            <div className="space-y-4">
                               <Label className="flex items-center gap-2">
-                                 Deployment style
+                                 Deployment Style
                                  <InfoTooltip text="How aggressively should the system deploy capital in early phases?" />
                               </Label>
                               <div className="grid grid-cols-1 gap-3">
