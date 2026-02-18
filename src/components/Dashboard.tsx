@@ -46,11 +46,6 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
       error: trackersError,
    } = useAppSelector((state) => state.trackers);
 
-   // Fetch trackers on component mount
-   useEffect(() => {
-      dispatch(fetchAllTrackers());
-   }, [dispatch]);
-
    // Debug: Log state changes
    useEffect(() => {
       console.log('[Dashboard] State:', {
