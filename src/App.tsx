@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
@@ -61,7 +61,7 @@ const MainApp: React.FC = () => {
   }, [isAuthenticated, dispatch]);
 
   // Map trackers from API to Stock format for UI components
-  useMemo(() => {
+  useEffect(() => {
     const mappedStocks: Stock[] = trackers.map(tracker => ({
       id: tracker.trackerId.toString(),
       symbol: tracker.stockSymbol,
