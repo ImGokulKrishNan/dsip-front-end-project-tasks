@@ -30,7 +30,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const trackerMatch = useMatch('/tracker/:id');
 
   // Derive active view from route
-  const isDashboard = location.pathname === '/dashboard';
+  const isHome = location.pathname === '/home';
   const isTracker = !!trackerMatch;
   const selectedStockId = trackerMatch?.params.id ?? null;
 
@@ -43,12 +43,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const headerStock = isTracker ? stocks.find(s => s.id === selectedStockId) : null;
   const headerTitle = isTracker
     ? `${headerStock?.symbol || ''} Tracker`
-    : isDashboard
-      ? 'Dashboard'
+    : isHome
+      ? 'Home'
       : undefined;
   const headerSubtitle = isTracker
     ? 'Daily Smart Investment Execution'
-    : isDashboard
+    : isHome
       ? 'Portfolio Overview & Operations'
       : undefined;
 
@@ -68,7 +68,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const handleCreateNew = () => {
     dispatch(setSelectedStock(null));
     dispatch(setTempStrategyConfig(undefined));
-    navigate('/add-stock');
+    navigate('/create-tracker');
   };
 
   // Sync Feature State
@@ -202,7 +202,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* 2. Center Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-background relative">
         {/* Global Header with Divider */}
-        {(headerTitle || isDashboard) && (
+        {(headerTitle || isHome) && (
           <>
             <div className="px-6 py-4 flex items-center justify-between bg-background">
               <div className="flex items-center gap-3">
@@ -217,13 +217,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 </Button>
 
                 {isTracker && (
-                  <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+                  <Button variant="ghost" size="icon" onClick={() => navigate('/home')}>
                     <Icons.ArrowLeft size={18} />
                   </Button>
                 )}
                 <div>
                   <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
-                    {headerTitle || 'Dashboard'}
+                    {headerTitle || 'Home'}
                   </h1>
                   <p className="text-muted-foreground text-xs">
                     {headerSubtitle || 'Portfolio Overview & Operations'}
@@ -233,7 +233,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
               {/* Right side: User Profile + Theme Toggle + Action Button */}
               <div className="flex items-center gap-2 md:gap-4">
-                {isDashboard && (
+                {isHome && (
                   <Button onClick={handleCreateNew} className="shadow-lg h-9 w-9 p-0 md:h-10 md:w-auto md:px-4 rounded-full md:rounded-md">
                     <Icons.Plus className="h-5 w-5" />
                     <span className="ml-2 hidden md:inline">Activate Stock Engine</span>

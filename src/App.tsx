@@ -29,7 +29,7 @@ export const LandingGuard: React.FC = () => {
   const { isAuthenticated } = useAppSelector(state => state.auth);
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <LandingPage />;

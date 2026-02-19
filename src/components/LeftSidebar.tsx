@@ -22,7 +22,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   const location = useLocation();
   const trackerMatch = useMatch('/tracker/:id');
 
-  const isAddStock = location.pathname === '/add-stock';
+  const isAddStock = location.pathname === '/create-tracker';
   const selectedStockId = trackerMatch?.params.id ?? null;
 
   const filteredStocks = stocks.filter(stock =>

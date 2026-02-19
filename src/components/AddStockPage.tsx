@@ -38,7 +38,7 @@ export const AddStockPage: React.FC = () => {
       }
 
       dispatch(fetchAllTrackers());
-      navigate('/dashboard');
+      navigate('/home');
     } catch (error: any) {
       console.error('[App] Failed to create tracker:', error);
       alert(`Failed to create tracker: ${error.message || 'Unknown error'}`);
@@ -47,7 +47,7 @@ export const AddStockPage: React.FC = () => {
 
   return (
     <AddStock
-      onBack={() => navigate('/dashboard')}
+      onBack={() => navigate('/home')}
       onAdd={handleAddStock}
       initialValues={tempStrategyConfig}
     />

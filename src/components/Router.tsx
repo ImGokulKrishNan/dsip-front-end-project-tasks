@@ -6,7 +6,7 @@ import { Route, Routes } from "react-router-dom";
 import AuthCallback from "./AuthCallback";
 import UnauthorizedAccess from "./UnauthorizedAccess";
 import { AppShell, LandingGuard } from "@/App";
-import { DashboardPage } from "./DashboardPage";
+import { HomePage } from "./HomePage";
 import { AddStockPage } from "./AddStockPage";
 import { TrackerPage } from "./TrackerPage";
 import NotFound from "./NotFound";
@@ -41,7 +41,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/auth/unauthorized" element={<UnauthorizedAccess />} />
       <Route path="/" element={<LandingGuard />} />
       <Route element={<AppShell />}>
-        <Route path="/home" element={<DashboardPage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/create-tracker" element={<AddStockPage />} />
         <Route path="/tracker/:id" element={<TrackerPage />} />
       </Route>

@@ -44,11 +44,11 @@ export const TrackerPage: React.FC = () => {
   return (
     <StockDetails
       stock={stockToUse}
-      onBack={() => navigate('/dashboard')}
+      onBack={() => navigate('/home')}
       onUpdate={(s) => dispatch(updateStock(s))}
       onCopyStrategy={(config) => {
         dispatch(setTempStrategyConfig(config));
-        navigate('/add-stock');
+        navigate('/create-tracker');
       }}
       showDsipOnly={showDsipOnly}
       setShowDsipOnly={(show) => dispatch(setShowDsipOnly(show))}

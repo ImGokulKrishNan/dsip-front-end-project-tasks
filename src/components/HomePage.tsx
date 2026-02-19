@@ -4,7 +4,7 @@ import Dashboard from "./Dashboard";
 import { setSelectedStock, setTempStrategyConfig } from "@/store/slices/stocksSlice";
 import { fetchTrackerDetails } from "@/store/slices/trackersSlice";
 
-export const DashboardPage: React.FC = () => {
+export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { stocks } = useAppSelector(state => state.stocks);
@@ -14,7 +14,7 @@ export const DashboardPage: React.FC = () => {
       stocks={stocks}
       onAddStock={() => {
         dispatch(setTempStrategyConfig(undefined));
-        navigate('/add-stock');
+        navigate('/create-tracker');
       }}
       onSelectStock={(id) => {
         dispatch(setSelectedStock(id));
