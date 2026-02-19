@@ -99,6 +99,9 @@ export interface Tracker {
   total_cycles: number; // Added for API compatibility
   is_fractional_shares_allowed: boolean;
   createdAt: string;
+  current_market_price?: number;
+  current_avg?: number;
+  dsip_current_avg?: number;
   live_investment_cycle?: {
     total_capital_invested_so_far: number;
     partition_progress: number;
@@ -128,6 +131,8 @@ export interface PortfolioSummary {
   totalCapitalPlanned: number;
   totalCapitalInvested: number;
   totalCurrentValue: number;
+  dsipTotalCapitalInvested: number;
+  dsipTotalCurrentValue: number;
 }
 
 export interface GetAllTrackersResponse {

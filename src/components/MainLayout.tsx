@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { syncTrackerData } from '../lib/api.fetcher';
 import { useToast } from '@/hooks/use-toast';
+import InfoTooltip from './InfoTooltip';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -367,6 +368,31 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     )}
 
                     <div className="grid gap-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-4 rounded-xl bg-card border shadow-sm space-y-1">
+                          <div className="flex items-center">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Market Price</span>
+                            <InfoTooltip text="The current live market price of the stock." />
+                          </div>
+                          <div className="text-xl font-bold">
+                            $ {trackerData?.current_market_price != null ? trackerData.current_market_price : '-'}
+                          </div>
+                        </div>
+                        {(trackerData?.dsip_total_capital_invested_so_far ?? 0) !== 0 && (
+                          <div className="p-4 rounded-xl bg-card border shadow-sm space-y-1">
+                            <div className="flex items-center">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Average</span>
+                              <InfoTooltip text="Your average buy price across all purchases for this stock." />
+                            </div>
+                            <div className="text-xl font-bold">
+                              $ {showDsipOnly
+                                ? (trackerData?.dsip_current_avg != null ? trackerData.dsip_current_avg.toFixed(3) : '-')
+                                : (trackerData?.current_avg != null ? trackerData.current_avg.toFixed(3) : '-')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
                         <div className="flex items-center gap-1">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">

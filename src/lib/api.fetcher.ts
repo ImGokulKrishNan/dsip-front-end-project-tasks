@@ -133,8 +133,10 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
         totalTrackers: trackers.length,
         activeTrackers: trackers.length,
         totalCapitalPlanned: data.total_market_value || 0,
-        totalCapitalInvested: data.dsip_total_capital_invested_so_far || 0,
-        totalCurrentValue: data.dsip_total_market_value || 0,
+        totalCapitalInvested: data.total_capital_invested_so_far || 0,
+        totalCurrentValue: data.total_market_value || 0,
+        dsipTotalCapitalInvested: data.dsip_total_capital_invested_so_far || 0,
+        dsipTotalCurrentValue: data.dsip_total_market_value || 0,
       },
     };
 
@@ -210,6 +212,9 @@ export async function getTrackerDetails(
         createdAt: data.created_at || new Date().toISOString(),
         stockName: data.name || 'Unknown',
         currentPrice: data.current_total_value || 0,
+        current_avg: data.current_avg,
+        dsip_current_avg: data.dsip_current_avg,
+        current_market_price: data.current_market_price,
         live_investment_cycle: data.live_investment_cycle ? {
           total_capital_invested_so_far: data.live_investment_cycle.total_capital_invested_so_far || 0,
           partition_progress: data.live_investment_cycle.partition_progress || 0,

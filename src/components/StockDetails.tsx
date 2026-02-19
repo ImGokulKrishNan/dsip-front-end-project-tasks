@@ -106,6 +106,8 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
   const displayCurrentPrice = getDisplayValue(trackerData?.currentPrice, stock.currentPrice);
   const displayInitialInvestedAmount = getDisplayValue(trackerData?.initial_invested_amount, null);
   const displayInitialSharesHeld = getDisplayValue(trackerData?.initial_shares_held, null);
+  const displayCurrentAvg = (() => { const v = getDisplayValue(trackerData?.current_avg, null); return typeof v === 'number' ? v.toFixed(3) : v; })();
+  const displayCurrentMarketPrice = getDisplayValue(trackerData?.current_market_price, null);
 
   // Get deployment style as text
   const getDeploymentStyleText = () => {
@@ -1670,6 +1672,21 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                     )}
 
                     <div className="grid gap-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-4 rounded-xl bg-card border shadow-sm space-y-1">
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Referred Market Price</span>
+                          <div className="text-xl font-bold">
+                            {displayCurrentMarketPrice}
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-card border shadow-sm space-y-1">
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Average</span>
+                          <div className="text-xl font-bold">
+                            {displayCurrentAvg}
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
                         <div className="flex items-center gap-1">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -1883,7 +1900,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                               </div>
                             )}
                             <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
-                              <span className="text-sm text-slate-400">Days Active</span>
+                              <span className="text-sm text-slate-400">Expected Days</span>
                               <span className="text-sm font-semibold text-white">{partitionDetails?.expected_days || displayPartitionMonths} days</span>
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
