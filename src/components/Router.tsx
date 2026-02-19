@@ -41,8 +41,8 @@ export const AppRoutes: React.FC = () => {
       <Route path="/auth/unauthorized" element={<UnauthorizedAccess />} />
       <Route path="/" element={<LandingGuard />} />
       <Route element={<AppShell />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/add-stock" element={<AddStockPage />} />
+        <Route path="/home" element={<DashboardPage />} />
+        <Route path="/create-tracker" element={<AddStockPage />} />
         <Route path="/tracker/:id" element={<TrackerPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />

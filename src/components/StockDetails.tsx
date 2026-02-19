@@ -484,7 +484,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       // This will be handled by Redux if you have the action set up
       // For now, we'll rely on the parent component to refresh
     } catch (error: any) {
-      console.error('[Confirm Error]', error);
+      console.log('[Confirm Error]', error);
       setConfirmError(error.message || 'Failed to confirm execution');
     } finally {
       setIsConfirming(false);
