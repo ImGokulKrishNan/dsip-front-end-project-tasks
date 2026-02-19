@@ -1,23 +1,14 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { checkAuth, clearAuth } from './store/slices/authSlice';
-import { updateStock, setSelectedStock, setTempStrategyConfig, setShowDsipOnly, setStocks } from './store/slices/stocksSlice';
-import { setView, showCelebrationModal, hideCelebrationModal, navigateToDashboard, navigateToAddStock, navigateToStockDetails } from './store/slices/uiSlice';
-import { fetchTrackerDetails, createTracker, fetchAllTrackers } from './store/slices/trackersSlice';
-import { setOnUnauthorized } from './lib/api';
-import { Stock, LoadFactor } from './types';
-
-import { Icons } from './constants';
+import { setStocks } from './store/slices/stocksSlice';
+import { hideCelebrationModal } from './store/slices/uiSlice';
+import { fetchAllTrackers } from './store/slices/trackersSlice';
+import { Stock } from './types';
 
 import LandingPage from './components/LandingPage';
-import AuthCallback from './components/AuthCallback';
-import UnauthorizedAccess from './components/UnauthorizedAccess';
-import Dashboard from './components/Dashboard';
-import AddStock from './components/AddStock';
-import StockDetails from './components/StockDetails';
 import MainLayout from './components/MainLayout';
 import { ThemeProvider } from './components/theme-provider';
 
@@ -31,29 +22,26 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Toaster } from "@/components/ui/toaster";
-import NotFound from './components/NotFound';
+import { AppRoutes } from './components/Router';
 
-// Main app content - single page with state-based navigation
-const MainApp: React.FC = () => {
+// Shows landing page for unauthenticated users, redirects to /dashboard if authenticated
+export const LandingGuard: React.FC = () => {
+  const { isAuthenticated } = useAppSelector(state => state.auth);
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <LandingPage />;
+};
+
+// Protected app shell — auth guard, data loading, layout wrapper
+export const AppShell: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isAuthenticated, isLoading } = useAppSelector(state => state.auth);
-  const { stocks, selectedStockId, tempStrategyConfig, showDsipOnly } = useAppSelector(state => state.stocks);
-  const { view, showCelebration } = useAppSelector(state => state.ui);
+  const { isAuthenticated } = useAppSelector(state => state.auth);
   const { trackers } = useAppSelector(state => state.trackers);
+  const { showCelebration } = useAppSelector(state => state.ui);
 
-  // Set up API unauthorized handler
-  useEffect(() => {
-    setOnUnauthorized(() => {
-      dispatch(clearAuth());
-    });
-  }, [dispatch]);
-
-  // Check auth on mount
-  useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
-
-  // Fetch trackers on mount when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchAllTrackers());
@@ -66,212 +54,33 @@ const MainApp: React.FC = () => {
       id: tracker.trackerId.toString(),
       symbol: tracker.stockSymbol,
       name: tracker.stockName,
-      convictionYears: 5, // Default, will be loaded from tracker details
-      partitionMonths: 1, // Default
-      loadFactor: 'Aggressive' as any, // Default
+      convictionYears: 5,
+      partitionMonths: 1,
+      loadFactor: 'Aggressive' as any,
       totalBudget: tracker.totalCapitalPlanned,
       deployedAmount: tracker.totalCapitalInvestedSoFar,
       currentAverage: tracker.sharesHeldSoFar > 0 ? tracker.totalCapitalInvestedSoFar / tracker.sharesHeldSoFar : 0,
       currentPrice: tracker.currentPrice,
-      isPaused: tracker.status === 3, // TrackerStatus.PAUSED
+      isPaused: tracker.status === 3,
       history: [],
       quantityOwned: tracker.sharesHeldSoFar,
       averagePriceOwned: tracker.sharesHeldSoFar > 0 ? tracker.totalCapitalInvestedSoFar / tracker.sharesHeldSoFar : 0,
-      convictionLevel: 75, // Default
-      priceMovementPct: 0, // Will be calculated
+      convictionLevel: 75,
+      priceMovementPct: 0,
       net_profit_percentage: tracker.net_profit_percentage,
       dsip_net_profit_percentage: tracker.dsip_net_profit_percentage,
     }));
     dispatch(setStocks(mappedStocks));
   }, [trackers, dispatch]);
 
-  // Auto-navigate to dashboard when authenticated
-  useEffect(() => {
-    if (isAuthenticated && view === 'LANDING') {
-      dispatch(navigateToDashboard());
-    }
-    if (!isAuthenticated && view !== 'LANDING') {
-      dispatch(setView('LANDING'));
-    }
-  }, [isAuthenticated, view, dispatch]);
-
-  // Show loading state while checking auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
-
-  // Show landing page if not authenticated
-  if (!isAuthenticated || view === 'LANDING') {
-    return <LandingPage />;
-  }
-
-  const handleAddStock = async (newStock: Stock) => {
-    // Map LoadFactor enum to uppercase string values for the API
-    // The backend expects: "GRADUAL", "MODERATE", "AGGRESSIVE"
-    const deploymentStyleMap: Record<LoadFactor, string> = {
-      [LoadFactor.GRADUAL]: 'GRADUAL',
-      [LoadFactor.MODERATE]: 'MODERATE',
-      [LoadFactor.AGGRESSIVE]: 'AGGRESSIVE',
-    };
-
-    try {
-
-      // Call the createTracker API
-      const requestPayload = {
-        stock_symbol: newStock.symbol,
-        conviction_period_years: newStock.convictionYears,
-        total_capital_planned: newStock.totalBudget,
-        partition_months: newStock.partitionMonths,
-        deployment_style: deploymentStyleMap[newStock.loadFactor],
-        base_conviction_score: newStock.convictionLevel,
-        initial_invested_amount: newStock.averagePriceOwned, // This is already the total amount invested
-        initial_shares_held: newStock.quantityOwned,
-        is_fractional_shares_allowed: true,
-      };
-
-      console.log('[App] Creating tracker with payload:', requestPayload);
-
-      const result = await dispatch(createTracker(requestPayload)).unwrap();
-
-      console.log('[App] Tracker created successfully:', result);
-
-      // Show celebration modal if this is the first tracker
-      if (stocks.length === 0) {
-        dispatch(showCelebrationModal());
-      }
-
-      // Refresh the trackers list to get the new tracker
-      dispatch(fetchAllTrackers());
-
-      // Navigate to dashboard to see the new tracker
-      dispatch(navigateToDashboard());
-    } catch (error: any) {
-      console.error('[App] Failed to create tracker:', error);
-      console.error('[App] Error details:', {
-        message: error.message,
-        stack: error.stack,
-        error: error
-      });
-      alert(`Failed to create tracker: ${error.message || 'Unknown error'}`);
-    }
-  };
-
-  const handleUpdateStock = (updatedStock: Stock) => {
-    dispatch(updateStock(updatedStock));
-  };
-
-  const handleSelectStock = (id: string) => {
-    dispatch(setSelectedStock(id));
-
-    // Fetch tracker details from API if it's a numeric ID (from API)
-    const trackerId = parseInt(id);
-    if (!isNaN(trackerId)) {
-      console.log('[App] Fetching tracker details for ID:', trackerId);
-      dispatch(fetchTrackerDetails(trackerId));
-    }
-
-    dispatch(navigateToStockDetails());
-  };
-
-  const handleCreateNew = () => {
-    dispatch(setSelectedStock(null));
-    dispatch(setTempStrategyConfig(undefined));
-    dispatch(navigateToAddStock());
-  };
-
-  const handleCopyStrategy = (config: Partial<Stock>) => {
-    dispatch(setTempStrategyConfig(config));
-    dispatch(navigateToAddStock());
-  };
 
   return (
     <>
-      <MainLayout
-        stocks={stocks}
-        activeView={view}
-        selectedStockId={selectedStockId}
-        onSelectStock={handleSelectStock}
-        onCreateNew={handleCreateNew}
-        onUpdateStock={handleUpdateStock}
-        headerTitle={
-          view === 'STOCK_DETAILS'
-            ? `${stocks.find(s => s.id === selectedStockId)?.symbol || ''} Tracker`
-            : undefined
-        }
-        headerSubtitle={
-          view === 'STOCK_DETAILS'
-            ? 'Daily Smart Investment Execution'
-            : undefined
-        }
-        headerAction={
-          view === 'STOCK_DETAILS' ? (
-            <Button variant="ghost" size="icon" onClick={() => dispatch(navigateToDashboard())}>
-              <Icons.ArrowLeft size={18} />
-            </Button>
-          ) : undefined
-        }
-        showDsipOnly={showDsipOnly}
-        setShowDsipOnly={(show: boolean) => dispatch(setShowDsipOnly(show))}
-      >
-        {view === 'DASHBOARD' && (
-          <Dashboard
-            stocks={stocks}
-            onAddStock={() => {
-              dispatch(setTempStrategyConfig(undefined));
-              dispatch(navigateToAddStock());
-            }}
-            onSelectStock={handleSelectStock}
-          />
-        )}
-        {view === 'ADD_STOCK' && (
-          <AddStock
-            onBack={() => dispatch(navigateToDashboard())}
-            onAdd={handleAddStock}
-            initialValues={tempStrategyConfig}
-          />
-        )}
-        {view === 'STOCK_DETAILS' && (() => {
-          const selectedStock = stocks.find(s => s.id === selectedStockId);
-
-          // If no stock found in hardcoded data, create a dummy stock for API data
-          const stockToUse = selectedStock || {
-            id: selectedStockId || '',
-            symbol: 'Loading...',
-            name: 'Loading...',
-            convictionYears: 5,
-            partitionMonths: 1,
-            loadFactor: 'Aggressive' as any,
-            totalBudget: 0,
-            deployedAmount: 0,
-            currentAverage: 0,
-            currentPrice: 0,
-            isPaused: false,
-            history: [],
-            quantityOwned: 0,
-            averagePriceOwned: 0,
-            convictionLevel: 75,
-            priceMovementPct: 0,
-          };
-
-          return stockToUse ? (
-            <StockDetails
-              stock={stockToUse}
-              onBack={() => dispatch(navigateToDashboard())}
-              onUpdate={handleUpdateStock}
-              onCopyStrategy={handleCopyStrategy}
-              showDsipOnly={showDsipOnly}
-              setShowDsipOnly={(show: boolean) => dispatch(setShowDsipOnly(show))}
-            />
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-slate-400">
-              Select a strategy to view details
-            </div>
-          );
-        })()}
+      <MainLayout>
+        <Outlet />
       </MainLayout>
 
       {/* First DSIP Celebration Modal */}
@@ -308,16 +117,7 @@ const App: React.FC = () => {
       <BrowserRouter>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 font-sans">
-            <Routes>
-              {/* OAuth callback route - required for popup redirect */}
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              {/* Unauthorized access route */}
-              <Route path="/auth/unauthorized" element={<UnauthorizedAccess />} />
-              {/* Root route goes to main app */}
-              <Route path="/" element={<MainApp />} />
-              {/* All other routes go to not found page */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
             <Toaster />
           </div>
         </ThemeProvider>

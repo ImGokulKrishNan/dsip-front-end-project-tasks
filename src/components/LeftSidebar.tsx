@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useLocation, useMatch } from 'react-router-dom';
 import { Icons } from '../constants';
-import { Stock, AppView } from '../types';
+import { Stock } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,22 +9,22 @@ import { cn } from '@/lib/utils';
 
 interface LeftSidebarProps {
   stocks: Stock[];
-  activeView: AppView;
-  selectedStockId: string | null;
   onSelectStock: (id: string) => void;
   onCreateNew: () => void;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
   stocks,
-  activeView,
-  selectedStockId,
   onSelectStock,
   onCreateNew
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const trackerMatch = useMatch('/tracker/:id');
 
-  // Filter stocks based on search query
+  const isAddStock = location.pathname === '/add-stock';
+  const selectedStockId = trackerMatch?.params.id ?? null;
+
   const filteredStocks = stocks.filter(stock =>
     stock.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -33,7 +34,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       {/* Header / Create CTA */}
       <div className="p-3 border-b">
         <Button
-          variant={activeView === 'ADD_STOCK' ? "default" : "outline"}
+          variant={isAddStock ? "default" : "outline"}
           className="w-full justify-start h-auto py-3 px-4 gap-3"
           onClick={onCreateNew}
         >
@@ -74,13 +75,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               </div>
             ) : (
               filteredStocks.map(stock => {
-                const isActive = activeView === 'STOCK_DETAILS' && selectedStockId === stock.id;
-                // Use net_profit_percentage from API if available, otherwise calculate
+                const isActive = selectedStockId === stock.id;
                 const profitLossPct = stock.net_profit_percentage !== undefined
                   ? stock.net_profit_percentage
                   : (stock.currentAverage > 0
-                      ? ((stock.currentPrice - stock.currentAverage) / stock.currentAverage) * 100
-                      : 0);
+                    ? ((stock.currentPrice - stock.currentAverage) / stock.currentAverage) * 100
+                    : 0);
                 const isProfit = profitLossPct >= 0;
 
                 return (
@@ -90,7 +90,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     className={cn(
                       "w-full p-3 rounded-md text-left border transition-all hover:bg-accent hover:text-accent-foreground group",
                       isActive
-                        ? "bg-accent text-accent-foreground border-border" // Shadcn active state style
+                        ? "bg-accent text-accent-foreground border-border"
                         : "bg-transparent border-transparent"
                     )}
                   >

@@ -16,10 +16,6 @@ import type {
   UpdateTrackerRequest,
   ExecuteTradeRequest,
   GetStockPriceRequest,
-  TrackerSummary,
-  GetTrackerDetailsResponse,
-  Partition,
-  StockPrice,
 } from '../../types/tracker.types';
 import * as trackerApi from '../../lib/api.fetcher';
 
@@ -300,7 +296,7 @@ const trackersSlice = createSlice({
       state.isCreatingTracker = true;
       state.error = null;
     });
-    builder.addCase(createTracker.fulfilled, (state, action) => {
+    builder.addCase(createTracker.fulfilled, (state, _) => {
       state.isCreatingTracker = false;
       state.successMessage = 'Tracker created successfully';
       state.error = null;

@@ -44,5 +44,3 @@ export interface UserProfile {
   email: string;
   onboardingComplete: boolean;
 }
-
-export type AppView = 'LANDING' | 'ONBOARDING' | 'DASHBOARD' | 'ADD_STOCK' | 'STOCK_DETAILS';

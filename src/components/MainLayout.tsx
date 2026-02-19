@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useMatch, useLocation } from 'react-router-dom';
 import LeftSidebar from './LeftSidebar';
-import { AppView, Stock } from '../types';
 import { Icons } from '../constants';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,51 +10,65 @@ import { cn } from '@/lib/utils';
 
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
+import { setSelectedStock, setTempStrategyConfig, setShowDsipOnly } from '../store/slices/stocksSlice';
+import { fetchTrackerDetails } from '../store/slices/trackersSlice';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { syncTrackerData } from '../lib/api.fetcher';
-import { fetchTrackerDetails } from '../store/slices/trackersSlice';
 import { useToast } from '@/hooks/use-toast';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  stocks: Stock[];
-  activeView: AppView;
-  selectedStockId: string | null;
-  onSelectStock: (id: string) => void;
-  onCreateNew: () => void;
-  onUpdateStock: (stock: Stock) => void;
-  headerTitle?: string;
-  headerSubtitle?: string;
-  headerAction?: React.ReactNode;
-  showDsipOnly: boolean;
-  setShowDsipOnly: (show: boolean) => void;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({
-  children,
-  stocks,
-  activeView,
-  selectedStockId,
-  onSelectStock,
-  onCreateNew,
-
-  headerTitle,
-  headerSubtitle,
-  headerAction,
-  showDsipOnly,
-  setShowDsipOnly
-}) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const dispatch = useAppDispatch();
-  const user = useAppSelector(state => state.auth.user);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const trackerMatch = useMatch('/tracker/:id');
 
-  // Get tracker data from Redux (must be at top level, not inside callback)
-  const { selectedTracker } = useAppSelector((state) => state.trackers);
+  // Derive active view from route
+  const isDashboard = location.pathname === '/dashboard';
+  const isTracker = !!trackerMatch;
+  const selectedStockId = trackerMatch?.params.id ?? null;
+
+  // Redux state
+  const user = useAppSelector(state => state.auth.user);
+  const { stocks, showDsipOnly } = useAppSelector(state => state.stocks);
+  const { selectedTracker } = useAppSelector(state => state.trackers);
+
+  // Derive header content from route
+  const headerStock = isTracker ? stocks.find(s => s.id === selectedStockId) : null;
+  const headerTitle = isTracker
+    ? `${headerStock?.symbol || ''} Tracker`
+    : isDashboard
+      ? 'Dashboard'
+      : undefined;
+  const headerSubtitle = isTracker
+    ? 'Daily Smart Investment Execution'
+    : isDashboard
+      ? 'Portfolio Overview & Operations'
+      : undefined;
 
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  const handleSelectStock = (id: string) => {
+    dispatch(setSelectedStock(id));
+    const trackerId = parseInt(id);
+    if (!isNaN(trackerId)) {
+      dispatch(fetchTrackerDetails(trackerId));
+    }
+    navigate(`/tracker/${id}`);
+  };
+
+  const handleCreateNew = () => {
+    dispatch(setSelectedStock(null));
+    dispatch(setTempStrategyConfig(undefined));
+    navigate('/add-stock');
   };
 
   // Sync Feature State
@@ -67,7 +81,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Close mobile menu when screen size increases
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -79,7 +92,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -91,9 +103,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     };
   }, [isMobileMenuOpen]);
 
-  // Handle stock selection and close mobile menu
-  const handleSelectStock = (id: string) => {
-    onSelectStock(id);
+  const handleMobileSelectStock = (id: string) => {
+    handleSelectStock(id);
     setIsMobileMenuOpen(false);
   };
 
@@ -105,7 +116,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       return;
     }
 
-    // Get tracker ID from Redux state
     const trackerId = selectedTracker?.tracker?.trackerId;
 
     if (!trackerId) {
@@ -117,26 +127,22 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     setSyncError(null);
 
     try {
-      // Call the sync API
       const result = await syncTrackerData({
         tracker_id: trackerId,
         current_total_shares: userShares,
         current_total_invested_amount: userInvested,
-        reason: 'Manual sync from broker statement', // Hardcoded reason
+        reason: 'Manual sync from broker statement',
       });
 
       if (result.success) {
-        // Show success toast
         toast({
           title: 'Sync Successful',
           description: result.message,
           variant: 'default',
         });
 
-        // Refresh tracker details to get updated data
         dispatch(fetchTrackerDetails(trackerId));
 
-        // Close popup and reset form
         setShowSyncPopup(false);
         setSyncForm({ totalInvested: '', totalShares: '' });
       } else {
@@ -160,24 +166,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     }
   };
 
-
-
-
   return (
     <div className="flex h-screen w-screen bg-background overflow-hidden font-sans">
       {/* 1. Left Sidebar - Desktop */}
       <div className="hidden md:flex h-full w-[300px] shrink-0">
         <LeftSidebar
           stocks={stocks}
-          activeView={activeView}
-          selectedStockId={selectedStockId}
-          onSelectStock={onSelectStock}
-          onCreateNew={onCreateNew}
+          onSelectStock={handleSelectStock}
+          onCreateNew={handleCreateNew}
         />
       </div>
 
       {/* 1b. Left Sidebar - Mobile Drawer */}
-      {/* Backdrop */}
       {isMobileMenuOpen && (
         <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
@@ -185,18 +185,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         />
       )}
 
-      {/* Drawer */}
       <div className={cn(
         "fixed inset-y-0 left-0 z-50 w-3/4 max-w-sm bg-background border-r shadow-lg transition-transform duration-300 ease-in-out md:hidden",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <LeftSidebar
           stocks={stocks}
-          activeView={activeView}
-          selectedStockId={selectedStockId}
-          onSelectStock={handleSelectStock}
+          onSelectStock={handleMobileSelectStock}
           onCreateNew={() => {
-            onCreateNew();
+            handleCreateNew();
             setIsMobileMenuOpen(false);
           }}
         />
@@ -205,7 +202,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       {/* 2. Center Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-background relative">
         {/* Global Header with Divider */}
-        {(headerTitle || activeView === 'DASHBOARD') && (
+        {(headerTitle || isDashboard) && (
           <>
             <div className="px-6 py-4 flex items-center justify-between bg-background">
               <div className="flex items-center gap-3">
@@ -219,7 +216,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   <Icons.Menu className="h-6 w-6" />
                 </Button>
 
-                {headerAction}
+                {isTracker && (
+                  <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+                    <Icons.ArrowLeft size={18} />
+                  </Button>
+                )}
                 <div>
                   <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
                     {headerTitle || 'Dashboard'}
@@ -232,8 +233,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
               {/* Right side: User Profile + Theme Toggle + Action Button */}
               <div className="flex items-center gap-2 md:gap-4">
-                {activeView === 'DASHBOARD' && (
-                  <Button onClick={onCreateNew} className="shadow-lg h-9 w-9 p-0 md:h-10 md:w-auto md:px-4 rounded-full md:rounded-md">
+                {isDashboard && (
+                  <Button onClick={handleCreateNew} className="shadow-lg h-9 w-9 p-0 md:h-10 md:w-auto md:px-4 rounded-full md:rounded-md">
                     <Icons.Plus className="h-5 w-5" />
                     <span className="ml-2 hidden md:inline">Activate Stock Engine</span>
                   </Button>
@@ -271,21 +272,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       </main>
 
       {/* 3. Right Sidebar - Market Overview & Recent History */}
-      {activeView === 'STOCK_DETAILS' && (
+      {isTracker && (
         <aside className="w-[320px] bg-background flex flex-col h-full hidden xl:flex border-l">
           <ScrollArea className="flex-1">
             <div className="p-6 space-y-6">
               {selectedStockId && (() => {
                 const selectedStock = stocks.find(s => s.id === selectedStockId);
 
-                // Use tracker data from Redux (already retrieved at top level)
                 const useApiData = selectedTracker !== null;
                 const trackerData = useApiData ? selectedTracker?.tracker : null;
 
-                // If neither hardcoded stock nor API data, return null
                 if (!selectedStock && !useApiData) return null;
 
-                // Calculate values from API data or hardcoded stock
                 let sipQuantity = 0;
                 let deployedAmount = 0;
                 let manualInvested = 0;
@@ -293,19 +291,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 let history: any[] = [];
 
                 if (useApiData && trackerData) {
-                  // Use API data
                   sipQuantity = selectedTracker?.recentExecutions.reduce((acc, curr) => acc + (curr.executedAmount / (curr.executionPrice || 1)), 0) || 0;
-                  
-                  // Use toggle to select between base and DSIP metrics
-                  deployedAmount = showDsipOnly 
+
+                  deployedAmount = showDsipOnly
                     ? (trackerData.dsip_total_capital_invested_so_far || 0)
                     : (trackerData.total_capital_invested_so_far || 0);
-                  
-                  manualInvested = 0; // API doesn't have manual holdings
+
+                  manualInvested = 0;
                   currentPrice = trackerData.currentPrice || 0;
                   history = selectedTracker?.recentExecutions || [];
                 } else if (selectedStock) {
-                  // Use hardcoded stock data
                   sipQuantity = selectedStock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
                   deployedAmount = selectedStock.deployedAmount;
                   manualInvested = selectedStock.quantityOwned * selectedStock.averagePriceOwned;
@@ -313,7 +308,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   history = selectedStock.history;
                 }
 
-                // Conditional Logic based on Toggle
                 const totalInvestedStock = showDsipOnly
                   ? deployedAmount
                   : (manualInvested + deployedAmount);
@@ -322,21 +316,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   ? sipQuantity
                   : ((selectedStock?.quantityOwned || 0) + sipQuantity);
 
-                const currentValueStock = useApiData 
-                  ? (showDsipOnly 
-                      ? (trackerData?.dsip_total_market_value || 0)
-                      : (trackerData?.total_market_value || 0))
+                const currentValueStock = useApiData
+                  ? (showDsipOnly
+                    ? (trackerData?.dsip_total_market_value || 0)
+                    : (trackerData?.total_market_value || 0))
                   : relevantShares * currentPrice;
                 const totalPLStock = currentValueStock - totalInvestedStock;
                 const isProfitStock = totalPLStock >= 0;
-                
-                // Calculate percentage growth/loss
+
                 const percentageChange = useApiData && trackerData
-                  ? (showDsipOnly 
-                      ? (trackerData.dsip_net_profit_percentage || 0)
-                      : (trackerData.net_profit_percentage || 0))
-                  : totalInvestedStock > 0 
-                    ? (totalPLStock / totalInvestedStock) * 100 
+                  ? (showDsipOnly
+                    ? (trackerData.dsip_net_profit_percentage || 0)
+                    : (trackerData.net_profit_percentage || 0))
+                  : totalInvestedStock > 0
+                    ? (totalPLStock / totalInvestedStock) * 100
                     : 0;
 
                 return (
@@ -351,7 +344,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                         <Switch
                           id="dsip-toggle"
                           checked={showDsipOnly}
-                          onCheckedChange={setShowDsipOnly}
+                          onCheckedChange={(show) => dispatch(setShowDsipOnly(show))}
                           className="scale-75"
                         />
                       </div>
@@ -375,7 +368,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {showDsipOnly ? "DSIP Invested" : "Total Invested"}
                           </span>
-
                         </div>
                         <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       </div>
@@ -416,7 +408,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                             return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
                           }
 
-                          // Sort and slice history
                           const sortedHistory = [...history]
                             .sort((a, b) => {
                               const dateA = useApiData ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
@@ -426,7 +417,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                             .slice(0, 15);
 
                           return sortedHistory.map((tx, i) => {
-                            // Handle both API format and hardcoded format
                             const date = useApiData ? tx.createdAt : tx.date;
                             const amount = useApiData ? tx.executedAmount : tx.amount;
 
@@ -483,7 +473,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   />
                 </div>
 
-                {/* Preview Diff Calculation */}
                 {(syncForm.totalInvested && syncForm.totalShares) && (
                   <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
                     <div className="flex justify-between">
@@ -495,7 +484,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   </div>
                 )}
 
-                {/* Error Message */}
                 {syncError && (
                   <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
                     <div className="flex items-start gap-2">
