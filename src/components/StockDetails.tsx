@@ -1235,7 +1235,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                       ${(useApiData && selectedTracker?.tracker?.live_investment_cycle?.total_capital_invested_so_far
                         ? selectedTracker.tracker.live_investment_cycle.total_capital_invested_so_far
                         : (totalShares * stock.currentPrice)
-                      ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </div>
                   </div>
 
@@ -1710,13 +1710,13 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                             </span>
                           </div>
                         </div>
-                        <div className="text-2xl font-bold">${Math.round(currentValueStock).toLocaleString()}</div>
+                        <div className="text-2xl font-bold">${currentValueStock.toLocaleString()}</div>
                       </div>
 
                       <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfitStock ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
                         <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
                         <div className="text-3xl font-black tracking-tight">
-                          {isProfitStock ? '+' : ''}${Math.round(totalPLStock).toLocaleString()}
+                          {isProfitStock ? '+' : ''}${totalPLStock.toLocaleString()}
                         </div>
                       </div>
                     </div>
