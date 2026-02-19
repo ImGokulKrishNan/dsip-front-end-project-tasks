@@ -233,6 +233,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
               {/* Right side: User Profile + Theme Toggle + Action Button */}
               <div className="flex items-center gap-2 md:gap-4">
+                <div className='xl:hidden'>
+                  <ModeToggle />
+                </div>
+
                 {isHome && (
                   <Button onClick={handleCreateNew} className="shadow-lg h-9 w-9 p-0 md:h-10 md:w-auto md:px-4 rounded-full md:rounded-md">
                     <Icons.Plus className="h-5 w-5" />
