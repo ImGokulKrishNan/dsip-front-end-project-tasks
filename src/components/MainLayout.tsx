@@ -286,6 +286,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
                 const useApiData = selectedTracker !== null;
                 const trackerData = useApiData ? selectedTracker?.tracker : null;
+                const isCurrentAverageLesserThanMarketValue = showDsipOnly ? trackerData?.dsip_current_avg < trackerData?.current_market_price : trackerData?.current_avg < trackerData?.current_market_price
+                const currentMarketToAvgPriceDiff = showDsipOnly ? trackerData?.dsip_current_avg / trackerData?.current_market_price * 100 : trackerData?.current_avg / trackerData?.current_market_price * 100
 
                 if (!selectedStock && !useApiData) return null;
 
@@ -378,16 +380,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             $ {trackerData?.current_market_price != null ? trackerData.current_market_price : '-'}
                           </div>
                         </div>
-                        {(trackerData?.dsip_total_capital_invested_so_far ?? 0) !== 0 && (
-                          <div className="p-4 rounded-xl bg-card border shadow-sm space-y-1">
+                        {/*Hide the current average if the DSIP only is zero*/}
+                        {!((trackerData?.dsip_total_capital_invested_so_far ?? 0) === 0 && showDsipOnly) && (
+                          <div className={`p-4 rounded-xl bg-card border shadow-sm space-y-1 isProfitStock ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 text-red-700 dark:text-red-400`}>
                             <div className="flex items-center">
                               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Average</span>
                               <InfoTooltip text="Your average buy price across all purchases for this stock." />
                             </div>
                             <div className="text-xl font-bold">
                               $ {showDsipOnly
-                                ? (trackerData?.dsip_current_avg != null ? trackerData.dsip_current_avg.toFixed(3) : '-')
-                                : (trackerData?.current_avg != null ? trackerData.current_avg.toFixed(3) : '-')}
+                                ? (trackerData?.dsip_current_avg != null ? trackerData.dsip_current_avg : '-')
+                                : (trackerData?.current_avg != null ? trackerData.current_avg : '-')}
                             </div>
                           </div>
                         )}

@@ -422,7 +422,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                             <div className="flex justify-between items-end text-xs">
                               <span className="text-muted-foreground font-medium uppercase tracking-wider">Deployment</span>
                               <span className="font-bold text-primary">
-                                {((stock.deployedAmount / stock.totalBudget) * 100).toFixed(1)}%
+                                {((stock.deployedAmount / stock.totalBudget) * 100).toFixed(2)}%
                               </span>
                             </div>
                             <div className="h-4 w-full bg-secondary/50 rounded-full overflow-hidden relative shadow-inner border border-black/5">
