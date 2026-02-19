@@ -67,7 +67,7 @@ export async function createTracker(
   // Extract detailed error message from response
   const errorData = response.data as any;
   const detailedMessage = errorData?.message || errorData?.error || response.message || 'Failed to create tracker';
-  
+
   throw new Error(detailedMessage);
 }
 
@@ -106,10 +106,10 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
     // We need: trackers with camelCase fields
     const trackers = (data.dsip_trackers || []).map((tracker: any) => {
       // Calculate current price from total invested and shares if available
-      const sharesHeld = tracker.dsip_total_capital_invested_so_far && tracker.total_capital_invested_so_far 
+      const sharesHeld = tracker.dsip_total_capital_invested_so_far && tracker.total_capital_invested_so_far
         ? (tracker.total_capital_invested_so_far / (tracker.dsip_total_capital_invested_so_far || 1))
         : 0;
-      
+
       return {
         trackerId: tracker.id,
         stockSymbol: tracker.symbol,
@@ -328,7 +328,7 @@ export async function executeTrade(
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to execute trade');
+  throw new Error(response.data.message || 'Failed to execute trade');
 }
 
 // ============================================================================
