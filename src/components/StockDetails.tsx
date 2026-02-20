@@ -562,12 +562,23 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                       </Label>
                       <div className="relative">
                         <Input
-                          type="number"
-                          step="0.1"
+                          type="text"
+                          inputMode="decimal"
                           placeholder="-2.4"
                           className="h-11 md:h-8 text-base md:text-sm font-semibold pl-3 md:pl-2.5 pr-8"
                           value={lockInPct}
-                          onChange={e => setLockInPct(e.target.value)}
+                          onChange={e => {
+                            const val = e.target.value;
+                            // Allow empty, a lone minus sign, or a trailing decimal while typing
+                            if (val === '' || val === '-' || val === '.' || val === '-.') {
+                              setLockInPct(val);
+                              return;
+                            }
+                            const num = parseFloat(val);
+                            if (!isNaN(num) && num >= -90 && num <= 90) {
+                              setLockInPct(val);
+                            }
+                          }}
                           autoFocus
                         />
                         <div className="absolute right-3 md:right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-xs">%</div>
