@@ -14,16 +14,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
+import Performance from './Performance';
 
 interface StockDetailsProps {
   stock: Stock;
   onBack: () => void;
   onUpdate: (stock: Stock) => void;
   onCopyStrategy?: (config: Partial<Stock>) => void;
-  showDsipOnly?: boolean;
-  setShowDsipOnly?: (show: boolean) => void;
 }
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
@@ -57,15 +54,10 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy, showDsipOnly, setShowDsipOnly }) => {
+const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, onCopyStrategy }) => {
   // Redux dispatch
   const dispatch = useAppDispatch();
 
-  // Sync Feature State (for Investment Performance section)
-  const [showSyncPopup, setShowSyncPopup] = useState(false);
-  const [syncForm, setSyncForm] = useState({ totalInvested: '', totalShares: '' });
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
   // Get tracker data from Redux store
   const {
@@ -106,8 +98,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
   const displayCurrentPrice = getDisplayValue(trackerData?.currentPrice, stock.currentPrice);
   const displayInitialInvestedAmount = getDisplayValue(trackerData?.initial_invested_amount, null);
   const displayInitialSharesHeld = getDisplayValue(trackerData?.initial_shares_held, null);
-  const displayCurrentAvg = (() => { const v = getDisplayValue(trackerData?.current_avg, null); return typeof v === 'number' ? v.toFixed(3) : v; })();
-  const displayCurrentMarketPrice = getDisplayValue(trackerData?.current_market_price, null);
+
 
   // Get deployment style as text
   const getDeploymentStyleText = () => {
@@ -300,50 +291,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
 
   const cycleLength = displayPartitionMonths;
 
-  // Handle sync portfolio
-  const handleSync = async () => {
-    const userInvested = Number(syncForm.totalInvested);
-    const userShares = Number(syncForm.totalShares);
-
-    if (!userInvested || !userShares) {
-      return;
-    }
-
-    const trackerId = trackerData?.trackerId;
-
-    if (!trackerId) {
-      setSyncError('No tracker selected. Please select a tracker first.');
-      return;
-    }
-
-    setIsSyncing(true);
-    setSyncError(null);
-
-    try {
-      const { syncTrackerData } = await import('../lib/api.fetcher');
-      const result = await syncTrackerData({
-        tracker_id: trackerId,
-        current_total_shares: userShares,
-        current_total_invested_amount: userInvested,
-        reason: 'Manual sync from broker statement',
-      });
-
-      if (result.success) {
-        const { fetchTrackerDetails } = await import('../store/slices/trackersSlice');
-        dispatch(fetchTrackerDetails(trackerId));
-
-        setShowSyncPopup(false);
-        setSyncForm({ totalInvested: '', totalShares: '' });
-      } else {
-        setSyncError(result.message || 'Sync failed');
-      }
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to sync portfolio data';
-      setSyncError(errorMessage);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const performCalculation = async () => {
     setIsCalculating(true);
@@ -530,7 +477,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
+    <div className="flex-1 flex flex-col xl:flex-row h-full bg-background overflow-hidden">
       <ScrollArea className="flex-1">
         <div className="px-4 py-5 md:p-6 space-y-6 pb-32">
 
@@ -1602,177 +1549,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
             </Card>
           </div>
 
-          {/* Investment Performance Section - Mobile/Tablet View */}
-          <Card className="xl:hidden border-primary/10 shadow-sm bg-background">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h3 className="text-lg font-bold tracking-tight">Investment</h3>
-                  <p className="text-sm text-muted-foreground">Performance</p>
-                </div>
-                {setShowDsipOnly && (
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="dsip-toggle-mobile" className="text-[10px] uppercase font-bold text-muted-foreground">DSIP Only</Label>
-                    <Switch
-                      id="dsip-toggle-mobile"
-                      checked={showDsipOnly}
-                      onCheckedChange={setShowDsipOnly}
-                      className="scale-75"
-                    />
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6 pb-4">
-              {(() => {
-                // Calculate values from API data or hardcoded stock
-                let sipQuantity = 0;
-                let deployedAmount = 0;
-                let manualInvested = 0;
-                let currentPrice = 0;
-                let history: any[] = [];
-
-                if (useApiData && trackerData) {
-                  // Use API data
-                  sipQuantity = selectedTracker?.recentExecutions.reduce((acc, curr) => acc + (curr.executedAmount / (curr.executionPrice || 1)), 0) || 0;
-                  deployedAmount = trackerData.total_capital_invested_so_far;
-                  manualInvested = 0; // API doesn't have manual holdings
-                  currentPrice = trackerData.currentPrice || 0;
-                  history = selectedTracker?.recentExecutions || [];
-                } else {
-                  // Use hardcoded stock data
-                  sipQuantity = stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
-                  deployedAmount = stock.deployedAmount;
-                  manualInvested = stock.quantityOwned * stock.averagePriceOwned;
-                  currentPrice = stock.currentPrice;
-                  history = stock.history;
-                }
-
-                // Conditional Logic based on Toggle
-                const totalInvestedStock = showDsipOnly
-                  ? deployedAmount
-                  : (manualInvested + deployedAmount);
-
-                const relevantShares = showDsipOnly
-                  ? sipQuantity
-                  : ((stock?.quantityOwned || 0) + sipQuantity);
-
-                const currentValueStock = relevantShares * currentPrice;
-                const totalPLStock = currentValueStock - totalInvestedStock;
-                const isProfitStock = totalPLStock >= 0;
-
-                // Calculate percentage growth/loss
-                const percentageChange = useApiData && selectedTracker?.tracker?.net_profit_percentage !== undefined
-                  ? selectedTracker.tracker.net_profit_percentage
-                  : totalInvestedStock > 0
-                    ? (totalPLStock / totalInvestedStock) * 100
-                    : 0;
-
-                return (
-                  <>
-                    {/* Sync Button */}
-                    {!showDsipOnly && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowSyncPopup(true)}
-                        className="w-full h-10 text-sm bg-background hover:bg-muted border-dashed"
-                      >
-                        <Icons.Refresh className="mr-2 w-4 h-4" /> Sync Portfolio
-                      </Button>
-                    )}
-
-                    <div className="grid gap-4">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="p-4 rounded-xl bg-card border shadow-sm space-y-1">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Referred Market Price</span>
-                          <div className="text-xl font-bold">
-                            {displayCurrentMarketPrice}
-                          </div>
-                        </div>
-                        <div className="p-4 rounded-xl bg-card border shadow-sm space-y-1">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Average</span>
-                          <div className="text-xl font-bold">
-                            {displayCurrentAvg}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            {showDsipOnly ? "DSIP Invested" : "Total Invested"}
-                          </span>
-                        </div>
-                        <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString()}</div>
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
-                          <div className="flex items-center gap-1">
-                            {isProfitStock ? (
-                              <Icons.ArrowUp className="w-4 h-4 text-emerald-500" />
-                            ) : (
-                              <Icons.ArrowDown className="w-4 h-4 text-red-500" />
-                            )}
-                            <span className={`text-xs font-bold ${isProfitStock ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                              {isProfitStock ? '+' : ''}{percentageChange.toFixed(2)}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-2xl font-bold">${currentValueStock.toLocaleString()}</div>
-                      </div>
-
-                      <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfitStock ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
-                        <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
-                        <div className="text-3xl font-black tracking-tight">
-                          {isProfitStock ? '+' : ''}${totalPLStock.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-4">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        Recent History
-                      </h4>
-                      <div className="space-y-2">
-                        {(() => {
-                          if (history.length === 0) {
-                            return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
-                          }
-
-                          // Sort and slice history
-                          const sortedHistory = [...history]
-                            .sort((a, b) => {
-                              const dateA = useApiData ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
-                              const dateB = useApiData ? new Date(b.createdAt).getTime() : new Date(b.date).getTime();
-                              return dateB - dateA;
-                            })
-                            .slice(0, 15);
-
-                          return sortedHistory.map((tx, i) => {
-                            // Handle both API format and hardcoded format
-                            const date = useApiData ? tx.createdAt : tx.date;
-                            const amount = useApiData ? tx.executedAmount : tx.amount;
-
-                            return (
-                              <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="text-xs font-semibold text-muted-foreground">{new Date(date).toLocaleDateString()}</span>
-                                </div>
-                                <span className="font-mono font-bold">${amount.toLocaleString()}</span>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-            </CardContent>
-          </Card>
+          {/* Investment Performance Section - Mobile/Tablet (below content) */}
+          <div className="xl:hidden">
+            <Performance />
+          </div>
 
           <div>
             {/* Partition Selector Dropdown */}
@@ -2042,94 +1822,22 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
               </DialogContent>
             </Dialog>
 
-            {/* Sync Popup - Manual Calibration */}
-            <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Icons.Refresh className="w-5 h-5 text-primary" />
-                    Sync Portfolio
-                  </DialogTitle>
-                  <DialogDescription>
-                    Manually update your total holdings to match your broker. We'll adjust the base records while keeping your current cycle intact.
-                  </DialogDescription>
-                </DialogHeader>
 
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-muted-foreground">Total Invested Amount ($)</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 150000"
-                      value={syncForm.totalInvested}
-                      onChange={(e) => setSyncForm({ ...syncForm, totalInvested: e.target.value })}
-                      className="h-11 font-mono text-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-muted-foreground">Total Shares Quantity</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 50.5"
-                      value={syncForm.totalShares}
-                      onChange={(e) => setSyncForm({ ...syncForm, totalShares: e.target.value })}
-                      className="h-11 font-mono text-lg"
-                    />
-                  </div>
-
-                  {/* Preview Diff Calculation */}
-                  {(syncForm.totalInvested && syncForm.totalShares) && (
-                    <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Calculated Avg Price:</span>
-                        <span className="font-mono font-bold">
-                          ${(Number(syncForm.totalInvested) / Number(syncForm.totalShares)).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Error Message */}
-                  {syncError && (
-                    <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
-                      <div className="flex items-start gap-2">
-                        <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />
-                        <div className="flex-1 space-y-1">
-                          <p className="font-semibold">Sync Error</p>
-                          <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">{syncError}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <DialogFooter>
-                  <Button variant="ghost" onClick={() => {
-                    setShowSyncPopup(false);
-                    setSyncError(null);
-                  }}>Cancel</Button>
-                  <Button
-                    onClick={handleSync}
-                    disabled={!syncForm.totalInvested || !syncForm.totalShares || isSyncing}
-                  >
-                    {isSyncing ? (
-                      <>
-                        <Icons.Refresh className="mr-2 h-4 w-4 animate-spin" />
-                        Syncing...
-                      </>
-                    ) : (
-                      'Update Portfolio'
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
 
           </div>
 
 
         </div>
       </ScrollArea>
+
+      {/* Investment Performance Section - Desktop Sidebar (right side) */}
+      <aside className="hidden xl:flex w-[320px] shrink-0 flex-col h-full border-l bg-background">
+        <ScrollArea className="flex-1">
+          <div className="p-6 space-y-6">
+            <Performance />
+          </div>
+        </ScrollArea>
+      </aside>
     </div>
   );
 };
