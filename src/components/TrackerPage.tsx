@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setSelectedStock, setShowDsipOnly, setTempStrategyConfig, updateStock } from "@/store/slices/stocksSlice";
+import { setSelectedStock, setTempStrategyConfig, updateStock } from "@/store/slices/stocksSlice";
 import { fetchTrackerDetails } from "@/store/slices/trackersSlice";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -9,7 +9,7 @@ export const TrackerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { stocks, showDsipOnly } = useAppSelector(state => state.stocks);
+  const { stocks } = useAppSelector(state => state.stocks);
 
   useEffect(() => {
     if (id) {
@@ -50,8 +50,6 @@ export const TrackerPage: React.FC = () => {
         dispatch(setTempStrategyConfig(config));
         navigate('/create-tracker');
       }}
-      showDsipOnly={showDsipOnly}
-      setShowDsipOnly={(show) => dispatch(setShowDsipOnly(show))}
     />
   );
 };
