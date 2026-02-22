@@ -477,9 +477,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
   }
 
   return (
-    <div className="flex-1 flex flex-col xl:flex-row h-full bg-background overflow-hidden">
-      <ScrollArea className="flex-1">
-        <div className="px-4 py-5 md:p-6 space-y-6 pb-32">
+    <div className="flex-1 flex flex-col xl:flex-row h-full bg-background overflow-y-auto xl:overflow-hidden">
+      <ScrollArea className="flex-none xl:flex-1 h-auto xl:h-full">
+        <div className="px-4 py-5 md:p-6 space-y-6 pb-12 xl:pb-32">
 
           {/* 1. Daily Execution Zone */}
           <div className="space-y-3">
@@ -1549,11 +1549,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
             </Card>
           </div>
 
-          {/* Investment Performance Section - Mobile/Tablet (below content) */}
-          <div className="xl:hidden">
-            <Performance />
-          </div>
-
           <div>
             {/* Partition Selector Dropdown */}
             {showPartitionSelector && selectorAnchor && (
@@ -1831,9 +1826,9 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
       </ScrollArea>
 
       {/* Investment Performance Section - Desktop Sidebar (right side) */}
-      <aside className="hidden xl:flex w-[320px] shrink-0 flex-col h-full border-l bg-background">
-        <ScrollArea className="flex-1">
-          <div className="p-6 space-y-6">
+      <aside className="flex flex-col w-full xl:w-[320px] shrink-0 h-auto xl:h-full border-t xl:border-t-0 xl:border-l bg-background">
+        <ScrollArea className="flex-none xl:flex-1 h-auto xl:h-full">
+          <div className="p-6 space-y-6 xl:pb-6 pb-32">
             <Performance />
           </div>
         </ScrollArea>

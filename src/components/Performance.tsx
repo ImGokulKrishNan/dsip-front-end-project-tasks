@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Icons } from '../constants';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +12,7 @@ import { setShowDsipOnly } from '../store/slices/stocksSlice';
 import { fetchTrackerDetails } from '../store/slices/trackersSlice';
 import { syncTrackerData } from '../lib/api.fetcher';
 import { useToast } from '@/hooks/use-toast';
+import { Execution } from '../types/tracker.types';
 
 const Performance: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -27,70 +28,54 @@ const Performance: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Derive selected stock from tracker
-  const useApiData = selectedTracker !== null;
-  const trackerData = useApiData ? selectedTracker?.tracker : null;
+  // Derive data source
+  const trackerData = selectedTracker?.tracker || null;
   const selectedStockId = trackerData?.trackerId?.toString() || null;
 
-  if (!selectedStockId) return null;
+  // Memoized metrics computation
+  const metrics = useMemo(() => {
+    if (!selectedStockId || !trackerData) return null;
 
-  const selectedStock = stocks.find(s => s.id === selectedStockId);
-  if (!selectedStock && !useApiData) return null;
+    let history: Array<Execution> = [];
 
-  // Compute metrics
-  let sipQuantity = 0;
-  let deployedAmount = 0;
-  let manualInvested = 0;
-  let currentPrice = 0;
-  let history: any[] = [];
-
-  if (useApiData && trackerData) {
-    sipQuantity = selectedTracker?.recentExecutions.reduce(
-      (acc: number, curr: any) => acc + (curr.executedAmount / (curr.executionPrice || 1)), 0
-    ) || 0;
-
-    deployedAmount = showDsipOnly
+    const totalInvested = showDsipOnly
       ? (trackerData.dsip_total_capital_invested_so_far || 0)
       : (trackerData.total_capital_invested_so_far || 0);
 
-    manualInvested = 0;
-    currentPrice = trackerData.currentPrice || 0;
     history = selectedTracker?.recentExecutions || [];
-  } else if (selectedStock) {
-    sipQuantity = selectedStock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
-    deployedAmount = selectedStock.deployedAmount;
-    manualInvested = selectedStock.quantityOwned * selectedStock.averagePriceOwned;
-    currentPrice = selectedStock.currentPrice;
-    history = selectedStock.history;
-  }
 
-  const totalInvestedStock = showDsipOnly
-    ? deployedAmount
-    : (manualInvested + deployedAmount);
+    const currentValue = showDsipOnly
+      ? (trackerData.dsip_total_market_value || 0)
+      : (trackerData.total_market_value || 0);
 
-  const relevantShares = showDsipOnly
-    ? sipQuantity
-    : ((selectedStock?.quantityOwned || 0) + sipQuantity);
+    const totalPL = currentValue - totalInvested;
+    const isProfit = totalPL >= 0;
 
-  const currentValueStock = useApiData
-    ? (showDsipOnly
-      ? (trackerData?.dsip_total_market_value || 0)
-      : (trackerData?.total_market_value || 0))
-    : relevantShares * currentPrice;
-
-  const totalPLStock = currentValueStock - totalInvestedStock;
-  const isProfitStock = totalPLStock >= 0;
-
-  const percentageChange = useApiData && trackerData
-    ? (showDsipOnly
+    const percentageChange = showDsipOnly
       ? (trackerData.dsip_net_profit_percentage || 0)
-      : (trackerData.net_profit_percentage || 0))
-    : totalInvestedStock > 0
-      ? (totalPLStock / totalInvestedStock) * 100
-      : 0;
+      : (trackerData.net_profit_percentage || 0);
 
-  // Sync handler
-  const handleSync = async () => {
+    // Sort history once during computation
+    const sortedHistory = [...history]
+      .sort((a, b) => {
+        const dateA = new Date(String(a.createdAt)).getTime();
+        const dateB = new Date(String(b.createdAt)).getTime();
+        return dateB - dateA;
+      })
+      .slice(0, 15);
+
+    return {
+      totalInvested,
+      currentValue,
+      totalPL,
+      isProfit,
+      percentageChange,
+      sortedHistory,
+    };
+  }, [stocks, selectedStockId, selectedTracker, trackerData, showDsipOnly]);
+
+  // Sync handler — memoized to avoid recreation on each render
+  const handleSync = useCallback(async () => {
     const userInvested = Number(syncForm.totalInvested);
     const userShares = Number(syncForm.totalShares);
 
@@ -124,12 +109,18 @@ const Performance: React.FC = () => {
       } else {
         setSyncError(result.message || 'Sync failed');
       }
-    } catch (error: any) {
-      setSyncError(error.message || 'Failed to sync portfolio data');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to sync portfolio data';
+      setSyncError(message);
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, [syncForm, trackerData, dispatch, toast]);
+
+  // Early return after all hooks
+  if (!metrics) return null;
+
+  const { totalInvested, currentValue, totalPL, isProfit, percentageChange, sortedHistory } = metrics;
 
   return (
     <>
@@ -194,67 +185,58 @@ const Performance: React.FC = () => {
               {showDsipOnly ? "DSIP Invested" : "Total Invested"}
             </span>
           </div>
-          <div className="text-2xl font-bold">${totalInvestedStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div className="text-2xl font-bold">${totalInvested.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border shadow-sm space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Value</span>
             <div className="flex items-center gap-1">
-              {isProfitStock ? (
+              {isProfit ? (
                 <Icons.ArrowUp className="w-4 h-4 text-emerald-500" />
               ) : (
                 <Icons.ArrowDown className="w-4 h-4 text-red-500" />
               )}
-              <span className={`text-xs font-bold ${isProfitStock ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                {isProfitStock ? '+' : ''}{percentageChange.toFixed(2)}%
+              <span className={`text-xs font-bold ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {isProfit ? '+' : ''}{percentageChange.toFixed(2)}%
               </span>
             </div>
           </div>
 
-          <div className="text-2xl font-bold">${currentValueStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div className="text-2xl font-bold">${currentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         </div>
 
-        <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfitStock ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
+        <div className={cn("p-4 rounded-xl border shadow-sm space-y-1", isProfit ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400")}>
           <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Total P&L</span>
           <div className="text-3xl font-black tracking-tight">
-            {isProfitStock ? '+' : ''}${totalPLStock.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {isProfit ? '+' : ''}${totalPL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
       </div>
 
+      {/* Recent History */}
       <div className="space-y-3 pt-8">
         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
           Recent History
         </h4>
         <div className="space-y-2">
-          {(() => {
-            if (history.length === 0) {
-              return <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>;
-            }
-
-            const sortedHistory = [...history]
-              .sort((a, b) => {
-                const dateA = useApiData ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
-                const dateB = useApiData ? new Date(b.createdAt).getTime() : new Date(b.date).getTime();
-                return dateB - dateA;
-              })
-              .slice(0, 15);
-
-            return sortedHistory.map((tx, i) => {
-              const date = useApiData ? tx.createdAt : tx.date;
-              const amount = useApiData ? tx.executedAmount : tx.amount;
+          {sortedHistory.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">No transactions recorded yet.</p>
+          ) : (
+            sortedHistory.map((tx, i) => {
+              const date = String(tx.createdAt);
+              const amount = Number(tx.executedAmount);
 
               return (
-                <div key={i} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
+                <div key={`${date}-${amount}-${i}`} className="flex justify-between items-center p-3 border rounded-xl bg-card text-sm shadow-sm transition-colors hover:bg-accent/50">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-semibold text-muted-foreground">{new Date(date).toLocaleDateString()}</span>
                   </div>
                   <span className="font-mono font-bold">${amount.toLocaleString()}</span>
                 </div>
               );
-            });
-          })()}
+            })
+          )}
         </div>
       </div>
 
