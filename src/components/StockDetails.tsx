@@ -563,7 +563,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack, onUpdate, on
                       <div className="relative">
                         <Input
                           type="text"
-                          inputMode="decimal"
+                          // inputMode="decimal"
                           placeholder="-2.4"
                           className="h-11 md:h-8 text-base md:text-sm font-semibold pl-3 md:pl-2.5 pr-8"
                           value={lockInPct}
