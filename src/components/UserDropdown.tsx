@@ -26,7 +26,7 @@ export const UserDropdown = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="items-center gap-2 px-2.5 py-1.5 h-auto rounded-lg border bg-muted/30 backdrop-blur-sm hover:bg-muted/50"
+          className="items-center gap-2 px-2.5 py-1.5 h-auto rounded-lg md:border md:bg-muted/30 md:backdrop-blur-sm hover:bg-muted/50"
         >
           {user?.profilePicture ? (
             <img

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useMatch, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import LeftSidebar from "./LeftSidebar";
 import Performance from "./Performance";
 import { Icons } from "../constants";
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { useAppSelector } from "../store/hooks";
 import { UserDropdown } from "./UserDropdown";
 import { AppView } from "@/types";
+import MobileStockSearch from "./MobileStockSearch";
+import useSelectedStockId from "@/hooks/use-selected-stock-id";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -26,13 +28,12 @@ export function deriveActiveView(pathname: string): AppView {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const trackerMatch = useMatch("/tracker/:id");
 
   // Derive active view from route
   const isHome = location.pathname === "/home";
-  const isTracker = !!trackerMatch;
 
-  const selectedStockId = trackerMatch?.params.id ?? null;
+  const selectedStockId = useSelectedStockId();
+  const isTracker = !!selectedStockId;
 
   // Redux state
   const { stocks } = useAppSelector((state) => state.stocks);
@@ -99,7 +100,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* 2. Center Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-background relative">
         {/* Global Header with Divider */}
-        <div className="px-6 py-1 flex items-center justify-between bg-background">
+        <div className="px-2 md:px-6 py-1 flex items-center justify-between bg-background">
           <div className="flex items-center gap-3">
             {/* Mobile Hamburger Menu */}
             <Button
@@ -129,8 +130,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   </p> */}
             </div>
           </div>
-
-          <UserDropdown />
+          <div className="flex items-center justify-between gap-2">
+            <MobileStockSearch stocks={stocks} />
+            <UserDropdown />
+          </div>
         </div>
         <Separator />
 

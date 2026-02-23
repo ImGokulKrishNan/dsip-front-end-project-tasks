@@ -5,7 +5,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Icons } from "../constants";
 import { cn } from "@/lib/utils";
-import { useMatch, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import useSelectedStockId from "@/hooks/use-selected-stock-id";
 
 interface LeftSidebarProps {
   stocks: Stock[];
@@ -77,8 +78,7 @@ interface StockCardProps {
 
 const StockCard = ({ stock }: StockCardProps) => {
   const navigate = useNavigate();
-  const trackerMatch = useMatch("/tracker/:id");
-  const selectedStockId = trackerMatch?.params.id ?? null;
+  const selectedStockId = useSelectedStockId();
 
   const isActive = selectedStockId === stock.id;
 
