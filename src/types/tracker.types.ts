@@ -27,9 +27,9 @@ export enum PartitionStatus {
 }
 
 export enum Exchange {
-  US = 'US',
-  NSE = 'NSE',
-  BSE = 'BSE',
+  US = "US",
+  NSE = "NSE",
+  BSE = "BSE",
 }
 
 // ============================================================================
@@ -175,8 +175,13 @@ export interface GetTrackerDetailsResponse {
 }
 
 export interface ExecuteTradeResponse {
-  status: 'EXECUTED';
-  code: 'SUCCESS' | 'ONGOING' | 'KILL_SWITCH_STAGNATION' | 'KILL_SWITCH_POOR_GROWTH' | 'NEUTRAL_PARTITION';
+  status: "EXECUTED";
+  code:
+    | "SUCCESS"
+    | "ONGOING"
+    | "KILL_SWITCH_STAGNATION"
+    | "KILL_SWITCH_POOR_GROWTH"
+    | "NEUTRAL_PARTITION";
   title?: string;
   message?: string;
   deployed_amount: number;
@@ -188,7 +193,7 @@ export interface StockPrice {
   stockName: string;
   closePrice: number;
   lastUpdatedDate: string;
-  source: 'cache' | 'api';
+  source: "cache" | "api";
 }
 
 export interface DeleteTrackerResponse {
@@ -196,7 +201,7 @@ export interface DeleteTrackerResponse {
 }
 
 export interface EndActionResponse {
-  action: 'ALREADY_PROCESSED' | 'PARTITION_ENDED';
+  action: "ALREADY_PROCESSED" | "PARTITION_ENDED";
   message: string;
   partition_index: number;
 }

@@ -5,10 +5,11 @@
  * Maintains backward compatibility while adding new features
  */
 
-import { apiRequestPromise, setAuthenticationFailureHandler } from './axios';
-import type { ApiRequestOptions } from './axios';
+import { apiRequestPromise, setAuthenticationFailureHandler } from "./axios";
+import type { ApiRequestOptions } from "./axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 let onUnauthorized: (() => void) | null = null;
 
@@ -34,17 +35,18 @@ export function setOnUnauthorized(callback: () => void) {
  * ```
  */
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const method = (options?.method as ApiRequestOptions['method']) || 'GET';
-  const isGet = method === 'GET';
+  const method = (options?.method as ApiRequestOptions["method"]) || "GET";
+  const isGet = method === "GET";
 
   let requestData: any = null;
 
   // Parse body if present
   if (options?.body) {
     try {
-      requestData = typeof options.body === 'string'
-        ? JSON.parse(options.body)
-        : options.body;
+      requestData =
+        typeof options.body === "string"
+          ? JSON.parse(options.body)
+          : options.body;
     } catch {
       requestData = options.body;
     }
@@ -52,26 +54,24 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
 
   // Extract headers as a typed object for safe access
   const headers = options?.headers as Record<string, string> | undefined;
-  
-  const response = await apiRequestPromise<T>(
-    path,
-    requestData,
-    {
-      method,
-      isJSON: !isGet && headers?.['Content-Type'] !== 'application/x-www-form-urlencoded',
-      headers,
-    }
-  );
 
-  if (response.status === 'success') {
+  const response = await apiRequestPromise<T>(path, requestData, {
+    method,
+    isJSON:
+      !isGet &&
+      headers?.["Content-Type"] !== "application/x-www-form-urlencoded",
+    headers,
+  });
+
+  if (response.status === "success") {
     return response.data;
-  } else if (response.status === 'authentication_failure') {
+  } else if (response.status === "authentication_failure") {
     if (onUnauthorized) {
       onUnauthorized();
     }
-    throw new ApiError(401, response.message || 'Authentication failed');
+    throw new ApiError(401, response.message || "Authentication failed");
   } else {
-    const errorMessage = response.message || 'Request failed';
+    const errorMessage = response.message || "Request failed";
     const statusCode = getStatusCodeFromError(response.data);
     throw new ApiError(statusCode, errorMessage);
   }
@@ -81,9 +81,9 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
  * Helper to extract status code from error response
  */
 function getStatusCodeFromError(data: any): number {
-  if (data === 'timeout_exceeded') return 408;
-  if (data === 'network_error') return 503;
-  if (data === 'request_cancelled') return 499;
+  if (data === "timeout_exceeded") return 408;
+  if (data === "network_error") return 503;
+  if (data === "request_cancelled") return 499;
   return 500;
 }
 
@@ -91,9 +91,12 @@ function getStatusCodeFromError(data: any): number {
  * API Error class
  */
 export class ApiError extends Error {
-  constructor(public status: number, public statusText: string) {
+  constructor(
+    public status: number,
+    public statusText: string,
+  ) {
     super(`${status} ${statusText}`);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 

@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { api, API_BASE_URL, setOnUnauthorized } from '../../lib/api';
-import { DEV_CONFIG } from '../../config/dev';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { api, API_BASE_URL, setOnUnauthorized } from "../../lib/api";
+import { DEV_CONFIG } from "../../config/dev";
 
 export interface User {
   id: string;
@@ -30,7 +30,7 @@ const initialState: AuthState = {
 
 // Async thunk for checking authentication status
 export const checkAuth = createAsyncThunk(
-  'auth/checkAuth',
+  "auth/checkAuth",
   async (_, { rejectWithValue }) => {
     // Skip auth check in dev mode
     if (DEV_CONFIG.BYPASS_AUTH) {
@@ -41,33 +41,33 @@ export const checkAuth = createAsyncThunk(
     }
 
     try {
-      const data = await api<AuthStatusResponse>('/api/auth/status');
+      const data = await api<AuthStatusResponse>("/api/auth/status");
       return data;
     } catch (error) {
-      return rejectWithValue('Authentication failed');
+      return rejectWithValue("Authentication failed");
     }
-  }
+  },
 );
 
 // Async thunk for logout
 export const logout = createAsyncThunk(
-  'auth/logout',
+  "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
       await fetch(`${API_BASE_URL}/logout`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
       });
       return null;
     } catch (error) {
       // Best-effort logout, still clear state
       return null;
     }
-  }
+  },
 );
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     // Sync action for clearing auth state (used by API interceptor)
@@ -85,7 +85,7 @@ const authSlice = createSlice({
     setAuthError: (state, action: PayloadAction<string | undefined>) => {
       state.isAuthenticated = false;
       state.user = null;
-      state.error = action.payload || 'Authentication failed';
+      state.error = action.payload || "Authentication failed";
     },
   },
   extraReducers: (builder) => {

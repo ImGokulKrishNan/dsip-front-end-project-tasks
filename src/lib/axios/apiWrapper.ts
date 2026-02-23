@@ -5,18 +5,19 @@
  * Handles common API request/response patterns with callbacks
  */
 
-import axios, { AxiosError, CancelTokenSource } from 'axios';
-import axiosInstance from './instance';
+import axios, { AxiosError, CancelTokenSource } from "axios";
+import axiosInstance from "./instance";
 import type {
   ApiResponse,
   ApiErrorResponse,
   ApiCallback,
   ApiRequestOptions,
-} from './types';
-import type { TimedAxiosRequestConfig } from './instance';
+} from "./types";
+import type { TimedAxiosRequestConfig } from "./instance";
 
 // Get base URL from environment or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // Threshold for slow API warnings (milliseconds)
 const LATENCY_THRESHOLD = 5000;
@@ -35,16 +36,16 @@ export function setAuthenticationFailureHandler(callback: () => void) {
  * Build request headers based on options
  */
 function getHeaders(options: ApiRequestOptions): Record<string, string> {
-  let contentType = 'application/x-www-form-urlencoded';
+  let contentType = "application/x-www-form-urlencoded";
 
   if (options.isJSON) {
-    contentType = 'application/json';
+    contentType = "application/json";
   } else if (options.isFormData) {
-    contentType = 'multipart/form-data';
+    contentType = "multipart/form-data";
   }
 
   return {
-    'Content-Type': contentType,
+    "Content-Type": contentType,
     ...options.headers,
   };
 }
@@ -55,7 +56,7 @@ function getHeaders(options: ApiRequestOptions): Record<string, string> {
 function processResponse<T>(
   response: any,
   url: string,
-  options: ApiRequestOptions
+  options: ApiRequestOptions,
 ): ApiResponse<T> | ApiErrorResponse {
   const config = response.config as TimedAxiosRequestConfig;
   const duration = config.timeDuration || 0;
@@ -67,24 +68,24 @@ function processResponse<T>(
 
   // Optional response logging
   if (options.logResponse) {
-    console.log('[API Response]', url, response);
+    console.log("[API Response]", url, response);
   }
 
   const resData = response.data;
 
   // Handle string responses
-  if (typeof resData === 'string') {
-    const isSuccess = resData.toLowerCase().includes('success');
+  if (typeof resData === "string") {
+    const isSuccess = resData.toLowerCase().includes("success");
     if (isSuccess) {
       // Cast string to T - caller should expect string type when API returns strings
       return {
-        status: 'success',
-        data: resData.replace(/success/i, '').trim() as unknown as T,
+        status: "success",
+        data: resData.replace(/success/i, "").trim() as unknown as T,
       } as ApiResponse<T>;
     } else {
       // Return as error response which accepts any data type
       return {
-        status: 'error',
+        status: "error",
         data: resData,
         message: resData,
       } as ApiErrorResponse;
@@ -92,35 +93,35 @@ function processResponse<T>(
   }
 
   // Handle object/array responses
-  if (resData && typeof resData === 'object') {
+  if (resData && typeof resData === "object") {
     const normalizedStatus = resData.status?.toString().toLowerCase();
 
     switch (normalizedStatus) {
-      case 'success':
+      case "success":
         return {
-          status: 'success',
+          status: "success",
           data: resData,
         };
 
-      case 'failure':
-      case 'error':
+      case "failure":
+      case "error":
         return {
-          status: 'error',
+          status: "error",
           data: resData,
-          message: resData.message || 'Request failed',
+          message: resData.message || "Request failed",
         };
 
-      case 'authentication_failure':
+      case "authentication_failure":
         return {
-          status: 'authentication_failure',
+          status: "authentication_failure",
           data: resData,
-          message: resData.message || 'Authentication failed',
+          message: resData.message || "Authentication failed",
         };
 
       default:
         // No explicit status, assume success if we got a 2xx response
         return {
-          status: 'success',
+          status: "success",
           data: resData,
         };
     }
@@ -128,7 +129,7 @@ function processResponse<T>(
 
   // Fallback for unexpected response types
   return {
-    status: 'success',
+    status: "success",
     data: resData,
   };
 }
@@ -139,28 +140,28 @@ function processResponse<T>(
 function processError(
   error: AxiosError,
   url: string,
-  options: ApiRequestOptions
+  options: ApiRequestOptions,
 ): ApiErrorResponse {
   const config = error.config as TimedAxiosRequestConfig | undefined;
   const duration = config?.timeDuration || 0;
 
   // Handle cancelled requests
   if (axios.isCancel(error)) {
-    console.log('[API Cancelled]', url, error.message);
+    console.log("[API Cancelled]", url, error.message);
     return {
-      status: 'error',
-      data: 'request_cancelled',
-      message: 'Request was cancelled',
+      status: "error",
+      data: "request_cancelled",
+      message: "Request was cancelled",
     };
   }
 
   // Handle authentication failures
   if (
     error.response?.status === 401 ||
-    (error.response?.data as any)?.status === 'authentication_failure'
+    (error.response?.data as any)?.status === "authentication_failure"
   ) {
     if (!options.disableLogs) {
-      console.warn('[API Auth Failed]', url);
+      console.warn("[API Auth Failed]", url);
     }
 
     if (!options.skipLogoutAlert && onAuthenticationFailure) {
@@ -168,48 +169,48 @@ function processError(
     }
 
     return {
-      status: 'error',
+      status: "error",
       data: error.response?.data || error,
-      message: 'Authentication failed',
+      message: "Authentication failed",
     };
   }
 
   // Handle timeout errors
   if (
-    error.code === 'ETIMEDOUT' ||
-    (error.code === 'ECONNABORTED' && error.message.includes('timeout'))
+    error.code === "ETIMEDOUT" ||
+    (error.code === "ECONNABORTED" && error.message.includes("timeout"))
   ) {
     if (!options.disableLogs) {
-      console.error('[API Timeout]', url, `${duration}ms`);
+      console.error("[API Timeout]", url, `${duration}ms`);
     }
     return {
-      status: 'failed',
-      data: 'timeout_exceeded',
-      message: 'Request timeout exceeded',
+      status: "failed",
+      data: "timeout_exceeded",
+      message: "Request timeout exceeded",
     };
   }
 
   // Handle network errors
-  if (error.message === 'Network Error') {
+  if (error.message === "Network Error") {
     if (!options.disableLogs) {
-      console.error('[API Network Error]', url);
+      console.error("[API Network Error]", url);
     }
     return {
-      status: 'failed',
-      data: 'network_error',
-      message: 'Network connection failed',
+      status: "failed",
+      data: "network_error",
+      message: "Network connection failed",
     };
   }
 
   // Generic error logging
   if (!options.disableLogs) {
-    console.error('[API Error]', url, error);
+    console.error("[API Error]", url, error);
   }
 
   return {
-    status: 'error',
+    status: "error",
     data: error.response?.data || error.message,
-    message: error.message || 'Request failed',
+    message: error.message || "Request failed",
   };
 }
 
@@ -243,7 +244,7 @@ export function apiRequest<T = any>(
   data?: any,
   options: ApiRequestOptions = {},
   callback?: ApiCallback<T>,
-  getCancelSource?: (source: CancelTokenSource) => void
+  getCancelSource?: (source: CancelTokenSource) => void,
 ): void {
   // Create cancel token source for request cancellation
   const { CancelToken } = axios;
@@ -255,11 +256,11 @@ export function apiRequest<T = any>(
   }
 
   // Build full URL (handle both relative and absolute URLs)
-  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
   // Determine request method
-  const method = options.method || 'POST';
-  const isGet = method.toLowerCase() === 'get';
+  const method = options.method || "POST";
+  const isGet = method.toLowerCase() === "get";
 
   // Configure request data/params based on method and options
   let requestData: any;
@@ -287,7 +288,7 @@ export function apiRequest<T = any>(
 
   // Log request if needed
   if (!options.disableLogs) {
-    console.log('[API Request]', method, fullUrl, options.requestId || '');
+    console.log("[API Request]", method, fullUrl, options.requestId || "");
   }
 
   // Execute request
@@ -320,7 +321,7 @@ export function apiRequest<T = any>(
 export function apiRequestPromise<T = any>(
   url: string,
   data?: any,
-  options: ApiRequestOptions = {}
+  options: ApiRequestOptions = {},
 ): Promise<ApiResponse<T> | ApiErrorResponse> {
   return new Promise((resolve) => {
     apiRequest<T>(url, data, options, (response) => {

@@ -8,7 +8,7 @@
  * or directly in components.
  */
 
-import { apiRequestPromise } from './axios/apiWrapper';
+import { apiRequestPromise } from "./axios/apiWrapper";
 import type {
   CreateTrackerRequest,
   UpdateTrackerRequest,
@@ -23,7 +23,7 @@ import type {
   DeleteTrackerResponse,
   Execution,
   EndActionResponse,
-} from '../types/tracker.types';
+} from "../types/tracker.types";
 
 // ============================================================================
 // 1. Create Tracker
@@ -49,24 +49,28 @@ import type {
  * ```
  */
 export async function createTracker(
-  data: CreateTrackerRequest
+  data: CreateTrackerRequest,
 ): Promise<Tracker> {
   const response = await apiRequestPromise<Tracker>(
-    '/api/dsip-trackers',
+    "/api/dsip-trackers",
     data,
     {
-      method: 'POST',
+      method: "POST",
       isJSON: true,
-    }
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
   // Extract detailed error message from response
   const errorData = response.data as any;
-  const detailedMessage = errorData?.message || errorData?.error || response.message || 'Failed to create tracker';
+  const detailedMessage =
+    errorData?.message ||
+    errorData?.error ||
+    response.message ||
+    "Failed to create tracker";
 
   throw new Error(detailedMessage);
 }
@@ -89,35 +93,42 @@ export async function createTracker(
  */
 export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
   const response = await apiRequestPromise<any>(
-    '/api/dsip-trackers',
+    "/api/dsip-trackers",
     undefined,
     {
-      method: 'GET',
-    }
+      method: "GET",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     const data = response.data;
 
-    console.log('[API] Raw response:', data);
+    console.log("[API] Raw response:", data);
 
     // Transform API response to match our expected format
     // API returns: dsip_trackers with snake_case fields
     // We need: trackers with camelCase fields
     const trackers = (data.dsip_trackers || []).map((tracker: any) => {
       // Calculate current price from total invested and shares if available
-      const sharesHeld = tracker.dsip_total_capital_invested_so_far && tracker.total_capital_invested_so_far
-        ? (tracker.total_capital_invested_so_far / (tracker.dsip_total_capital_invested_so_far || 1))
-        : 0;
+      const sharesHeld =
+        tracker.dsip_total_capital_invested_so_far &&
+        tracker.total_capital_invested_so_far
+          ? tracker.total_capital_invested_so_far /
+            (tracker.dsip_total_capital_invested_so_far || 1)
+          : 0;
 
       return {
         trackerId: tracker.id,
         stockSymbol: tracker.symbol,
         stockName: tracker.name,
-        currentPrice: sharesHeld > 0 ? (tracker.total_capital_invested_so_far / sharesHeld) : 0,
+        currentPrice:
+          sharesHeld > 0
+            ? tracker.total_capital_invested_so_far / sharesHeld
+            : 0,
         totalCapitalPlanned: tracker.total_capital_planned || 0,
         totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far || 0,
-        dsipTotalCaptialInvestedSoFar: tracker.dsip_total_capital_invested_so_far || 0,
+        dsipTotalCaptialInvestedSoFar:
+          tracker.dsip_total_capital_invested_so_far || 0,
         sharesHeldSoFar: sharesHeld,
         status: 1, // Default to ACTIVE
         activePartitionIndex: 1, // Default
@@ -140,11 +151,11 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
       },
     };
 
-    console.log('[API] Transformed response:', transformed);
+    console.log("[API] Transformed response:", transformed);
     return transformed;
   }
 
-  throw new Error(response.message || 'Failed to fetch trackers');
+  throw new Error(response.message || "Failed to fetch trackers");
 }
 
 // ============================================================================
@@ -167,29 +178,29 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
  * ```
  */
 export async function getTrackerDetails(
-  trackerId: number
+  trackerId: number,
 ): Promise<GetTrackerDetailsResponse> {
   const response = await apiRequestPromise<any>(
     `/api/dsip-trackers/${trackerId}`,
     undefined,
     {
-      method: 'GET',
-    }
+      method: "GET",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     const data = response.data;
 
-    console.log('[API] Raw tracker details:', data);
+    console.log("[API] Raw tracker details:", data);
 
     // Transform API response to match our expected format
     // API returns flat object with snake_case fields
     const transformed: GetTrackerDetailsResponse = {
       tracker: {
         trackerId: data.id || trackerId,
-        userId: data.user_id || '',
+        userId: data.user_id || "",
         stock_id: data.stock_id || 0,
-        stock_symbol: data.symbol || '',
+        stock_symbol: data.symbol || "",
         conviction_period_years: data.conviction_period_years || 0,
         total_capital_planned: data.total_capital_planned || 0,
         partition_days: data.partition_days || 0,
@@ -203,23 +214,30 @@ export async function getTrackerDetails(
         total_capital_invested_so_far: data.total_capital_invested_so_far || 0,
         total_market_value: data.total_market_value || 0,
         net_profit_percentage: data.net_profit_percentage || 0,
-        dsip_total_capital_invested_so_far: data.dsip_total_capital_invested_so_far || 0,
+        dsip_total_capital_invested_so_far:
+          data.dsip_total_capital_invested_so_far || 0,
         dsip_total_market_value: data.dsip_total_market_value || 0,
         dsip_net_profit_percentage: data.dsip_net_profit_percentage || 0,
         shares_held_so_far: data.shares_held_so_far || 0,
         total_cycles: data.total_cycles || 0,
-        is_fractional_shares_allowed: data.is_fractional_shares_allowed || false,
+        is_fractional_shares_allowed:
+          data.is_fractional_shares_allowed || false,
         createdAt: data.created_at || new Date().toISOString(),
-        stockName: data.name || 'Unknown',
+        stockName: data.name || "Unknown",
         currentPrice: data.current_total_value || 0,
         current_avg: data.current_avg,
         dsip_current_avg: data.dsip_current_avg,
         current_market_price: data.current_market_price,
-        live_investment_cycle: data.live_investment_cycle ? {
-          total_capital_invested_so_far: data.live_investment_cycle.total_capital_invested_so_far || 0,
-          partition_progress: data.live_investment_cycle.partition_progress || 0,
-          net_profit_percentage: data.live_investment_cycle.net_profit_percentage || 0,
-        } : undefined,
+        live_investment_cycle: data.live_investment_cycle
+          ? {
+              total_capital_invested_so_far:
+                data.live_investment_cycle.total_capital_invested_so_far || 0,
+              partition_progress:
+                data.live_investment_cycle.partition_progress || 0,
+              net_profit_percentage:
+                data.live_investment_cycle.net_profit_percentage || 0,
+            }
+          : undefined,
       },
       partitions: (data.history || []).map((h: any, index: number) => ({
         partitionId: index + 1,
@@ -246,11 +264,11 @@ export async function getTrackerDetails(
       })),
     };
 
-    console.log('[API] Transformed tracker details:', transformed);
+    console.log("[API] Transformed tracker details:", transformed);
     return transformed;
   }
 
-  throw new Error(response.message || 'Failed to fetch tracker details');
+  throw new Error(response.message || "Failed to fetch tracker details");
 }
 
 // ============================================================================
@@ -275,22 +293,22 @@ export async function getTrackerDetails(
  */
 export async function updateTracker(
   trackerId: number,
-  data: UpdateTrackerRequest
+  data: UpdateTrackerRequest,
 ): Promise<GetTrackerDetailsResponse> {
   const response = await apiRequestPromise<GetTrackerDetailsResponse>(
     `/api/dsip-trackers/${trackerId}`,
     data,
     {
-      method: 'PUT',
+      method: "PUT",
       isJSON: true,
-    }
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to update tracker');
+  throw new Error(response.message || "Failed to update tracker");
 }
 
 // ============================================================================
@@ -318,22 +336,22 @@ export async function updateTracker(
  */
 export async function executeTrade(
   trackerId: number,
-  data: ExecuteTradeRequest
+  data: ExecuteTradeRequest,
 ): Promise<ExecuteTradeResponse> {
   const response = await apiRequestPromise<ExecuteTradeResponse>(
     `/api/dsip-trackers/${trackerId}/execute`,
     data,
     {
-      method: 'POST',
+      method: "POST",
       isJSON: true,
-    }
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.data.message || 'Failed to execute trade');
+  throw new Error(response.data.message || "Failed to execute trade");
 }
 
 // ============================================================================
@@ -357,21 +375,21 @@ export async function executeTrade(
  */
 export async function getPartitionDetails(
   trackerId: number,
-  partitionIndex: number
+  partitionIndex: number,
 ): Promise<Partition> {
   const response = await apiRequestPromise<Partition>(
     `/api/dsip-trackers/${trackerId}/partitions/${partitionIndex}`,
     undefined,
     {
-      method: 'GET',
-    }
+      method: "GET",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to fetch partition details');
+  throw new Error(response.message || "Failed to fetch partition details");
 }
 
 // ============================================================================
@@ -392,21 +410,21 @@ export async function getPartitionDetails(
  * ```
  */
 export async function deleteTracker(
-  trackerId: number
+  trackerId: number,
 ): Promise<DeleteTrackerResponse> {
   const response = await apiRequestPromise<DeleteTrackerResponse>(
     `/api/dsip-trackers/${trackerId}`,
     undefined,
     {
-      method: 'DELETE',
-    }
+      method: "DELETE",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to delete tracker');
+  throw new Error(response.message || "Failed to delete tracker");
 }
 
 // ============================================================================
@@ -431,21 +449,21 @@ export async function deleteTracker(
  * ```
  */
 export async function getStockClosingPrice(
-  params: GetStockPriceRequest
+  params: GetStockPriceRequest,
 ): Promise<StockPrice> {
   const response = await apiRequestPromise<StockPrice>(
     `/api/stocks/close?symbol=${params.symbol}&exchange=${params.exchange}`,
     undefined,
     {
-      method: 'GET',
-    }
+      method: "GET",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to fetch stock price');
+  throw new Error(response.message || "Failed to fetch stock price");
 }
 
 // ============================================================================
@@ -470,21 +488,21 @@ export async function getStockClosingPrice(
  */
 export async function getTrackerExecutions(
   trackerId: number,
-  limit: number = 6
+  limit: number = 6,
 ): Promise<Execution[]> {
   const response = await apiRequestPromise<Execution[]>(
     `/api/dsip-trackers/${trackerId}/executions?limit=${limit}`,
     undefined,
     {
-      method: 'GET',
-    }
+      method: "GET",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to fetch tracker executions');
+  throw new Error(response.message || "Failed to fetch tracker executions");
 }
 
 // ============================================================================
@@ -523,22 +541,19 @@ export async function syncTrackerData(data: {
   total_shares?: number;
   total_invested_amount?: number;
 }> {
-  const response = await apiRequestPromise<any>(
-    '/api/dsip/sync',
-    data,
-    {
-      method: 'POST',
-      isJSON: true,
-    }
-  );
+  const response = await apiRequestPromise<any>("/api/dsip/sync", data, {
+    method: "POST",
+    isJSON: true,
+  });
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
   // Extract detailed error message from response data if available
   const errorData = response.data as any;
-  const detailedMessage = errorData?.message || response.message || 'Failed to sync tracker data';
+  const detailedMessage =
+    errorData?.message || response.message || "Failed to sync tracker data";
 
   throw new Error(detailedMessage);
 }
@@ -563,7 +578,7 @@ export async function syncTrackerData(data: {
  */
 export async function getRecommendation(
   trackerId: number,
-  lockInPct: number
+  lockInPct: number,
 ): Promise<{
   tracker_id: number;
   recommended_amount: number;
@@ -599,15 +614,15 @@ export async function getRecommendation(
     `/api/dsip-trackers/${trackerId}/recommendation?lock_in_pct=${lockInPct}`,
     undefined,
     {
-      method: 'GET',
-    }
+      method: "GET",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to get recommendation');
+  throw new Error(response.message || "Failed to get recommendation");
 }
 
 // ============================================================================
@@ -632,21 +647,19 @@ export async function getRecommendation(
  */
 export async function endPartitionAction(
   trackerId: number,
-  partitionIndex: number
+  partitionIndex: number,
 ): Promise<EndActionResponse> {
   const response = await apiRequestPromise<EndActionResponse>(
     `/api/dsip-trackers/end-action?trackerId=${trackerId}&partitionIndex=${partitionIndex}`,
     undefined,
     {
-      method: 'POST',
-    }
+      method: "POST",
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   }
 
-  throw new Error(response.message || 'Failed to end partition action');
+  throw new Error(response.message || "Failed to end partition action");
 }
-
-

@@ -1,8 +1,8 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
-import stocksReducer from './slices/stocksSlice';
-import uiReducer from './slices/uiSlice';
-import trackersReducer from './slices/trackersSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+import stocksReducer from "./slices/stocksSlice";
+import uiReducer from "./slices/uiSlice";
+import trackersReducer from "./slices/trackersSlice";
 
 export const store = configureStore({
   reducer: {
@@ -19,7 +19,7 @@ export const store = configureStore({
         ignoredPaths: [],
       },
     }),
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env.NODE_ENV !== "production",
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

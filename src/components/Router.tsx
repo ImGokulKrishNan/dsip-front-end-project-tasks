@@ -19,7 +19,7 @@ const LoadingSpinner: React.FC = () => (
 
 export const AppRoutes: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector(state => state.auth);
+  const { isLoading } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     setOnUnauthorized(() => {

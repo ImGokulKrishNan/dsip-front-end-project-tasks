@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Stock } from '../../types';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Stock } from "../../types";
 
 interface StocksState {
   stocks: Stock[];
@@ -16,7 +16,7 @@ const initialState: StocksState = {
 };
 
 const stocksSlice = createSlice({
-  name: 'stocks',
+  name: "stocks",
   initialState,
   reducers: {
     // Add a new stock
@@ -28,7 +28,7 @@ const stocksSlice = createSlice({
 
     // Update an existing stock
     updateStock: (state, action: PayloadAction<Stock>) => {
-      const index = state.stocks.findIndex(s => s.id === action.payload.id);
+      const index = state.stocks.findIndex((s) => s.id === action.payload.id);
       if (index !== -1) {
         state.stocks[index] = action.payload;
       }
@@ -36,7 +36,7 @@ const stocksSlice = createSlice({
 
     // Delete a stock
     deleteStock: (state, action: PayloadAction<string>) => {
-      state.stocks = state.stocks.filter(s => s.id !== action.payload);
+      state.stocks = state.stocks.filter((s) => s.id !== action.payload);
       if (state.selectedStockId === action.payload) {
         state.selectedStockId = null;
       }
@@ -48,7 +48,10 @@ const stocksSlice = createSlice({
     },
 
     // Set temporary strategy config for copying
-    setTempStrategyConfig: (state, action: PayloadAction<Partial<Stock> | undefined>) => {
+    setTempStrategyConfig: (
+      state,
+      action: PayloadAction<Partial<Stock> | undefined>,
+    ) => {
       state.tempStrategyConfig = action.payload;
     },
 

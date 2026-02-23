@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { useTheme } from "@/components/theme-provider"
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme-provider";
 
 export function ModeToggle() {
-  const { setTheme } = useTheme()
+  const { setTheme } = useTheme();
 
   return (
     <Button variant="outline" size="icon">
@@ -19,5 +19,5 @@ export function ModeToggle() {
         className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
       />
     </Button>
-  )
+  );
 }

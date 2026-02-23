@@ -7,6 +7,7 @@ This guide explains the changes made to integrate the tracker APIs into your Das
 ### 1. **Dashboard.tsx Updates**
 
 The Dashboard component now:
+
 - ✅ Fetches trackers from the API using `fetchAllTrackers()`
 - ✅ Displays loading spinner while fetching data
 - ✅ Shows error message if API call fails
@@ -17,27 +18,30 @@ The Dashboard component now:
 ### 2. **Key Changes**
 
 #### Added Redux Integration
+
 ```typescript
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchAllTrackers } from '../store/slices/trackersSlice';
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchAllTrackers } from "../store/slices/trackersSlice";
 
 const dispatch = useAppDispatch();
 const {
-   trackers,
-   portfolioSummary,
-   isLoadingTrackers,
-   error: trackersError,
+  trackers,
+  portfolioSummary,
+  isLoadingTrackers,
+  error: trackersError,
 } = useAppSelector((state) => state.trackers);
 ```
 
 #### Fetch Data on Mount
+
 ```typescript
 useEffect(() => {
-   dispatch(fetchAllTrackers());
+  dispatch(fetchAllTrackers());
 }, [dispatch]);
 ```
 
 #### Conditional Rendering
+
 - Shows loading spinner when `isLoadingTrackers` is true
 - Shows error card when `trackersError` exists
 - Uses API data (`trackers`) when available
@@ -73,8 +77,9 @@ const handleSelectStock = (id: string) => {
 ```
 
 **Add this import at the top:**
+
 ```typescript
-import { fetchTrackerDetails } from './store/slices/trackersSlice';
+import { fetchTrackerDetails } from "./store/slices/trackersSlice";
 ```
 
 ### Option B: Fetch in StockDetails Component
@@ -118,6 +123,7 @@ function StockDetails({ stock, ... }) {
 ## 📊 API Data Structure
 
 ### Portfolio Summary (from getAllTrackers)
+
 ```typescript
 {
   trackers: [
@@ -145,6 +151,7 @@ function StockDetails({ stock, ... }) {
 ```
 
 ### Tracker Details (from getTrackerDetails)
+
 ```typescript
 {
   tracker: {
@@ -199,28 +206,33 @@ function StockDetails({ stock, ... }) {
 
 ### Dashboard Cards
 
-| Old Field (Stock) | New Field (Tracker) | Notes |
-|-------------------|---------------------|-------|
-| `stock.id` | `tracker.trackerId` | Convert to string |
-| `stock.symbol` | `tracker.stockSymbol` | Direct mapping |
-| `stock.name` | `tracker.stockName` | Available in API |
-| `stock.currentPrice` | `tracker.currentPrice` | Available in API |
-| `stock.totalBudget` | `tracker.totalCapitalPlanned` | Direct mapping |
-| `stock.deployedAmount` | `tracker.totalCapitalInvestedSoFar` | Direct mapping |
-| `stock.isPaused` | `tracker.status !== 1` | 1 = ACTIVE |
-| `stock.quantityOwned` | `tracker.sharesHeldSoFar` | Direct mapping |
+| Old Field (Stock)      | New Field (Tracker)                 | Notes             |
+| ---------------------- | ----------------------------------- | ----------------- |
+| `stock.id`             | `tracker.trackerId`                 | Convert to string |
+| `stock.symbol`         | `tracker.stockSymbol`               | Direct mapping    |
+| `stock.name`           | `tracker.stockName`                 | Available in API  |
+| `stock.currentPrice`   | `tracker.currentPrice`              | Available in API  |
+| `stock.totalBudget`    | `tracker.totalCapitalPlanned`       | Direct mapping    |
+| `stock.deployedAmount` | `tracker.totalCapitalInvestedSoFar` | Direct mapping    |
+| `stock.isPaused`       | `tracker.status !== 1`              | 1 = ACTIVE        |
+| `stock.quantityOwned`  | `tracker.sharesHeldSoFar`           | Direct mapping    |
 
 ### Calculate P&L
+
 ```typescript
 // Old way (using stock prop)
-const totalInvested = (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount;
+const totalInvested =
+  stock.quantityOwned * stock.averagePriceOwned + stock.deployedAmount;
 const currentValue = totalQuantity * stock.currentPrice;
 const pnlPct = ((currentValue - totalInvested) / totalInvested) * 100;
 
 // New way (using tracker from API)
 const totalInvested = tracker.totalCapitalInvestedSoFar;
 const currentValue = tracker.sharesHeldSoFar * tracker.currentPrice;
-const pnlPct = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0;
+const pnlPct =
+  totalInvested > 0
+    ? ((currentValue - totalInvested) / totalInvested) * 100
+    : 0;
 ```
 
 ---
@@ -228,6 +240,7 @@ const pnlPct = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvest
 ## 🔧 Testing
 
 ### 1. Test Dashboard with API
+
 ```bash
 # Start your backend server on port 8080
 # Then start the frontend
@@ -235,16 +248,20 @@ npm run dev
 ```
 
 ### 2. Check Browser Console
+
 Open DevTools and look for:
+
 - `[API Request] GET http://localhost:8080/api/dsip-trackers`
 - Redux state updates in Redux DevTools
 
 ### 3. Test Error Handling
+
 - Stop the backend server
 - Refresh the page
 - Should show error message in the Dashboard
 
 ### 4. Test Loading State
+
 - Add a delay in the API
 - Should show loading spinner
 
@@ -253,6 +270,7 @@ Open DevTools and look for:
 ## 🚀 Summary
 
 ### What Works Now:
+
 ✅ Dashboard fetches trackers from API
 ✅ Portfolio summary calculated from API
 ✅ Tracker cards display real data
@@ -260,12 +278,14 @@ Open DevTools and look for:
 ✅ Graceful fallback to hardcoded data
 
 ### Next Step:
+
 🔲 Integrate `fetchTrackerDetails(trackerId)` when clicking Execute button
 🔲 Update StockDetails component to use tracker details from Redux
 🔲 Replace hardcoded transaction history with `recentExecutions`
 🔲 Replace hardcoded partitions with API partitions
 
 ### Files to Update Next:
+
 1. [App.tsx](src/App.tsx) - Add `fetchTrackerDetails` call
 2. [StockDetails.tsx](src/components/StockDetails.tsx) - Use `selectedTracker` from Redux
 3. [AddStock.tsx](src/components/AddStock.tsx) - Use `createTracker` API
@@ -275,28 +295,30 @@ Open DevTools and look for:
 ## 📝 Quick Reference
 
 ### Available Redux Actions
+
 ```typescript
 import {
-  fetchAllTrackers,       // Get all trackers
-  fetchTrackerDetails,    // Get specific tracker details
-  createTracker,          // Create new tracker
-  updateTracker,          // Update tracker settings
-  executeTrade,           // Execute a trade
-  deleteTracker,          // Delete a tracker
-  fetchPartitionDetails,  // Get partition details
-  fetchStockPrice,        // Get stock price
-} from './store/slices/trackersSlice';
+  fetchAllTrackers, // Get all trackers
+  fetchTrackerDetails, // Get specific tracker details
+  createTracker, // Create new tracker
+  updateTracker, // Update tracker settings
+  executeTrade, // Execute a trade
+  deleteTracker, // Delete a tracker
+  fetchPartitionDetails, // Get partition details
+  fetchStockPrice, // Get stock price
+} from "./store/slices/trackersSlice";
 ```
 
 ### Access Redux State
+
 ```typescript
 const {
-  trackers,                  // TrackerSummary[]
-  portfolioSummary,          // PortfolioSummary
-  selectedTracker,           // GetTrackerDetailsResponse
-  isLoadingTrackers,         // boolean
-  isLoadingTrackerDetails,   // boolean
-  error,                     // string | null
+  trackers, // TrackerSummary[]
+  portfolioSummary, // PortfolioSummary
+  selectedTracker, // GetTrackerDetailsResponse
+  isLoadingTrackers, // boolean
+  isLoadingTrackerDetails, // boolean
+  error, // string | null
 } = useAppSelector((state) => state.trackers);
 ```
 

@@ -1,21 +1,34 @@
-
-import React, { useState } from 'react';
-import { Stock } from '../types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState } from "react";
+import { Stock } from "../types";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface DailyActionCardProps {
   stock: Stock;
   onExecute: (id: string, amount: number) => void;
 }
 
-const DailyActionCard: React.FC<DailyActionCardProps> = ({ stock, onExecute }) => {
-  const [insight] = useState<string>("Market conditions favorable for accumulation.");
+const DailyActionCard: React.FC<DailyActionCardProps> = ({
+  stock,
+  onExecute,
+}) => {
+  const [insight] = useState<string>(
+    "Market conditions favorable for accumulation.",
+  );
   const [executing, setExecuting] = useState(false);
 
   const checkSkipped = () => {
     if (stock.history.length === 0) return false;
-    const lastTradeDate = new Date(stock.history[stock.history.length - 1].date);
+    const lastTradeDate = new Date(
+      stock.history[stock.history.length - 1].date,
+    );
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - lastTradeDate.getTime());
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -51,8 +64,12 @@ const DailyActionCard: React.FC<DailyActionCardProps> = ({ stock, onExecute }) =
             </CardDescription>
           </div>
           <div className="text-right">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Target</p>
-            <p className="text-2xl font-bold">${recommendedAmount.toLocaleString()}</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Target
+            </p>
+            <p className="text-2xl font-bold">
+              ${recommendedAmount.toLocaleString()}
+            </p>
           </div>
         </div>
       </CardHeader>
@@ -61,7 +78,8 @@ const DailyActionCard: React.FC<DailyActionCardProps> = ({ stock, onExecute }) =
         {isSkipped && (
           <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-md text-amber-600 text-xs flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <span className="font-semibold">Sync Adjusted:</span> Previous gap detected.
+            <span className="font-semibold">Sync Adjusted:</span> Previous gap
+            detected.
           </div>
         )}
 

@@ -1,8 +1,7 @@
-
 export enum LoadFactor {
-  AGGRESSIVE = 'Aggressive',
-  MODERATE = 'Moderate',
-  GRADUAL = 'Gradual'
+  AGGRESSIVE = "Aggressive",
+  MODERATE = "Moderate",
+  GRADUAL = "Gradual",
 }
 
 export interface Stock {
@@ -36,7 +35,7 @@ export interface Transaction {
   date: string;
   amount: number;
   price: number;
-  type: 'SIP' | 'TOPUP';
+  type: "SIP" | "TOPUP";
 }
 
 export interface UserProfile {
@@ -44,3 +43,10 @@ export interface UserProfile {
   email: string;
   onboardingComplete: boolean;
 }
+
+export type AppView =
+  | "LANDING"
+  | "ONBOARDING"
+  | "DASHBOARD"
+  | "ADD_STOCK"
+  | "STOCK_DETAILS";

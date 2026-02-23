@@ -9,15 +9,15 @@
  * - Loading and error states
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import type {
   TrackersState,
   CreateTrackerRequest,
   UpdateTrackerRequest,
   ExecuteTradeRequest,
   GetStockPriceRequest,
-} from '../../types/tracker.types';
-import * as trackerApi from '../../lib/api.fetcher';
+} from "../../types/tracker.types";
+import * as trackerApi from "../../lib/api.fetcher";
 
 // ============================================================================
 // Initial State
@@ -66,37 +66,39 @@ const initialState: TrackersState = {
  * Fetches all trackers for the user's portfolio
  */
 export const fetchAllTrackers = createAsyncThunk(
-  'trackers/fetchAll',
+  "trackers/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
       const response = await trackerApi.getAllTrackers();
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch trackers');
+      return rejectWithValue(error.message || "Failed to fetch trackers");
     }
-  }
+  },
 );
 
 /**
  * Fetches detailed information for a specific tracker
  */
 export const fetchTrackerDetails = createAsyncThunk(
-  'trackers/fetchDetails',
+  "trackers/fetchDetails",
   async (trackerId: number, { rejectWithValue }) => {
     try {
       const response = await trackerApi.getTrackerDetails(trackerId);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch tracker details');
+      return rejectWithValue(
+        error.message || "Failed to fetch tracker details",
+      );
     }
-  }
+  },
 );
 
 /**
  * Creates a new tracker
  */
 export const createTracker = createAsyncThunk(
-  'trackers/create',
+  "trackers/create",
   async (data: CreateTrackerRequest, { rejectWithValue, dispatch }) => {
     try {
       const response = await trackerApi.createTracker(data);
@@ -104,19 +106,19 @@ export const createTracker = createAsyncThunk(
       dispatch(fetchAllTrackers());
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create tracker');
+      return rejectWithValue(error.message || "Failed to create tracker");
     }
-  }
+  },
 );
 
 /**
  * Updates an existing tracker
  */
 export const updateTracker = createAsyncThunk(
-  'trackers/update',
+  "trackers/update",
   async (
     { trackerId, data }: { trackerId: number; data: UpdateTrackerRequest },
-    { rejectWithValue, dispatch }
+    { rejectWithValue, dispatch },
   ) => {
     try {
       const response = await trackerApi.updateTracker(trackerId, data);
@@ -124,19 +126,19 @@ export const updateTracker = createAsyncThunk(
       dispatch(fetchAllTrackers());
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update tracker');
+      return rejectWithValue(error.message || "Failed to update tracker");
     }
-  }
+  },
 );
 
 /**
  * Executes a trade for a tracker
  */
 export const executeTrade = createAsyncThunk(
-  'trackers/executeTrade',
+  "trackers/executeTrade",
   async (
     { trackerId, data }: { trackerId: number; data: ExecuteTradeRequest },
-    { rejectWithValue, dispatch }
+    { rejectWithValue, dispatch },
   ) => {
     try {
       const response = await trackerApi.executeTrade(trackerId, data);
@@ -145,34 +147,42 @@ export const executeTrade = createAsyncThunk(
       dispatch(fetchAllTrackers());
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to execute trade');
+      return rejectWithValue(error.message || "Failed to execute trade");
     }
-  }
+  },
 );
 
 /**
  * Fetches partition details
  */
 export const fetchPartitionDetails = createAsyncThunk(
-  'trackers/fetchPartition',
+  "trackers/fetchPartition",
   async (
-    { trackerId, partitionIndex }: { trackerId: number; partitionIndex: number },
-    { rejectWithValue }
+    {
+      trackerId,
+      partitionIndex,
+    }: { trackerId: number; partitionIndex: number },
+    { rejectWithValue },
   ) => {
     try {
-      const response = await trackerApi.getPartitionDetails(trackerId, partitionIndex);
+      const response = await trackerApi.getPartitionDetails(
+        trackerId,
+        partitionIndex,
+      );
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch partition details');
+      return rejectWithValue(
+        error.message || "Failed to fetch partition details",
+      );
     }
-  }
+  },
 );
 
 /**
  * Deletes a tracker
  */
 export const deleteTracker = createAsyncThunk(
-  'trackers/delete',
+  "trackers/delete",
   async (trackerId: number, { rejectWithValue, dispatch }) => {
     try {
       const response = await trackerApi.deleteTracker(trackerId);
@@ -180,24 +190,24 @@ export const deleteTracker = createAsyncThunk(
       dispatch(fetchAllTrackers());
       return { trackerId, ...response };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to delete tracker');
+      return rejectWithValue(error.message || "Failed to delete tracker");
     }
-  }
+  },
 );
 
 /**
  * Fetches stock closing price
  */
 export const fetchStockPrice = createAsyncThunk(
-  'trackers/fetchStockPrice',
+  "trackers/fetchStockPrice",
   async (params: GetStockPriceRequest, { rejectWithValue }) => {
     try {
       const response = await trackerApi.getStockClosingPrice(params);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch stock price');
+      return rejectWithValue(error.message || "Failed to fetch stock price");
     }
-  }
+  },
 );
 
 // ============================================================================
@@ -205,7 +215,7 @@ export const fetchStockPrice = createAsyncThunk(
 // ============================================================================
 
 const trackersSlice = createSlice({
-  name: 'trackers',
+  name: "trackers",
   initialState,
   reducers: {
     // Set selected tracker ID
@@ -298,7 +308,7 @@ const trackersSlice = createSlice({
     });
     builder.addCase(createTracker.fulfilled, (state, _) => {
       state.isCreatingTracker = false;
-      state.successMessage = 'Tracker created successfully';
+      state.successMessage = "Tracker created successfully";
       state.error = null;
     });
     builder.addCase(createTracker.rejected, (state, action) => {
@@ -316,7 +326,7 @@ const trackersSlice = createSlice({
     builder.addCase(updateTracker.fulfilled, (state, action) => {
       state.isUpdatingTracker = false;
       state.selectedTracker = action.payload;
-      state.successMessage = 'Tracker updated successfully';
+      state.successMessage = "Tracker updated successfully";
       state.error = null;
     });
     builder.addCase(updateTracker.rejected, (state, action) => {
@@ -333,7 +343,8 @@ const trackersSlice = createSlice({
     });
     builder.addCase(executeTrade.fulfilled, (state, action) => {
       state.isExecutingTrade = false;
-      state.successMessage = action.payload.message || 'Trade executed successfully';
+      state.successMessage =
+        action.payload.message || "Trade executed successfully";
       state.error = null;
     });
     builder.addCase(executeTrade.rejected, (state, action) => {
@@ -367,7 +378,7 @@ const trackersSlice = createSlice({
     });
     builder.addCase(deleteTracker.fulfilled, (state, action) => {
       state.isDeletingTracker = false;
-      state.successMessage = 'Tracker deleted successfully';
+      state.successMessage = "Tracker deleted successfully";
       // Clear selected tracker if it was deleted
       if (state.selectedTrackerId === action.payload.trackerId) {
         state.selectedTracker = null;

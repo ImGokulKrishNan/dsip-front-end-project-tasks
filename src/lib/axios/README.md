@@ -23,48 +23,41 @@ npm install axios
 ### Callback-based API
 
 ```typescript
-import { apiRequest } from '@/lib/axios';
+import { apiRequest } from "@/lib/axios";
 
 // Simple POST request with JSON
 apiRequest(
-  '/api/users',
-  { name: 'John Doe', email: 'john@example.com' },
-  { method: 'POST', isJSON: true },
+  "/api/users",
+  { name: "John Doe", email: "john@example.com" },
+  { method: "POST", isJSON: true },
   (response) => {
-    if (response.status === 'success') {
-      console.log('User created:', response.data);
+    if (response.status === "success") {
+      console.log("User created:", response.data);
     } else {
-      console.error('Error:', response.message);
+      console.error("Error:", response.message);
     }
-  }
+  },
 );
 
 // GET request
-apiRequest(
-  '/api/users/123',
-  null,
-  { method: 'GET' },
-  (response) => {
-    if (response.status === 'success') {
-      console.log('User:', response.data);
-    }
+apiRequest("/api/users/123", null, { method: "GET" }, (response) => {
+  if (response.status === "success") {
+    console.log("User:", response.data);
   }
-);
+});
 ```
 
 ### Promise-based API
 
 ```typescript
-import { apiRequestPromise } from '@/lib/axios';
+import { apiRequestPromise } from "@/lib/axios";
 
 async function fetchUser(id: string) {
-  const response = await apiRequestPromise(
-    `/api/users/${id}`,
-    null,
-    { method: 'GET' }
-  );
+  const response = await apiRequestPromise(`/api/users/${id}`, null, {
+    method: "GET",
+  });
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   } else {
     throw new Error(response.message);
@@ -91,7 +84,7 @@ interface ApiRequestOptions {
   timeout?: number;
 
   // HTTP method (default: 'POST')
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
   // Log response to console
   logResponse?: boolean;
@@ -112,38 +105,38 @@ interface ApiRequestOptions {
 ### Request Cancellation
 
 ```typescript
-import { apiRequest } from '@/lib/axios';
-import type { CancelTokenSource } from 'axios';
+import { apiRequest } from "@/lib/axios";
+import type { CancelTokenSource } from "axios";
 
 let cancelSource: CancelTokenSource;
 
 apiRequest(
-  '/api/long-running-task',
-  { data: 'value' },
-  { method: 'POST' },
+  "/api/long-running-task",
+  { data: "value" },
+  { method: "POST" },
   (response) => {
-    console.log('Response:', response);
+    console.log("Response:", response);
   },
   (source) => {
     cancelSource = source;
-  }
+  },
 );
 
 // Cancel the request
-cancelSource.cancel('User cancelled the request');
+cancelSource.cancel("User cancelled the request");
 ```
 
 ### Authentication Failure Handler
 
 ```typescript
-import { setAuthenticationFailureHandler } from '@/lib/axios';
+import { setAuthenticationFailureHandler } from "@/lib/axios";
 
 // Set up global auth failure handler (typically in your app root)
 setAuthenticationFailureHandler(() => {
-  console.log('Authentication failed, redirecting to login...');
+  console.log("Authentication failed, redirecting to login...");
   // Clear auth state
   // Redirect to login
-  window.location.href = '/login';
+  window.location.href = "/login";
 });
 ```
 
@@ -151,19 +144,19 @@ setAuthenticationFailureHandler(() => {
 
 ```typescript
 apiRequest(
-  '/api/protected-resource',
-  { data: 'value' },
+  "/api/protected-resource",
+  { data: "value" },
   {
-    method: 'POST',
+    method: "POST",
     isJSON: true,
     headers: {
-      'X-Custom-Header': 'value',
-      'Authorization': 'Bearer token123'
-    }
+      "X-Custom-Header": "value",
+      Authorization: "Bearer token123",
+    },
   },
   (response) => {
-    console.log('Response:', response);
-  }
+    console.log("Response:", response);
+  },
 );
 ```
 
@@ -171,22 +164,22 @@ apiRequest(
 
 ```typescript
 const formData = new FormData();
-formData.append('file', fileInput.files[0]);
-formData.append('description', 'My file');
+formData.append("file", fileInput.files[0]);
+formData.append("description", "My file");
 
 apiRequest(
-  '/api/upload',
+  "/api/upload",
   formData,
   {
-    method: 'POST',
+    method: "POST",
     isFormData: true,
-    timeout: 30000 // 30 seconds for file upload
+    timeout: 30000, // 30 seconds for file upload
   },
   (response) => {
-    if (response.status === 'success') {
-      console.log('File uploaded:', response.data);
+    if (response.status === "success") {
+      console.log("File uploaded:", response.data);
     }
-  }
+  },
 );
 ```
 
@@ -195,9 +188,9 @@ apiRequest(
 ### Custom Hook with the Wrapper
 
 ```typescript
-import { useState, useEffect } from 'react';
-import { apiRequestPromise } from '@/lib/axios';
-import type { ApiResponse } from '@/lib/axios';
+import { useState, useEffect } from "react";
+import { apiRequestPromise } from "@/lib/axios";
+import type { ApiResponse } from "@/lib/axios";
 
 export function useUser(userId: string) {
   const [user, setUser] = useState(null);
@@ -208,20 +201,18 @@ export function useUser(userId: string) {
     async function fetchUser() {
       try {
         setLoading(true);
-        const response = await apiRequestPromise(
-          `/api/users/${userId}`,
-          null,
-          { method: 'GET' }
-        );
+        const response = await apiRequestPromise(`/api/users/${userId}`, null, {
+          method: "GET",
+        });
 
-        if (response.status === 'success') {
+        if (response.status === "success") {
           setUser(response.data);
           setError(null);
         } else {
-          setError(response.message || 'Failed to fetch user');
+          setError(response.message || "Failed to fetch user");
         }
       } catch (err) {
-        setError('An unexpected error occurred');
+        setError("An unexpected error occurred");
       } finally {
         setLoading(false);
       }
@@ -268,10 +259,10 @@ If not set, defaults to `http://localhost:8080`.
 For advanced use cases, you can access the configured axios instance directly:
 
 ```typescript
-import { axiosInstance } from '@/lib/axios';
+import { axiosInstance } from "@/lib/axios";
 
 // Use axios directly
-const response = await axiosInstance.get('/api/users');
+const response = await axiosInstance.get("/api/users");
 ```
 
 ## Error Handling
@@ -295,15 +286,13 @@ If you're migrating from the existing fetch-based `api.ts`:
 
 ```typescript
 // Old (fetch-based)
-const data = await api<User>('/api/users/123');
+const data = await api<User>("/api/users/123");
 
 // New (axios-based, promise style)
-const response = await apiRequestPromise<User>(
-  '/api/users/123',
-  null,
-  { method: 'GET' }
-);
-if (response.status === 'success') {
+const response = await apiRequestPromise<User>("/api/users/123", null, {
+  method: "GET",
+});
+if (response.status === "success") {
   const data = response.data;
 }
 
@@ -313,16 +302,16 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
     path,
     options?.body ? JSON.parse(options.body as string) : null,
     {
-      method: (options?.method as any) || 'GET',
+      method: (options?.method as any) || "GET",
       isJSON: true,
-      headers: options?.headers as Record<string, string>
-    }
+      headers: options?.headers as Record<string, string>,
+    },
   );
 
-  if (response.status === 'success') {
+  if (response.status === "success") {
     return response.data;
   } else {
-    throw new Error(response.message || 'Request failed');
+    throw new Error(response.message || "Request failed");
   }
 }
 ```

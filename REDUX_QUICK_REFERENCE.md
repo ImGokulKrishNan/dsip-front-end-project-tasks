@@ -3,18 +3,21 @@
 ## 🚀 Quick Start
 
 ### Import Hooks
+
 ```typescript
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 ```
 
 ### Access State
+
 ```typescript
-const { isAuthenticated, user } = useAppSelector(state => state.auth);
-const { stocks, selectedStockId } = useAppSelector(state => state.stocks);
-const { view } = useAppSelector(state => state.ui);
+const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+const { stocks, selectedStockId } = useAppSelector((state) => state.stocks);
+const { view } = useAppSelector((state) => state.ui);
 ```
 
 ### Dispatch Actions
+
 ```typescript
 const dispatch = useAppDispatch();
 ```
@@ -33,7 +36,7 @@ dispatch(clearAuth());
 
 // Handle auth from popup
 dispatch(setAuthSuccess());
-dispatch(setAuthError('error message'));
+dispatch(setAuthError("error message"));
 ```
 
 ## 📊 Stock Actions
@@ -74,7 +77,7 @@ dispatch(navigateToStockDetails());
 dispatch(navigateToLanding());
 
 // Or set directly
-dispatch(setView('DASHBOARD'));
+dispatch(setView("DASHBOARD"));
 
 // Celebration modal
 dispatch(showCelebrationModal());
@@ -91,15 +94,15 @@ dispatch(setSidebarCollapsed(true));
 // With promise handling
 dispatch(checkAuth())
   .unwrap()
-  .then((result) => console.log('Success', result))
-  .catch((error) => console.error('Error', error));
+  .then((result) => console.log("Success", result))
+  .catch((error) => console.error("Error", error));
 
 // With async/await
 try {
   const result = await dispatch(logout()).unwrap();
-  console.log('Logged out successfully');
+  console.log("Logged out successfully");
 } catch (error) {
-  console.error('Logout failed:', error);
+  console.error("Logout failed:", error);
 }
 ```
 
@@ -130,6 +133,7 @@ try {
 ## 🎯 Common Patterns
 
 ### Component with Auth
+
 ```typescript
 const MyComponent = () => {
   const dispatch = useAppDispatch();
@@ -146,6 +150,7 @@ const MyComponent = () => {
 ```
 
 ### Component with Stocks
+
 ```typescript
 const StocksList = () => {
   const dispatch = useAppDispatch();
@@ -167,6 +172,7 @@ const StocksList = () => {
 ```
 
 ### Component with Navigation
+
 ```typescript
 const Navigation = () => {
   const dispatch = useAppDispatch();
@@ -188,45 +194,50 @@ const Navigation = () => {
 ## 🛠️ Debugging
 
 ### Log Current State
+
 ```typescript
-import { store } from '../store';
-console.log('Current state:', store.getState());
+import { store } from "../store";
+console.log("Current state:", store.getState());
 ```
 
 ### Watch State Changes
+
 ```typescript
-const stocks = useAppSelector(state => {
-  console.log('Stocks updated:', state.stocks);
+const stocks = useAppSelector((state) => {
+  console.log("Stocks updated:", state.stocks);
   return state.stocks.stocks;
 });
 ```
 
 ### Monitor Actions
+
 ```typescript
 const dispatch = useAppDispatch();
 dispatch(addStock(newStock));
-console.log('After add:', store.getState().stocks);
+console.log("After add:", store.getState().stocks);
 ```
 
 ## ⚡ Performance Tips
 
 ### Use Specific Selectors
+
 ```typescript
 // ❌ Bad - selects entire slice
-const auth = useAppSelector(state => state.auth);
+const auth = useAppSelector((state) => state.auth);
 
 // ✅ Good - selects only what you need
-const user = useAppSelector(state => state.auth.user);
-const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+const user = useAppSelector((state) => state.auth.user);
+const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 ```
 
 ### Memoize Complex Selectors
+
 ```typescript
-import { createSelector } from '@reduxjs/toolkit';
+import { createSelector } from "@reduxjs/toolkit";
 
 const selectTotalValue = createSelector(
   [(state) => state.stocks.stocks],
-  (stocks) => stocks.reduce((sum, s) => sum + s.currentPrice, 0)
+  (stocks) => stocks.reduce((sum, s) => sum + s.currentPrice, 0),
 );
 
 const MyComponent = () => {
@@ -237,20 +248,22 @@ const MyComponent = () => {
 ## 📝 TypeScript Tips
 
 ### Type State Selectors
+
 ```typescript
-const stocks: Stock[] = useAppSelector(state => state.stocks.stocks);
-const user: User | null = useAppSelector(state => state.auth.user);
+const stocks: Stock[] = useAppSelector((state) => state.stocks.stocks);
+const user: User | null = useAppSelector((state) => state.auth.user);
 ```
 
 ### Type Actions
+
 ```typescript
-import type { PayloadAction } from '@reduxjs/toolkit';
+import type { PayloadAction } from "@reduxjs/toolkit";
 
 // In slice definition
 reducers: {
   setUser: (state, action: PayloadAction<User>) => {
     state.user = action.payload;
-  }
+  };
 }
 ```
 

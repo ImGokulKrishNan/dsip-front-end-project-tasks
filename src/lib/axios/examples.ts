@@ -5,8 +5,12 @@
  * in different scenarios common to React applications
  */
 
-import { apiRequest, apiRequestPromise, setAuthenticationFailureHandler } from './index';
-import type { ApiResponse, CancelTokenSource } from 'axios';
+import {
+  apiRequest,
+  apiRequestPromise,
+  setAuthenticationFailureHandler,
+} from "./index";
+import type { ApiResponse, CancelTokenSource } from "axios";
 
 // ============================================
 // 1. BASIC EXAMPLES
@@ -16,18 +20,13 @@ import type { ApiResponse, CancelTokenSource } from 'axios';
  * Example 1: Simple GET request with callback
  */
 export function exampleGet() {
-  apiRequest(
-    '/api/stocks/AAPL',
-    null,
-    { method: 'GET' },
-    (response) => {
-      if (response.status === 'success') {
-        console.log('Stock data:', response.data);
-      } else {
-        console.error('Failed to fetch stock:', response.message);
-      }
+  apiRequest("/api/stocks/AAPL", null, { method: "GET" }, (response) => {
+    if (response.status === "success") {
+      console.log("Stock data:", response.data);
+    } else {
+      console.error("Failed to fetch stock:", response.message);
     }
-  );
+  });
 }
 
 /**
@@ -35,23 +34,23 @@ export function exampleGet() {
  */
 export function examplePost() {
   apiRequest(
-    '/api/stocks',
+    "/api/stocks",
     {
-      symbol: 'AAPL',
+      symbol: "AAPL",
       quantity: 100,
-      price: 150.25
+      price: 150.25,
     },
     {
-      method: 'POST',
-      isJSON: true
+      method: "POST",
+      isJSON: true,
     },
     (response) => {
-      if (response.status === 'success') {
-        console.log('Stock added:', response.data);
+      if (response.status === "success") {
+        console.log("Stock added:", response.data);
       } else {
-        console.error('Failed to add stock:', response.message);
+        console.error("Failed to add stock:", response.message);
       }
-    }
+    },
   );
 }
 
@@ -60,19 +59,17 @@ export function examplePost() {
  */
 export async function examplePromise() {
   try {
-    const response = await apiRequestPromise(
-      '/api/stocks',
-      null,
-      { method: 'GET' }
-    );
+    const response = await apiRequestPromise("/api/stocks", null, {
+      method: "GET",
+    });
 
-    if (response.status === 'success') {
+    if (response.status === "success") {
       return response.data;
     } else {
       throw new Error(response.message);
     }
   } catch (error) {
-    console.error('Error fetching stocks:', error);
+    console.error("Error fetching stocks:", error);
     throw error;
   }
 }
@@ -300,21 +297,21 @@ export function exampleCancellation() {
 
   // Start request
   apiRequest(
-    '/api/stocks/search',
-    { query: 'AAPL' },
-    { method: 'POST' },
+    "/api/stocks/search",
+    { query: "AAPL" },
+    { method: "POST" },
     (response) => {
-      console.log('Search results:', response);
+      console.log("Search results:", response);
     },
     (source) => {
       cancelSource = source; // Save cancel source
-    }
+    },
   );
 
   // Cancel after 2 seconds
   setTimeout(() => {
     if (cancelSource) {
-      cancelSource.cancel('Search timeout');
+      cancelSource.cancel("Search timeout");
     }
   }, 2000);
 }
@@ -324,24 +321,24 @@ export function exampleCancellation() {
  */
 export function exampleFileUpload(file: File) {
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('description', 'Portfolio import');
+  formData.append("file", file);
+  formData.append("description", "Portfolio import");
 
   apiRequest(
-    '/api/upload/portfolio',
+    "/api/upload/portfolio",
     formData,
     {
-      method: 'POST',
+      method: "POST",
       isFormData: true,
-      timeout: 30000 // 30 seconds for upload
+      timeout: 30000, // 30 seconds for upload
     },
     (response) => {
-      if (response.status === 'success') {
-        console.log('File uploaded:', response.data);
+      if (response.status === "success") {
+        console.log("File uploaded:", response.data);
       } else {
-        console.error('Upload failed:', response.message);
+        console.error("Upload failed:", response.message);
       }
-    }
+    },
   );
 }
 
@@ -350,20 +347,20 @@ export function exampleFileUpload(file: File) {
  */
 export function exampleWithAuth(token: string) {
   apiRequest(
-    '/api/protected/stocks',
+    "/api/protected/stocks",
     null,
     {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-Client-Version': '1.0.0'
-      }
+        Authorization: `Bearer ${token}`,
+        "X-Client-Version": "1.0.0",
+      },
     },
     (response) => {
-      if (response.status === 'success') {
-        console.log('Protected data:', response.data);
+      if (response.status === "success") {
+        console.log("Protected data:", response.data);
       }
-    }
+    },
   );
 }
 
@@ -484,11 +481,11 @@ export function StockPriceMonitor({ symbol }: { symbol: string }) {
 export function initializeApp() {
   // Set authentication failure handler
   setAuthenticationFailureHandler(() => {
-    console.log('Authentication failed, redirecting to login...');
+    console.log("Authentication failed, redirecting to login...");
     // Clear any stored auth tokens
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("auth_token");
     // Redirect to login page
-    window.location.href = '/login';
+    window.location.href = "/login";
   });
 }
 

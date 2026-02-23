@@ -9,13 +9,15 @@ import { CreateTrackerRequest } from "@/types/tracker.types";
 export const AddStockPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { stocks, tempStrategyConfig } = useAppSelector(state => state.stocks);
+  const { stocks, tempStrategyConfig } = useAppSelector(
+    (state) => state.stocks,
+  );
 
   const handleAddStock = async (newStock: Stock) => {
     const deploymentStyleMap: Record<LoadFactor, string> = {
-      [LoadFactor.GRADUAL]: 'GRADUAL',
-      [LoadFactor.MODERATE]: 'MODERATE',
-      [LoadFactor.AGGRESSIVE]: 'AGGRESSIVE',
+      [LoadFactor.GRADUAL]: "GRADUAL",
+      [LoadFactor.MODERATE]: "MODERATE",
+      [LoadFactor.AGGRESSIVE]: "AGGRESSIVE",
     };
 
     try {
@@ -38,16 +40,16 @@ export const AddStockPage: React.FC = () => {
       }
 
       dispatch(fetchAllTrackers());
-      navigate('/home');
+      navigate("/home");
     } catch (error: any) {
-      console.error('[App] Failed to create tracker:', error);
-      alert(`Failed to create tracker: ${error.message || 'Unknown error'}`);
+      console.error("[App] Failed to create tracker:", error);
+      alert(`Failed to create tracker: ${error.message || "Unknown error"}`);
     }
   };
 
   return (
     <AddStock
-      onBack={() => navigate('/home')}
+      onBack={() => navigate("/home")}
       onAdd={handleAddStock}
       initialValues={tempStrategyConfig}
     />

@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 let onUnauthorized: (() => void) | null = null;
 
@@ -8,9 +9,9 @@ export function setOnUnauthorized(callback: () => void) {
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options?.headers,
     },
     ...options,
@@ -27,7 +28,7 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
 
     if (response.status === 401 || response.status === 403) {
       // Redirect to unauthorized page for 401/403 errors
-      window.location.href = '/auth/unauthorized';
+      window.location.href = "/auth/unauthorized";
       onUnauthorized?.();
     }
 
@@ -38,7 +39,10 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, public statusText: string) {
+  constructor(
+    public status: number,
+    public statusText: string,
+  ) {
     super(`${status} ${statusText}`);
   }
 }

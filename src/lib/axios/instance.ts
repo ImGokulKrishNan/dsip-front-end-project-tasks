@@ -4,7 +4,11 @@
  * Creates a configured axios instance with request/response interceptors
  */
 
-import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 // Extend Axios request config to include timing properties
 interface TimedAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -39,7 +43,7 @@ axiosInstance.interceptors.request.use(
       timedError.config.timeDuration = 0;
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 /**
@@ -63,7 +67,7 @@ axiosInstance.interceptors.response.use(
         timedError.config.requestEndTime - timedError.config.requestStartTime;
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;

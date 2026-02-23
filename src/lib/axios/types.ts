@@ -3,7 +3,7 @@
  */
 
 export interface ApiResponse<T = any> {
-  status: 'success' | 'error' | 'failure' | 'authentication_failure';
+  status: "success" | "error" | "failure" | "authentication_failure";
   data: T;
   message?: string;
 }
@@ -32,7 +32,7 @@ export interface ApiRequestOptions {
   /**
    * HTTP method (GET, POST, PUT, DELETE, etc.)
    */
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
   /**
    * Log response to console
@@ -62,9 +62,11 @@ export interface RequestConfig extends ApiRequestOptions {
 }
 
 export interface ApiErrorResponse {
-  status: 'error' | 'failed';
+  status: "error" | "failed";
   data: any;
   message?: string;
 }
 
-export type ApiCallback<T = any> = (response: ApiResponse<T> | ApiErrorResponse) => void;
+export type ApiCallback<T = any> = (
+  response: ApiResponse<T> | ApiErrorResponse,
+) => void;

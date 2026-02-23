@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Stock } from '../types';
-import { Icons } from '../constants';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchAllTrackers } from '../store/slices/trackersSlice';
-import { setShowDsipOnly } from '../store/slices/stocksSlice';
+import React, { useEffect, useState } from "react";
+import { Stock } from "../types";
+import { Icons } from "../constants";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchAllTrackers } from "../store/slices/trackersSlice";
+import { setShowDsipOnly } from "../store/slices/stocksSlice";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 // import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import InfoTooltip from './InfoTooltip';
+import InfoTooltip from "./InfoTooltip";
 
 interface DashboardProps {
   stocks: Stock[];
@@ -33,12 +33,19 @@ interface DashboardProps {
   onSelectStock: (id: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock }) => {
+const Dashboard: React.FC<DashboardProps> = ({
+  stocks,
+  onAddStock,
+  onSelectStock,
+}) => {
   const dispatch = useAppDispatch();
 
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [trackerToDelete, setTrackerToDelete] = useState<{ id: number; symbol: string } | null>(null);
+  const [trackerToDelete, setTrackerToDelete] = useState<{
+    id: number;
+    symbol: string;
+  } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Get tracker data from Redux store
@@ -54,7 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
 
   // Debug: Log state changes
   useEffect(() => {
-    console.log('[Dashboard] State:', {
+    console.log("[Dashboard] State:", {
       trackersCount: trackers.length,
       isLoadingTrackers,
       trackersError,
@@ -63,7 +70,11 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
   }, [trackers, isLoadingTrackers, trackersError, portfolioSummary]);
 
   // Handle delete tracker
-  const handleDeleteClick = (trackerId: number, symbol: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (
+    trackerId: number,
+    symbol: string,
+    e: React.MouseEvent,
+  ) => {
     e.stopPropagation(); // Prevent card click
     setTrackerToDelete({ id: trackerId, symbol });
     setDeleteDialogOpen(true);
@@ -74,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
 
     setIsDeleting(true);
     try {
-      const { deleteTracker } = await import('../lib/api.fetcher');
+      const { deleteTracker } = await import("../lib/api.fetcher");
       await deleteTracker(trackerToDelete.id);
 
       // Refresh trackers list
@@ -84,10 +95,15 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
       setDeleteDialogOpen(false);
       setTrackerToDelete(null);
 
-      console.log('[Dashboard] Tracker deleted successfully:', trackerToDelete.symbol);
+      console.log(
+        "[Dashboard] Tracker deleted successfully:",
+        trackerToDelete.symbol,
+      );
     } catch (error) {
-      console.error('[Dashboard] Failed to delete tracker:', error);
-      alert(`Failed to delete tracker ${trackerToDelete.symbol}. Please try again.`);
+      console.error("[Dashboard] Failed to delete tracker:", error);
+      alert(
+        `Failed to delete tracker ${trackerToDelete.symbol}. Please try again.`,
+      );
     } finally {
       setIsDeleting(false);
     }
@@ -112,25 +128,30 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
     totalCount = portfolioSummary.totalTrackers;
   } else {
     // Fallback to hardcoded stocks data
-    stocks.forEach(stock => {
-      const sipQuantity = stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
+    stocks.forEach((stock) => {
+      const sipQuantity = stock.history.reduce(
+        (acc, curr) => acc + curr.amount / curr.price,
+        0,
+      );
       const totalQuantity = stock.quantityOwned + sipQuantity;
-      const stockInvestment = (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount;
+      const stockInvestment =
+        stock.quantityOwned * stock.averagePriceOwned + stock.deployedAmount;
 
       totalInvestedValue += stockInvestment;
-      currentMarketValue += (totalQuantity * stock.currentPrice);
+      currentMarketValue += totalQuantity * stock.currentPrice;
     });
-    activeCount = stocks.filter(s => !s.isPaused).length;
+    activeCount = stocks.filter((s) => !s.isPaused).length;
     totalCount = stocks.length;
   }
 
-  const totalProfitLossPct = totalInvestedValue > 0
-    ? ((currentMarketValue - totalInvestedValue) / totalInvestedValue) * 100
-    : 0;
+  const totalProfitLossPct =
+    totalInvestedValue > 0
+      ? ((currentMarketValue - totalInvestedValue) / totalInvestedValue) * 100
+      : 0;
 
   const isPortfolioProfit = totalProfitLossPct >= 0;
 
-  console.log('[Dashboard] Rendering with:', {
+  console.log("[Dashboard] Rendering with:", {
     useApiData,
     trackersLength: trackers.length,
     isLoadingTrackers,
@@ -141,10 +162,8 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
   return (
     <>
       <div className="h-full p-4 md:p-6 space-y-6">
-
         {/* Main Content */}
         <div className="space-y-6">
-
           {/* Actions are removed as per request. 
             If we need to access them, we might need a dedicated page or a different entry point. 
             For now, completely removing the section. 
@@ -152,7 +171,6 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
 
           {/* Portfolio Stats & Grid - Now Full Width/Centered */}
           <div className="space-y-8">
-
             {/* <Card className="bg-primary text-primary-foreground p-6 overflow-hidden relative border-none shadow-2xl max-w-3xl mx-auto">
 
               <div className="relative z-10 flex justify-between items-start">
@@ -190,15 +208,24 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                   <div>
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
-                        {showDsipOnly ? 'DSIP Market Value' : 'Total Market Value'}
+                        {showDsipOnly
+                          ? "DSIP Market Value"
+                          : "Total Market Value"}
                         <InfoTooltip text="Market value as of yesterday's close + today's moves" />
                       </h3>
                       <div className="flex items-center gap-1.5">
-                        <Label htmlFor="dsip-toggle-dashboard" className="text-[10px] uppercase font-bold text-muted-foreground">DSIP Only</Label>
+                        <Label
+                          htmlFor="dsip-toggle-dashboard"
+                          className="text-[10px] uppercase font-bold text-muted-foreground"
+                        >
+                          DSIP Only
+                        </Label>
                         <Switch
                           id="dsip-toggle-dashboard"
                           checked={showDsipOnly}
-                          onCheckedChange={(show) => dispatch(setShowDsipOnly(show))}
+                          onCheckedChange={(show) =>
+                            dispatch(setShowDsipOnly(show))
+                          }
                           className="scale-75"
                         />
                       </div>
@@ -208,10 +235,22 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                     </p>
                   </div>
                   <div className="bg-background/50 border shadow-sm px-4 py-2 rounded-xl backdrop-blur-md">
-                    <div className={isPortfolioProfit ? "text-emerald-600 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>
-                      <span className="text-[10px] font-bold uppercase tracking-wider block text-muted-foreground mb-0.5">Net Yield</span>
+                    <div
+                      className={
+                        isPortfolioProfit
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : "text-red-600 dark:text-red-400"
+                      }
+                    >
+                      <span className="text-[10px] font-bold uppercase tracking-wider block text-muted-foreground mb-0.5">
+                        Net Yield
+                      </span>
                       <span className="text-xl font-black flex items-center gap-1">
-                        {isPortfolioProfit ? <Icons.TrendUp size={16} /> : <Icons.TrendDown size={16} />}
+                        {isPortfolioProfit ? (
+                          <Icons.TrendUp size={16} />
+                        ) : (
+                          <Icons.TrendDown size={16} />
+                        )}
                         {totalProfitLossPct.toFixed(2)}%
                       </span>
                     </div>
@@ -221,15 +260,23 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                 <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-8">
                   <div className="space-y-1">
                     <p className="text-[10px] Font-bold text-muted-foreground uppercase tracking-widest">
-                      {showDsipOnly ? 'DSIP Invested' : 'Invested Capital'}
+                      {showDsipOnly ? "DSIP Invested" : "Invested Capital"}
                     </p>
-                    <p className="text-2xl font-bold text-foreground">${totalInvestedValue}</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      ${totalInvestedValue}
+                    </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[10px] Font-bold text-muted-foreground uppercase tracking-widest">Active Engines</p>
+                    <p className="text-[10px] Font-bold text-muted-foreground uppercase tracking-widest">
+                      Active Engines
+                    </p>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-foreground">{activeCount}</span>
-                      <span className="text-xs text-muted-foreground font-medium self-end mb-1">/ {totalCount} Total</span>
+                      <span className="text-2xl font-bold text-foreground">
+                        {activeCount}
+                      </span>
+                      <span className="text-xs text-muted-foreground font-medium self-end mb-1">
+                        / {totalCount} Total
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -237,7 +284,9 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
             </Card>
 
             <div>
-              <h2 className="text-lg font-semibold tracking-tight mb-4">Stock Engine Performance</h2>
+              <h2 className="text-lg font-semibold tracking-tight mb-4">
+                Stock Engine Performance
+              </h2>
 
               {/* Loading State */}
               {isLoadingTrackers && (
@@ -253,7 +302,9 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
                     <Icons.AlertCircle size={20} />
                     <div>
                       <p className="font-semibold">Failed to load trackers</p>
-                      <p className="text-sm text-muted-foreground">{trackersError}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {trackersError}
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -261,199 +312,285 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
 
               {/* Stock Cards Grid */}
               {!isLoadingTrackers && !trackersError && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {/* Show empty state if no data */}
                   {useApiData && trackers.length === 0 && (
-                    <Card className="md:col-span-2 lg:col-span-3 p-8 flex flex-col items-center justify-center text-center border-dashed bg-muted/20">
-                      <p className="text-muted-foreground mb-4">No stock engines deployed yet.</p>
-                      <Button onClick={onAddStock} variant="outline">Create First Stock Engine</Button>
+                    <Card className="sm:col-span-2 lg:col-span-3 xl:col-span-4 p-8 flex flex-col items-center justify-center text-center border-dashed bg-muted/20">
+                      <p className="text-muted-foreground mb-4">
+                        No stock engines deployed yet.
+                      </p>
+                      <Button onClick={onAddStock} variant="outline">
+                        Create First Stock Engine
+                      </Button>
                     </Card>
                   )}
 
                   {/* Render API trackers */}
-                  {useApiData && trackers.map((tracker, index) => {
-                    console.log(`[Dashboard] Rendering tracker ${index}:`, tracker.stockSymbol);
+                  {useApiData &&
+                    trackers.map((tracker, index) => {
+                      console.log(
+                        `[Dashboard] Rendering tracker ${index}:`,
+                        tracker.stockSymbol,
+                      );
 
-                    const totalInvested = showDsipOnly
-                      ? tracker.dsipTotalCaptialInvestedSoFar
-                      : tracker.totalCapitalInvestedSoFar;
-                    const currentValue = tracker.sharesHeldSoFar * tracker.currentPrice;
-                    const pnlPct = showDsipOnly
-                      ? (tracker.dsip_net_profit_percentage ?? 0)
-                      : (tracker.net_profit_percentage !== undefined
-                        ? tracker.net_profit_percentage
-                        : (totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0));
-                    const isStockProfit = pnlPct >= 0;
-                    const isPaused = tracker.status !== 1; // 1 = ACTIVE
+                      const totalInvested = showDsipOnly
+                        ? tracker.dsipTotalCaptialInvestedSoFar
+                        : tracker.totalCapitalInvestedSoFar;
+                      const currentValue =
+                        tracker.sharesHeldSoFar * tracker.currentPrice;
+                      const pnlPct = showDsipOnly
+                        ? (tracker.dsip_net_profit_percentage ?? 0)
+                        : tracker.net_profit_percentage !== undefined
+                          ? tracker.net_profit_percentage
+                          : totalInvested > 0
+                            ? ((currentValue - totalInvested) / totalInvested) *
+                              100
+                            : 0;
+                      const isStockProfit = pnlPct >= 0;
+                      const isPaused = tracker.status !== 1; // 1 = ACTIVE
 
-                    // Prevent division by zero for deployment percentage
-                    const deploymentPct = tracker.totalCapitalPlanned > 0
-                      ? ((tracker.dsipTotalCaptialInvestedSoFar / tracker.totalCapitalPlanned) * 100)
-                      : 0;
+                      // Prevent division by zero for deployment percentage
+                      const deploymentPct =
+                        tracker.totalCapitalPlanned > 0
+                          ? (tracker.dsipTotalCaptialInvestedSoFar /
+                              tracker.totalCapitalPlanned) *
+                            100
+                          : 0;
 
-                    return (
-                      <Card
-                        key={tracker.trackerId}
-                        className="cursor-pointer hover:bg-accent/50 transition-colors group relative"
-                        onClick={() => onSelectStock(tracker.trackerId.toString())}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center font-bold text-secondary-foreground">
-                                {tracker.stockSymbol.substring(0, 2)}
+                      return (
+                        <Card
+                          key={tracker.trackerId}
+                          className="cursor-pointer hover:bg-accent/50 transition-colors group relative"
+                          onClick={() =>
+                            onSelectStock(tracker.trackerId.toString())
+                          }
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center font-bold text-secondary-foreground">
+                                  {tracker.stockSymbol.substring(0, 2)}
+                                </div>
+                                <div>
+                                  <h4 className="font-bold leading-none">
+                                    {tracker.stockSymbol}
+                                  </h4>
+                                  <span
+                                    className={
+                                      isStockProfit
+                                        ? "text-emerald-600 dark:text-emerald-400 text-xs font-bold"
+                                        : "text-red-600 dark:text-red-400 text-xs font-bold"
+                                    }
+                                  >
+                                    {isStockProfit ? "+" : ""}
+                                    {pnlPct.toFixed(2)}%
+                                  </span>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-bold leading-none">{tracker.stockSymbol}</h4>
-                                <span className={isStockProfit ? "text-emerald-600 dark:text-emerald-400 text-xs font-bold" : "text-red-600 dark:text-red-400 text-xs font-bold"}>
-                                  {isStockProfit ? '+' : ''}{pnlPct.toFixed(2)}%
+                              <div className="flex items-center gap-2">
+                                {isPaused && (
+                                  <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">
+                                    Paused
+                                  </span>
+                                )}
+
+                                {/* 3-Dot Menu */}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 hover:bg-accent"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Icons.MoreVertical size={16} />
+                                      <span className="sr-only">Open menu</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="end"
+                                    className="w-48"
+                                  >
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelectStock(
+                                          tracker.trackerId.toString(),
+                                        );
+                                      }}
+                                    >
+                                      <Icons.Settings className="mr-2 h-4 w-4" />
+                                      <span>View Details</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                      onClick={(e) =>
+                                        handleDeleteClick(
+                                          tracker.trackerId,
+                                          tracker.stockSymbol,
+                                          e,
+                                        )
+                                      }
+                                    >
+                                      <Icons.Trash className="mr-2 h-4 w-4" />
+                                      <span>Delete Tracker</span>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
+                            <div className="space-y-2 pt-2">
+                              <div className="flex justify-between items-end text-xs">
+                                <span className="text-muted-foreground font-medium uppercase tracking-wider">
+                                  Deployment
+                                </span>
+                                <span className="font-bold text-primary">
+                                  {deploymentPct.toFixed(1)}%
                                 </span>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {isPaused && <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">Paused</span>}
-
-                              {/* 3-Dot Menu */}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0 hover:bg-accent"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Icons.MoreVertical size={16} />
-                                    <span className="sr-only">Open menu</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSelectStock(tracker.trackerId.toString());
-                                    }}
-                                  >
-                                    <Icons.Settings className="mr-2 h-4 w-4" />
-                                    <span>View Details</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                    onClick={(e) => handleDeleteClick(tracker.trackerId, tracker.stockSymbol, e)}
-                                  >
-                                    <Icons.Trash className="mr-2 h-4 w-4" />
-                                    <span>Delete Tracker</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </div>
-                          <div className="space-y-2 pt-2">
-                            <div className="flex justify-between items-end text-xs">
-                              <span className="text-muted-foreground font-medium uppercase tracking-wider">Deployment</span>
-                              <span className="font-bold text-primary">
-                                {deploymentPct.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="h-4 w-full bg-secondary/50 rounded-full overflow-hidden relative shadow-inner border border-black/5">
-                              <div
-                                className="h-full bg-blue-500 transition-all duration-500 ease-out"
-                                style={{ width: `${Math.min(deploymentPct, 100)}%` }}
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground/40 mix-blend-difference">
-                                ${tracker.dsipTotalCaptialInvestedSoFar.toLocaleString()} / ${tracker.totalCapitalPlanned.toLocaleString()}
+                              <div className="h-4 w-full bg-secondary/50 rounded-full overflow-hidden relative shadow-inner border border-black/5">
+                                <div
+                                  className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                                  style={{
+                                    width: `${Math.min(deploymentPct, 100)}%`,
+                                  }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground/40 mix-blend-difference">
+                                  $
+                                  {tracker.dsipTotalCaptialInvestedSoFar.toLocaleString()}{" "}
+                                  / $
+                                  {tracker.totalCapitalPlanned.toLocaleString()}
+                                </div>
                               </div>
-                            </div>
 
-                            <Button
-                              className="w-full mt-4 h-8 text-xs font-bold uppercase tracking-wider"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent card click
-                                onSelectStock(tracker.trackerId.toString());
-                              }}
-                            >
-                              <Icons.Zap className="w-3 h-3 mr-2" /> Execute
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                              <Button
+                                className="w-full mt-4 h-8 text-xs font-bold uppercase tracking-wider"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card click
+                                  onSelectStock(tracker.trackerId.toString());
+                                }}
+                              >
+                                <Icons.Zap className="w-3 h-3 mr-2" /> Execute
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
 
                   {/* Fallback: Render hardcoded stocks if no API data */}
                   {!useApiData && stocks.length === 0 && (
-                    <Card className="md:col-span-2 lg:col-span-3 p-8 flex flex-col items-center justify-center text-center border-dashed bg-muted/20">
-                      <p className="text-muted-foreground mb-4">No stock engines deployed yet.</p>
-                      <Button onClick={onAddStock} variant="outline">Create First Stock Engine</Button>
+                    <Card className="sm:col-span-2 lg:col-span-3 xl:col-span-4 p-8 flex flex-col items-center justify-center text-center border-dashed bg-muted/20">
+                      <p className="text-muted-foreground mb-4">
+                        No stock engines deployed yet.
+                      </p>
+                      <Button onClick={onAddStock} variant="outline">
+                        Create First Stock Engine
+                      </Button>
                     </Card>
                   )}
 
-                  {!useApiData && stocks.map(stock => {
-                    const sipQuantity = stock.history.reduce((acc, curr) => acc + (curr.amount / curr.price), 0);
-                    const totalQuantity = stock.quantityOwned + sipQuantity;
-                    const totalInvested = (stock.quantityOwned * stock.averagePriceOwned) + stock.deployedAmount;
-                    const currentAvg = totalQuantity > 0 ? totalInvested / totalQuantity : stock.currentPrice;
-                    const pnlPct = currentAvg > 0 ? ((stock.currentPrice - currentAvg) / currentAvg) * 100 : 0;
-                    const isStockProfit = pnlPct >= 0;
+                  {!useApiData &&
+                    stocks.map((stock) => {
+                      const sipQuantity = stock.history.reduce(
+                        (acc, curr) => acc + curr.amount / curr.price,
+                        0,
+                      );
+                      const totalQuantity = stock.quantityOwned + sipQuantity;
+                      const totalInvested =
+                        stock.quantityOwned * stock.averagePriceOwned +
+                        stock.deployedAmount;
+                      const currentAvg =
+                        totalQuantity > 0
+                          ? totalInvested / totalQuantity
+                          : stock.currentPrice;
+                      const pnlPct =
+                        currentAvg > 0
+                          ? ((stock.currentPrice - currentAvg) / currentAvg) *
+                            100
+                          : 0;
+                      const isStockProfit = pnlPct >= 0;
 
-                    return (
-                      <Card
-                        key={stock.id}
-                        className="cursor-pointer hover:bg-accent/50 transition-colors group"
-                        onClick={() => onSelectStock(stock.id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center font-bold text-secondary-foreground">
-                                {stock.symbol.substring(0, 2)}
+                      return (
+                        <Card
+                          key={stock.id}
+                          className="cursor-pointer hover:bg-accent/50 transition-colors group"
+                          onClick={() => onSelectStock(stock.id)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center font-bold text-secondary-foreground">
+                                  {stock.symbol.substring(0, 2)}
+                                </div>
+                                <div>
+                                  <h4 className="font-bold leading-none">
+                                    {stock.symbol}
+                                  </h4>
+                                  <span
+                                    className={
+                                      isStockProfit
+                                        ? "text-emerald-600 dark:text-emerald-400 text-xs font-bold"
+                                        : "text-red-600 dark:text-red-400 text-xs font-bold"
+                                    }
+                                  >
+                                    {isStockProfit ? "+" : ""}
+                                    {pnlPct.toFixed(2)}%
+                                  </span>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-bold leading-none">{stock.symbol}</h4>
-                                <span className={isStockProfit ? "text-emerald-600 dark:text-emerald-400 text-xs font-bold" : "text-red-600 dark:text-red-400 text-xs font-bold"}>
-                                  {isStockProfit ? '+' : ''}{pnlPct.toFixed(2)}%
+                              {stock.isPaused && (
+                                <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">
+                                  Paused
+                                </span>
+                              )}
+                            </div>
+                            <div className="space-y-2 pt-2">
+                              <div className="flex justify-between items-end text-xs">
+                                <span className="text-muted-foreground font-medium uppercase tracking-wider">
+                                  Deployment
+                                </span>
+                                <span className="font-bold text-primary">
+                                  {(
+                                    (stock.deployedAmount / stock.totalBudget) *
+                                    100
+                                  ).toFixed(2)}
+                                  %
                                 </span>
                               </div>
-                            </div>
-                            {stock.isPaused && <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">Paused</span>}
-                          </div>
-                          <div className="space-y-2 pt-2">
-                            <div className="flex justify-between items-end text-xs">
-                              <span className="text-muted-foreground font-medium uppercase tracking-wider">Deployment</span>
-                              <span className="font-bold text-primary">
-                                {((stock.deployedAmount / stock.totalBudget) * 100).toFixed(2)}%
-                              </span>
-                            </div>
-                            <div className="h-4 w-full bg-secondary/50 rounded-full overflow-hidden relative shadow-inner border border-black/5">
-                              <div
-                                className="h-full bg-blue-500 transition-all duration-500 ease-out"
-                                style={{ width: `${Math.min((stock.deployedAmount / stock.totalBudget) * 100, 100)}%` }}
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground/40 mix-blend-difference">
-                                ${stock.deployedAmount.toLocaleString()} / ${stock.totalBudget.toLocaleString()}
+                              <div className="h-4 w-full bg-secondary/50 rounded-full overflow-hidden relative shadow-inner border border-black/5">
+                                <div
+                                  className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                                  style={{
+                                    width: `${Math.min((stock.deployedAmount / stock.totalBudget) * 100, 100)}%`,
+                                  }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground/40 mix-blend-difference">
+                                  ${stock.deployedAmount.toLocaleString()} / $
+                                  {stock.totalBudget.toLocaleString()}
+                                </div>
                               </div>
-                            </div>
 
-                            <Button
-                              className="w-full mt-4 h-8 text-xs font-bold uppercase tracking-wider"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent card click
-                                onSelectStock(stock.id);
-                              }}
-                            >
-                              <Icons.Zap className="w-3 h-3 mr-2" /> Execute
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                              <Button
+                                className="w-full mt-4 h-8 text-xs font-bold uppercase tracking-wider"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card click
+                                  onSelectStock(stock.id);
+                                }}
+                              >
+                                <Icons.Zap className="w-3 h-3 mr-2" /> Execute
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                 </div>
               )}
             </div>
-
           </div>
         </div>
       </div>
@@ -467,9 +604,12 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
               Delete Tracker
             </DialogTitle>
             <DialogDescription className="pt-2">
-              Are you sure you want to delete the tracker for <strong>{trackerToDelete?.symbol}</strong>?
-              <br /><br />
-              This action cannot be undone. All execution history and configuration will be permanently removed.
+              Are you sure you want to delete the tracker for{" "}
+              <strong>{trackerToDelete?.symbol}</strong>?
+              <br />
+              <br />
+              This action cannot be undone. All execution history and
+              configuration will be permanently removed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -488,7 +628,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stocks, onAddStock, onSelectStock
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : 'Delete Tracker'}
+              {isDeleting ? "Deleting..." : "Delete Tracker"}
             </Button>
           </DialogFooter>
         </DialogContent>
