@@ -223,8 +223,8 @@ const PartitionPill: React.FC<{
             isCompleted
               ? "bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 cursor-pointer"
               : isActive
-                ? "bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105 cursor-pointer"
-                : "bg-slate-800/50 border border-slate-700 cursor-not-allowed opacity-50"
+                ? "bg-muted dark:bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105 cursor-pointer"
+                : "bg-muted/70 dark:bg-slate-800/50 border border-border cursor-not-allowed opacity-50"
           }`}
         >
           {isActive && (
@@ -253,7 +253,7 @@ const PartitionPill: React.FC<{
                 </span>
               </span>
               <span className="absolute -inset-0.5 rounded-full bg-cyan-400/20 animate-pulse" />
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white z-20">
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground dark:text-white z-20">
                 {progressPercentage.toFixed(0)}%
               </span>
             </>
@@ -262,17 +262,17 @@ const PartitionPill: React.FC<{
             <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
           )}
           {isUpcoming && (
-            <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-slate-600" />
+            <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
           )}
         </button>
       </TooltipTrigger>
       <TooltipContent
         side="top"
-        className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5"
+        className="text-xs font-semibold bg-popover text-popover-foreground border-border px-3 py-1.5"
       >
         <div className="text-center">
           <div className="font-bold">Partition {partitionIndex}</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
+          <div className="text-[10px] text-muted-foreground mt-0.5">
             {isCompleted
               ? "Success"
               : isActive
@@ -351,13 +351,13 @@ const PartitionProgressBar: React.FC<PartitionProgressBarProps> = ({
             </TooltipTrigger>
             <TooltipContent
               side="top"
-              className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5"
+              className="text-xs font-semibold bg-popover text-popover-foreground border-border px-3 py-1.5"
             >
               <div className="text-center">
                 <div className="font-bold">
                   Partitions {groupedStart}-{groupedEnd}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">
+                <div className="text-[10px] text-muted-foreground mt-0.5">
                   Completed · Click to view partition {groupedEnd}
                 </div>
               </div>
@@ -394,23 +394,23 @@ const PartitionProgressBar: React.FC<PartitionProgressBarProps> = ({
             <TooltipTrigger asChild>
               <button
                 disabled
-                className="flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden bg-slate-800/50 border border-slate-700 cursor-not-allowed opacity-50"
+                className="flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden bg-muted/70 dark:bg-slate-800/50 border border-border cursor-not-allowed opacity-50"
               >
-                <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-slate-600" />
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500">
+                <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-muted-foreground">
                   {groupedStart}-{groupedEnd}
                 </span>
               </button>
             </TooltipTrigger>
             <TooltipContent
               side="top"
-              className="text-xs font-semibold bg-slate-900 text-white border-slate-700 px-3 py-1.5"
+              className="text-xs font-semibold bg-popover text-popover-foreground border-border px-3 py-1.5"
             >
               <div className="text-center">
                 <div className="font-bold">
                   Partitions {groupedStart}-{groupedEnd}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">
+                <div className="text-[10px] text-muted-foreground mt-0.5">
                   Upcoming
                 </div>
               </div>
@@ -422,7 +422,7 @@ const PartitionProgressBar: React.FC<PartitionProgressBarProps> = ({
   }
 
   return (
-    <div className="relative w-full bg-slate-900/30 rounded-full p-2 ring-1 ring-slate-800/50 shadow-inner">
+    <div className="relative w-full bg-muted/60 dark:bg-slate-900/30 rounded-full p-2 ring-1 ring-border shadow-inner">
       <div className="flex gap-2 w-full">{pills}</div>
     </div>
   );
