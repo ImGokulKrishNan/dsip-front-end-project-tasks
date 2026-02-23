@@ -108,26 +108,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <div className="hidden md:flex">
             <LeftSidebar stocks={stocks} />
           </div>
-          <div
-            className={cn(
-              "flex-1 flex min-w-0",
-              isTracker
-                ? "flex-col xl:flex-row overflow-y-auto xl:overflow-hidden"
-                : "flex-col overflow-hidden",
-            )}
-          >
-            <div
-              className={cn(
-                "flex-1 min-w-0",
-                isTracker ? "xl:overflow-auto" : "overflow-auto",
-              )}
-            >
+          <div className="flex-1 flex flex-col xl:flex-row min-w-0 overflow-hidden">
+            <ScrollArea className="flex-1 min-w-0 h-full">
               {children}
-            </div>
+              {isTracker && (
+                <div className="p-6 space-y-6 pb-32 xl:hidden">
+                  <Performance />
+                </div>
+              )}
+            </ScrollArea>
+
             {isTracker && (
-              <aside className="flex flex-col w-full xl:w-[400px] shrink-0 h-auto xl:h-full border-t xl:border-t-0 xl:border-l bg-background">
-                <ScrollArea className="flex-none xl:flex-1 h-auto xl:h-full">
-                  <div className="p-6 space-y-6 xl:pb-6 pb-32">
+              <aside className="hidden xl:flex flex-col w-[400px] shrink-0 h-full border-l bg-background">
+                <ScrollArea className="flex-1 h-full">
+                  <div className="p-6 space-y-6 pb-6">
                     <Performance />
                   </div>
                 </ScrollArea>
