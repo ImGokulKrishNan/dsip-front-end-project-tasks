@@ -1,9 +1,6 @@
 import { useMatch } from "react-router-dom";
 
-const useSelectedStockId = (): string | null => {
+export const useSelectedStockId = (): string | null => {
   const trackerMatch = useMatch("/tracker/:id");
-  const selectedStockId = trackerMatch?.params.id ?? null;
-  return selectedStockId;
+  return trackerMatch?.params.id ?? null;
 };
-
-export default useSelectedStockId;

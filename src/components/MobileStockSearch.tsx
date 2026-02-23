@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import useSelectedStockId from "@/hooks/use-selected-stock-id";
+import { useSelectedStockId } from "@/hooks/use-selected-stock-id";
 
 interface MobileStockSearchProps {
   stocks: Stock[];

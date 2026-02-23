@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import LeftSidebar from "./LeftSidebar";
 import Performance from "./Performance";
 import { Icons } from "../constants";
@@ -10,48 +10,21 @@ import { cn } from "@/lib/utils";
 
 import { useAppSelector } from "../store/hooks";
 import { UserDropdown } from "./UserDropdown";
-import { AppView } from "@/types";
 import MobileStockSearch from "./MobileStockSearch";
-import useSelectedStockId from "@/hooks/use-selected-stock-id";
+import PageHeader from "./PageHeader";
+import { useSelectedStockId } from "@/hooks/use-selected-stock-id";
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-export function deriveActiveView(pathname: string): AppView {
-  if (pathname === "/" || pathname === "") return "DASHBOARD";
-  if (pathname.startsWith("/add")) return "ADD_STOCK";
-  if (pathname.startsWith("/stock/")) return "STOCK_DETAILS";
-  return "DASHBOARD";
-}
-
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // Derive active view from route
-  const isHome = location.pathname === "/home";
 
   const selectedStockId = useSelectedStockId();
   const isTracker = !!selectedStockId;
 
-  // Redux state
   const { stocks } = useAppSelector((state) => state.stocks);
-
-  // Derive header content from route
-  const headerStock = isTracker
-    ? stocks.find((s) => s.id === selectedStockId)
-    : null;
-  const headerTitle = isTracker
-    ? `${headerStock?.symbol || ""} Tracker`
-    : isHome
-      ? "Home"
-      : undefined;
-  // const headerSubtitle = isTracker
-  //   ? 'Daily Smart Investment Execution'
-  //   : isHome
-  //     ? 'Portfolio Overview & Operations'
-  //     : undefined;
 
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -112,25 +85,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <Icons.Menu className="h-6 w-6" />
             </Button>
 
-            {isTracker && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/home")}
-              >
-                <Icons.ArrowLeft size={18} />
-              </Button>
-            )}
-            <div>
-              <h1 className="text-xl md:text-xl font-bold tracking-tight text-foreground">
-                {headerTitle || "Home"}
-              </h1>
-              {/* <p className="text-muted-foreground text-xs">
-                    {headerSubtitle || 'Portfolio Overview & Operations'}
-                  </p> */}
-            </div>
+            <PageHeader />
           </div>
           <div className="flex items-center justify-between gap-2">
+            <button
+              onClick={() => {
+                navigate("/create-tracker");
+              }}
+            >
+              <Icons.Plus
+                size={24}
+                className="shrink-0 p-1 text-muted-foreground/70 hover:text-foreground transition-colors md:hidden"
+              />
+            </button>
             <MobileStockSearch stocks={stocks} />
             <UserDropdown />
           </div>

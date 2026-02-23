@@ -60,11 +60,7 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
   </TooltipProvider>
 );
 
-const AddStock: React.FC<AddStockProps> = ({
-  onBack,
-  onAdd,
-  initialValues,
-}) => {
+const AddStock: React.FC<AddStockProps> = ({ onAdd, initialValues }) => {
   // const [step, setStep] = useState<1 | 2>(1); // Removed stepper
   const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
@@ -247,18 +243,6 @@ const AddStock: React.FC<AddStockProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background">
-      <div className="p-6 border-b flex items-center gap-4 sticky top-0 bg-background/95 backdrop-blur z-10 transition-all">
-        <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
-          <Icons.ArrowLeft size={20} />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">New Stock Engine</h1>
-          <p className="text-xs text-muted-foreground">
-            Configure Dynamic SIP Parameters
-          </p>
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto">
         <form
           onSubmit={handleSubmit}

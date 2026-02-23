@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "../constants";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import useSelectedStockId from "@/hooks/use-selected-stock-id";
+import { useSelectedStockId } from "@/hooks/use-selected-stock-id";
 
 interface LeftSidebarProps {
   stocks: Stock[];
