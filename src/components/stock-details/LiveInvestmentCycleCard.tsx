@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { GetTrackerDetailsResponse } from "../../types/tracker.types";
 
 interface LiveInvestmentCycleCardProps {
   currentCycle: number;
@@ -17,7 +18,7 @@ interface LiveInvestmentCycleCardProps {
   cycleLength: number;
   displayDeployedAmount: number;
   displayTotalBudget: number;
-  selectedTracker: any;
+  selectedTracker: GetTrackerDetailsResponse | null;
   totalShares: number;
   currentReturnPercent: number;
   stock: Stock;

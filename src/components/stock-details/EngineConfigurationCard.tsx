@@ -15,10 +15,11 @@ import {
 import { useUpdateTracker } from "@/hooks/useTrackers";
 import { InfoTooltip } from "../InfoTooltip";
 import { DisplayValues } from "./types";
+import { GetTrackerDetailsResponse } from "@/types/tracker.types";
 
 interface EngineConfigurationCardProps {
   displayValues: DisplayValues;
-  trackerData: any;
+  trackerData: GetTrackerDetailsResponse["tracker"] | null;
 }
 
 const LOAD_FACTOR_TO_KEY: Record<string, string> = {
@@ -49,7 +50,7 @@ export const EngineConfigurationCard: React.FC<
       totalBudget: displayValues.totalBudget,
       convictionYears: displayValues.convictionYears,
       loadFactor: (LOAD_FACTOR_TO_KEY[displayValues.loadFactor] ||
-        displayValues.loadFactor) as any,
+        displayValues.loadFactor) as string,
       partitionMonths: displayValues.partitionMonths,
       convictionLevel: displayValues.convictionLevel,
     });
@@ -305,7 +306,7 @@ export const EngineConfigurationCard: React.FC<
                   </Label>
                   <Select
                     value={editConfig.loadFactor}
-                    onValueChange={(val: any) =>
+                    onValueChange={(val: string) =>
                       setEditConfig({ ...editConfig, loadFactor: val })
                     }
                   >

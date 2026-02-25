@@ -15,7 +15,7 @@ const AuthCallback: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
 
-    if (error) {
+    const applyError = () => {
       setStatus("error");
       if (error === "unauthorized") {
         setErrorMessage(
@@ -27,11 +27,19 @@ const AuthCallback: React.FC = () => {
         setErrorMessage("An error occurred during sign in.");
       }
       setTimeout(() => navigate("/", { replace: true }), 3000);
-    } else {
+    };
+
+    const applySuccess = () => {
       setStatus("success");
       queryClient.invalidateQueries({ queryKey: authKeys.status }).then(() => {
         navigate("/", { replace: true });
       });
+    };
+
+    if (error) {
+      queueMicrotask(applyError);
+    } else {
+      queueMicrotask(applySuccess);
     }
   }, [queryClient, navigate]);
 

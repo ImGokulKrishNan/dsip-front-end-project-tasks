@@ -18,6 +18,26 @@ export interface DisplayValues {
   sharesHeld: number;
   currentPrice: number;
   loadFactor: string;
-  initialInvestedAmount: any;
-  initialSharesHeld: any;
+  initialInvestedAmount: number | null;
+  initialSharesHeld: number | null;
+}
+
+/** Partition details as shown in UI (supports both API shapes) */
+export interface PartitionDetailsView {
+  partition_index?: number;
+  partitionIndex?: number;
+  status?: number | string;
+  expected_days?: number;
+  expectedPartitionDays?: number;
+  capital_deployed?: number;
+  capitalInvestedSoFar?: number;
+  capital_allocated?: number;
+  partitionCapitalAllocated?: number;
+  net_profit_percentage?: number;
+  end_date?: string;
+  partitionEndDate?: string | null;
+  shares_bought?: number;
+  noOfSharesBought?: number;
+  start_date?: string;
+  createdAt?: string;
 }

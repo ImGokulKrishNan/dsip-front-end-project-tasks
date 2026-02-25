@@ -60,7 +60,7 @@ export const AppShell: React.FC = () => {
               Congratulations!
             </DialogTitle>
             <DialogDescription className="text-center pt-2 text-lg">
-              You've successfully created your first{" "}
+              You&apos;ve successfully created your first{" "}
               <span className="font-bold text-primary">DSIP Stock Engine</span>.
             </DialogDescription>
           </DialogHeader>
@@ -73,7 +73,7 @@ export const AppShell: React.FC = () => {
               onClick={() => setShowCelebration(false)}
               className="w-full sm:w-auto min-w-[150px]"
             >
-              Let's Go!
+              Let&apos;s Go!
             </Button>
           </DialogFooter>
         </DialogContent>

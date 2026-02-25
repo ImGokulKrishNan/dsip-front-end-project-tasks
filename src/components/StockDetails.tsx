@@ -11,10 +11,12 @@ import { EngineConfigurationCard } from "./stock-details/EngineConfigurationCard
 import { LiveInvestmentCycleCard } from "./stock-details/LiveInvestmentCycleCard";
 import { PartitionSection } from "./stock-details/PartitionSection";
 import { ExecutionDialogs } from "./stock-details/ExecutionDialogs";
+import type { ExecuteTradeResponse } from "../types/tracker.types";
 import {
   StockDetailsProps,
   RecommendationResponse,
   ExecutionState,
+  PartitionDetailsView,
 } from "./stock-details/types";
 
 const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
@@ -67,13 +69,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showVictoryPopup, setShowVictoryPopup] = useState(false);
   const [showKillSwitchPopup, setShowKillSwitchPopup] = useState(false);
-  const [executionResponse, setExecutionResponse] = useState<any>(null);
+  const [executionResponse, setExecutionResponse] =
+    useState<ExecuteTradeResponse | null>(null);
 
   // Partition State
   const [selectedPartition, setSelectedPartition] = useState<number | null>(
     null,
   );
-  const [partitionDetails, setPartitionDetails] = useState<any>(null);
+  const [partitionDetails, setPartitionDetails] =
+    useState<PartitionDetailsView | null>(null);
   const [isLoadingPartition, setIsLoadingPartition] = useState(false);
   const [showPartitionSelector, setShowPartitionSelector] = useState(false);
   const [selectorPartitions, setSelectorPartitions] = useState<number[]>([]);
@@ -126,12 +130,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
         const details = await getPartitionDetails(trackerData.trackerId, index);
         setPartitionDetails(details);
       } catch {
-        setPartitionDetails(getPartitionData(index));
+        setPartitionDetails(getPartitionData(index) as PartitionDetailsView);
       } finally {
         setIsLoadingPartition(false);
       }
     } else {
-      setPartitionDetails(getPartitionData(index));
+      setPartitionDetails(getPartitionData(index) as PartitionDetailsView);
     }
   };
 
@@ -157,9 +161,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
       setExecutionState("CALCULATED");
       setExecutedAmount(result.recommended_amount.toString());
       setExecutionPrice("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       setCalculationError(
-        error.message || "Failed to calculate recommendation",
+        error instanceof Error
+          ? error.message
+          : "Failed to calculate recommendation",
       );
       setExecutionState("IDLE");
     } finally {
@@ -247,8 +253,10 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
       } else {
         setShowSuccessPopup(true);
       }
-    } catch (error: any) {
-      setConfirmError(error.message || "Failed to confirm execution");
+    } catch (error: unknown) {
+      setConfirmError(
+        error instanceof Error ? error.message : "Failed to confirm execution",
+      );
     } finally {
       setIsConfirming(false);
     }

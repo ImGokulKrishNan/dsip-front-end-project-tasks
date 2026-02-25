@@ -2,11 +2,12 @@ import React from "react";
 import { Icons } from "../../constants";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import type { PartitionDetailsView } from "./types";
 
 interface PartitionSectionProps {
   selectedPartition: number | null;
   setSelectedPartition: (val: number | null) => void;
-  partitionDetails: any;
+  partitionDetails: PartitionDetailsView | null;
   isLoadingPartition: boolean;
   displayPartitionMonths: number;
   showPartitionSelector: boolean;

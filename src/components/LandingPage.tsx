@@ -38,8 +38,9 @@ const LandingPage: React.FC = () => {
 
         {/* Value Props */}
         <p className="text-slate-400 mb-12 text-xl md:text-2xl font-medium leading-relaxed max-w-lg mx-auto">
-          You're not a blind retail investor anymore. Deploy your capital like
-          an <span className="text-white">experienced angel investor.</span>.
+          You&apos;re not a blind retail investor anymore. Deploy your capital
+          like an{" "}
+          <span className="text-white">experienced angel investor.</span>.
         </p>
 
         {/* CTA Button */}

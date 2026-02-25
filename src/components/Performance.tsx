@@ -321,8 +321,9 @@ const Performance: React.FC = () => {
               Sync Portfolio
             </DialogTitle>
             <DialogDescription>
-              Manually update your total holdings to match your broker. We'll
-              adjust the base records while keeping your current cycle intact.
+              Manually update your total holdings to match your broker.
+              We&apos;ll adjust the base records while keeping your current
+              cycle intact.
             </DialogDescription>
           </DialogHeader>
 

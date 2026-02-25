@@ -62,7 +62,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ stocks }) => {
               </div>
             ) : (
               filteredStocks.map((stock) => {
-                return <StockCard stock={stock} />;
+                return <StockCard key={stock.id} stock={stock} />;
               })
             )}
           </div>

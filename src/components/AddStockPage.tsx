@@ -18,8 +18,9 @@ export const AddStockPage: React.FC = () => {
       }
 
       navigate("/home");
-    } catch (error: any) {
-      alert(`Failed to create tracker: ${error.message || "Unknown error"}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to create tracker: ${message}`);
     }
   };
 

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { InfoTooltip } from "../InfoTooltip";
 import { ExecutionState, RecommendationResponse } from "./types";
+import { GetTrackerDetailsResponse } from "@/types/tracker.types";
 
 interface DailyExecutionZoneProps {
   executionState: ExecutionState;
@@ -36,7 +37,7 @@ interface DailyExecutionZoneProps {
   onConfirm: () => void;
   totalInvested: number;
   totalShares: number;
-  trackerData: any;
+  trackerData: GetTrackerDetailsResponse["tracker"] | null;
 }
 
 export const DailyExecutionZone: React.FC<DailyExecutionZoneProps> = ({
@@ -67,7 +68,7 @@ export const DailyExecutionZone: React.FC<DailyExecutionZoneProps> = ({
         <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-md shadow-primary/30">
           <Icons.Zap size={16} />
         </div>
-        <h2 className="text-lg font-bold">Today's Execution</h2>
+        <h2 className="text-lg font-bold">Today&apos;s Execution</h2>
       </div>
 
       {executionState === "IDLE" && (
@@ -75,7 +76,7 @@ export const DailyExecutionZone: React.FC<DailyExecutionZoneProps> = ({
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Market Context</CardTitle>
             <CardDescription className="text-xs">
-              Enter today's price conditions to generate your smart order.
+              Enter today&apos;s price conditions to generate your smart order.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 p-4 pb-0">

@@ -28,8 +28,9 @@ const UnauthorizedAccess: React.FC = () => {
 
         {/* Description */}
         <p className="text-slate-300 mb-8 leading-relaxed">
-          You don't have permission to access this application. Please contact
-          your administrator or join our Finance Mastery course to get started.
+          You don&apos;t have permission to access this application. Please
+          contact your administrator or join our Finance Mastery course to get
+          started.
         </p>
 
         {/* Action Buttons */}

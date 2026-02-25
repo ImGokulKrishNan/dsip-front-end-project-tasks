@@ -32,7 +32,7 @@ const MobileStockSearch: React.FC<MobileStockSearchProps> = ({ stocks }) => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 80);
     } else {
-      setSearchQuery("");
+      queueMicrotask(() => setSearchQuery(""));
     }
   }, [isOpen]);
 

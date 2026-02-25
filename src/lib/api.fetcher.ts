@@ -21,6 +21,7 @@ import type {
   EndActionResponse,
   RecommendationResponse,
 } from "../types/tracker.types";
+import { DeploymentStyle, TrackerStatus } from "../types/tracker.types";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
@@ -71,33 +72,52 @@ export async function createTracker(
   });
 }
 
-export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
-  const data = await request<any>("/api/dsip-trackers");
+/** Raw API response shape for /api/dsip-trackers */
+interface RawTrackersPayload {
+  dsip_trackers?: RawTrackerItem[];
+  total_market_value?: number;
+  total_capital_invested_so_far?: number;
+  dsip_total_capital_invested_so_far?: number;
+  dsip_total_market_value?: number;
+}
 
-  const trackers = (data.dsip_trackers || []).map((tracker: any) => {
+interface RawTrackerItem {
+  id?: number;
+  symbol?: string;
+  name?: string;
+  total_capital_planned?: number;
+  total_capital_invested_so_far?: number;
+  dsip_total_capital_invested_so_far?: number;
+  createdAt?: string;
+  net_profit_percentage?: number;
+  dsip_net_profit_percentage?: number;
+}
+
+export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
+  const data = await request<RawTrackersPayload>("/api/dsip-trackers");
+  const list = data.dsip_trackers ?? [];
+
+  const trackers = list.map((tracker: RawTrackerItem) => {
+    const dsipTotal = tracker.dsip_total_capital_invested_so_far ?? 0;
+    const totalSoFar = tracker.total_capital_invested_so_far ?? 0;
     const sharesHeld =
-      tracker.dsip_total_capital_invested_so_far &&
-      tracker.total_capital_invested_so_far
-        ? tracker.total_capital_invested_so_far /
-          (tracker.dsip_total_capital_invested_so_far || 1)
-        : 0;
+      dsipTotal && totalSoFar ? totalSoFar / (dsipTotal || 1) : 0;
 
     return {
-      trackerId: tracker.id,
-      stockSymbol: tracker.symbol,
-      stockName: tracker.name,
-      currentPrice:
-        sharesHeld > 0 ? tracker.total_capital_invested_so_far / sharesHeld : 0,
-      totalCapitalPlanned: tracker.total_capital_planned || 0,
-      totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far || 0,
+      trackerId: tracker.id ?? 0,
+      stockSymbol: tracker.symbol ?? "",
+      stockName: tracker.name ?? "",
+      currentPrice: sharesHeld > 0 ? totalSoFar / sharesHeld : 0,
+      totalCapitalPlanned: tracker.total_capital_planned ?? 0,
+      totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far ?? 0,
       dsipTotalCaptialInvestedSoFar:
-        tracker.dsip_total_capital_invested_so_far || 0,
+        tracker.dsip_total_capital_invested_so_far ?? 0,
       sharesHeldSoFar: sharesHeld,
       status: 1,
       activePartitionIndex: 1,
-      createdAt: tracker.createdAt || new Date().toISOString(),
-      net_profit_percentage: tracker.net_profit_percentage || 0,
-      dsip_net_profit_percentage: tracker.dsip_net_profit_percentage || 0,
+      createdAt: tracker.createdAt ?? new Date().toISOString(),
+      net_profit_percentage: tracker.net_profit_percentage ?? 0,
+      dsip_net_profit_percentage: tracker.dsip_net_profit_percentage ?? 0,
     };
   });
 
@@ -107,84 +127,132 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
       totalTrackers: trackers.length,
       activeTrackers: trackers.length,
       totalCapitalPlanned: data.total_market_value || 0,
-      totalCapitalInvested: data.total_capital_invested_so_far || 0,
-      totalCurrentValue: data.total_market_value || 0,
-      dsipTotalCapitalInvested: data.dsip_total_capital_invested_so_far || 0,
-      dsipTotalCurrentValue: data.dsip_total_market_value || 0,
+      totalCapitalInvested: data.total_capital_invested_so_far ?? 0,
+      totalCurrentValue: data.total_market_value ?? 0,
+      dsipTotalCapitalInvested: data.dsip_total_capital_invested_so_far ?? 0,
+      dsipTotalCurrentValue: data.dsip_total_market_value ?? 0,
     },
   };
+}
+
+/** Raw API response shape for tracker details */
+interface RawTrackerDetailResponse {
+  id?: number;
+  user_id?: string;
+  stock_id?: number;
+  symbol?: string;
+  conviction_period_years?: number;
+  total_capital_planned?: number;
+  partition_days?: number;
+  partition_months?: number;
+  deployment_style?: number;
+  base_conviction_score?: number;
+  initial_invested_amount?: number;
+  initial_shares_held?: number;
+  status?: number;
+  active_partition_index?: number;
+  total_capital_invested_so_far?: number;
+  total_market_value?: number;
+  net_profit_percentage?: number;
+  dsip_total_capital_invested_so_far?: number;
+  dsip_total_market_value?: number;
+  dsip_net_profit_percentage?: number;
+  shares_held_so_far?: number;
+  total_cycles?: number;
+  is_fractional_shares_allowed?: boolean;
+  created_at?: string;
+  name?: string;
+  current_total_value?: number;
+  current_avg?: number;
+  dsip_current_avg?: number;
+  current_market_price?: number;
+  live_investment_cycle?: {
+    total_capital_invested_so_far?: number;
+    partition_progress?: number;
+    net_profit_percentage?: number;
+  };
+  history?: RawHistoryItem[];
+}
+
+interface RawHistoryItem {
+  executed_amount?: number;
+  executed_price?: number;
+  date?: string;
 }
 
 export async function getTrackerDetails(
   trackerId: number,
 ): Promise<GetTrackerDetailsResponse> {
-  const data = await request<any>(`/api/dsip-trackers/${trackerId}`);
+  const data = await request<RawTrackerDetailResponse>(
+    `/api/dsip-trackers/${trackerId}`,
+  );
+  const history = data.history ?? [];
 
   return {
     tracker: {
-      trackerId: data.id || trackerId,
-      userId: data.user_id || "",
-      stock_id: data.stock_id || 0,
-      stock_symbol: data.symbol || "",
-      conviction_period_years: data.conviction_period_years || 0,
-      total_capital_planned: data.total_capital_planned || 0,
-      partition_days: data.partition_days || 0,
-      partition_months: data.partition_months || 0,
-      deployment_style: data.deployment_style || 1,
-      base_conviction_score: data.base_conviction_score || 0,
-      initial_invested_amount: data.initial_invested_amount || 0,
-      initial_shares_held: data.initial_shares_held || 0,
-      status: data.status || 1,
-      active_partition_index: data.active_partition_index || 1,
-      total_capital_invested_so_far: data.total_capital_invested_so_far || 0,
-      total_market_value: data.total_market_value || 0,
-      net_profit_percentage: data.net_profit_percentage || 0,
+      trackerId: data.id ?? trackerId,
+      userId: data.user_id ?? "",
+      stock_id: data.stock_id ?? 0,
+      stock_symbol: data.symbol ?? "",
+      conviction_period_years: data.conviction_period_years ?? 0,
+      total_capital_planned: data.total_capital_planned ?? 0,
+      partition_days: data.partition_days ?? 0,
+      partition_months: data.partition_months ?? 0,
+      deployment_style: (data.deployment_style ?? 1) as DeploymentStyle,
+      base_conviction_score: data.base_conviction_score ?? 0,
+      initial_invested_amount: data.initial_invested_amount ?? 0,
+      initial_shares_held: data.initial_shares_held ?? 0,
+      status: (data.status ?? 1) as TrackerStatus,
+      active_partition_index: data.active_partition_index ?? 1,
+      total_capital_invested_so_far: data.total_capital_invested_so_far ?? 0,
+      total_market_value: data.total_market_value ?? 0,
+      net_profit_percentage: data.net_profit_percentage ?? 0,
       dsip_total_capital_invested_so_far:
-        data.dsip_total_capital_invested_so_far || 0,
-      dsip_total_market_value: data.dsip_total_market_value || 0,
-      dsip_net_profit_percentage: data.dsip_net_profit_percentage || 0,
-      shares_held_so_far: data.shares_held_so_far || 0,
-      total_cycles: data.total_cycles || 0,
-      is_fractional_shares_allowed: data.is_fractional_shares_allowed || false,
-      createdAt: data.created_at || new Date().toISOString(),
-      stockName: data.name || "Unknown",
-      currentPrice: data.current_total_value || 0,
+        data.dsip_total_capital_invested_so_far ?? 0,
+      dsip_total_market_value: data.dsip_total_market_value ?? 0,
+      dsip_net_profit_percentage: data.dsip_net_profit_percentage ?? 0,
+      shares_held_so_far: data.shares_held_so_far ?? 0,
+      total_cycles: data.total_cycles ?? 0,
+      is_fractional_shares_allowed: data.is_fractional_shares_allowed ?? false,
+      createdAt: data.created_at ?? new Date().toISOString(),
+      stockName: data.name ?? "Unknown",
+      currentPrice: data.current_total_value ?? 0,
       current_avg: data.current_avg,
       dsip_current_avg: data.dsip_current_avg,
       current_market_price: data.current_market_price,
       live_investment_cycle: data.live_investment_cycle
         ? {
             total_capital_invested_so_far:
-              data.live_investment_cycle.total_capital_invested_so_far || 0,
+              data.live_investment_cycle.total_capital_invested_so_far ?? 0,
             partition_progress:
-              data.live_investment_cycle.partition_progress || 0,
+              data.live_investment_cycle.partition_progress ?? 0,
             net_profit_percentage:
-              data.live_investment_cycle.net_profit_percentage || 0,
+              data.live_investment_cycle.net_profit_percentage ?? 0,
           }
         : undefined,
     },
-    partitions: (data.history || []).map((h: any, index: number) => ({
+    partitions: history.map((h, index) => ({
       partitionId: index + 1,
-      trackerId: data.id,
+      trackerId: data.id ?? trackerId,
       partitionIndex: index + 1,
-      expectedPartitionDays: data.partition_days || 0,
+      expectedPartitionDays: data.partition_days ?? 0,
       partitionCapitalAllocated: 0,
-      capitalInvestedSoFar: h.executed_amount || 0,
+      capitalInvestedSoFar: h.executed_amount ?? 0,
       noOfSharesBought: 0,
       successfulGrowthCount: 0,
       status: 2,
-      partitionEndDate: h.date || null,
-      createdAt: h.date || new Date().toISOString(),
+      partitionEndDate: h.date ?? null,
+      createdAt: h.date ?? new Date().toISOString(),
     })),
-    recentExecutions: (data.history || []).map((h: any, index: number) => ({
+    recentExecutions: history.map((h, index) => ({
       executionId: index + 1,
-      trackerId: data.id,
+      trackerId: data.id ?? trackerId,
       partitionId: 0,
       lockInPercentage: 0,
       convictionOverride: 0,
-      executedAmount: h.executed_amount || 0,
-      executionPrice: h.executed_price || 0,
-      createdAt: h.date || new Date().toISOString(),
+      executedAmount: h.executed_amount ?? 0,
+      executionPrice: h.executed_price ?? 0,
+      createdAt: h.date ?? new Date().toISOString(),
     })),
   };
 }

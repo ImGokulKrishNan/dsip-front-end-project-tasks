@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { ExecuteTradeResponse } from "../../types/tracker.types";
 
 interface ExecutionDialogsProps {
   showDailyLimitWarning: boolean;
@@ -19,7 +20,7 @@ interface ExecutionDialogsProps {
   setShowVictoryPopup: (val: boolean) => void;
   showKillSwitchPopup: boolean;
   setShowKillSwitchPopup: (val: boolean) => void;
-  executionResponse: any;
+  executionResponse: ExecuteTradeResponse | null;
   performCalculation: () => void;
 }
 
@@ -218,7 +219,7 @@ export const ExecutionDialogs: React.FC<ExecutionDialogsProps> = ({
             <p className="hidden"></p>
             <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
               <p className="text-xs font-semibold text-red-700 dark:text-red-400">
-                "Good traders know when to throttle down."
+                &quot;Good traders know when to throttle down.&quot;
               </p>
             </div>
           </div>

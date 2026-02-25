@@ -269,7 +269,7 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd }) => {
                     }
                   />
                   <Label htmlFor="fresh" className="font-medium cursor-pointer">
-                    This is a fresh investment (I don't own this stock yet)
+                    This is a fresh investment (I don&apos;t own this stock yet)
                   </Label>
                 </div>
 
