@@ -29,20 +29,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Center Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-background relative">
         {/* Global Header with Divider */}
-        <div className="px-2 md:px-6 py-1 flex items-center justify-between bg-background">
+        <div className="px-3 md:px-6 py-2 flex items-center justify-between bg-background">
           <div className="flex items-center gap-3">
             <PageHeader />
           </div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             <button
-              onClick={() => {
-                navigate("/create-tracker");
-              }}
+              onClick={() => navigate("/create-tracker")}
+              className="shrink-0 p-2 text-muted-foreground/70 hover:text-foreground transition-colors md:hidden"
             >
-              <Icons.Plus
-                size={24}
-                className="shrink-0 p-1 text-muted-foreground/70 hover:text-foreground transition-colors md:hidden"
-              />
+              <Icons.Plus size={24} />
             </button>
             <MobileStockSearch stocks={stocks} />
             <UserDropdown />
