@@ -1,6 +1,7 @@
 # DSIP Backend API - Quick Reference
 
 ## 📋 Base Information
+
 - **Base URL:** `http://localhost:8080`
 - **Authentication:** Session-based (Google OAuth2)
 - **Admin API Key Header:** `X-Admin-API-Key`
@@ -12,16 +13,19 @@
 ## 🚀 Quick Start
 
 ### 1. Import Postman Collection
+
 ```bash
 # Import the file: DSIP_Backend_Postman_Collection.json
 ```
 
 ### 2. Start the Backend
+
 ```bash
 docker-compose up --build -d
 ```
 
 ### 3. Access Swagger UI
+
 Open browser: `http://localhost:8080/swagger-ui.html`
 
 ---
@@ -29,50 +33,56 @@ Open browser: `http://localhost:8080/swagger-ui.html`
 ## 📊 API Endpoints Summary
 
 ### Health & Info (2 endpoints)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/` | Application info |
+
+| Method | Endpoint  | Description      |
+| ------ | --------- | ---------------- |
+| GET    | `/health` | Health check     |
+| GET    | `/`       | Application info |
 
 ### Authentication (1 endpoint)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/auth/status` | Get authentication status |
+
+| Method | Endpoint           | Description               |
+| ------ | ------------------ | ------------------------- |
+| GET    | `/api/auth/status` | Get authentication status |
 
 ### User Management (3 endpoints)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/user/me` | Get current user |
-| GET | `/api/user/sessions/count` | Get active session count |
-| POST | `/api/user/sessions/invalidate-all` | Invalidate all sessions |
+
+| Method | Endpoint                            | Description              |
+| ------ | ----------------------------------- | ------------------------ |
+| GET    | `/api/user/me`                      | Get current user         |
+| GET    | `/api/user/sessions/count`          | Get active session count |
+| POST   | `/api/user/sessions/invalidate-all` | Invalidate all sessions  |
 
 ### DSIP Tracker Management (8 endpoints)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/dsip-trackers` | Create tracker |
-| GET | `/api/dsip-trackers` | Get all trackers (portfolio) |
-| GET | `/api/dsip-trackers/{trackerId}` | Get tracker details |
-| PUT | `/api/dsip-trackers/{trackerId}` | Update tracker |
-| POST | `/api/dsip-trackers/{trackerId}/execute` | Execute trade |
-| GET | `/api/dsip-trackers/{trackerId}/executions` | Get tracker executions |
-| GET | `/api/dsip-trackers/{trackerId}/partitions/{partitionIndex}` | Get partition details |
-| DELETE | `/api/dsip-trackers/{trackerId}` | Delete tracker |
+
+| Method | Endpoint                                                     | Description                  |
+| ------ | ------------------------------------------------------------ | ---------------------------- |
+| POST   | `/api/dsip-trackers`                                         | Create tracker               |
+| GET    | `/api/dsip-trackers`                                         | Get all trackers (portfolio) |
+| GET    | `/api/dsip-trackers/{trackerId}`                             | Get tracker details          |
+| PUT    | `/api/dsip-trackers/{trackerId}`                             | Update tracker               |
+| POST   | `/api/dsip-trackers/{trackerId}/execute`                     | Execute trade                |
+| GET    | `/api/dsip-trackers/{trackerId}/executions`                  | Get tracker executions       |
+| GET    | `/api/dsip-trackers/{trackerId}/partitions/{partitionIndex}` | Get partition details        |
+| DELETE | `/api/dsip-trackers/{trackerId}`                             | Delete tracker               |
 
 ### Stock Management (3 endpoints)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/stocks/close` | Get stock closing price |
-| GET | `/api/stocks/cached` | Check if stock is cached |
-| DELETE | `/api/stocks/cache` | Remove stock from cache |
+
+| Method | Endpoint             | Description              |
+| ------ | -------------------- | ------------------------ |
+| GET    | `/api/stocks/close`  | Get stock closing price  |
+| GET    | `/api/stocks/cached` | Check if stock is cached |
+| DELETE | `/api/stocks/cache`  | Remove stock from cache  |
 
 ### Admin - Whitelist Management (5 endpoints) 🔐
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/admin/whitelist` | Get all whitelisted emails |
-| POST | `/api/admin/whitelist` | Add whitelisted email |
-| POST | `/api/admin/whitelist/bulk` | Bulk add whitelisted emails |
-| DELETE | `/api/admin/whitelist/{email}` | Remove whitelisted email |
-| GET | `/api/admin/whitelist/check/{email}` | Check if email is whitelisted |
+
+| Method | Endpoint                             | Description                   |
+| ------ | ------------------------------------ | ----------------------------- |
+| GET    | `/api/admin/whitelist`               | Get all whitelisted emails    |
+| POST   | `/api/admin/whitelist`               | Add whitelisted email         |
+| POST   | `/api/admin/whitelist/bulk`          | Bulk add whitelisted emails   |
+| DELETE | `/api/admin/whitelist/{email}`       | Remove whitelisted email      |
+| GET    | `/api/admin/whitelist/check/{email}` | Check if email is whitelisted |
 
 **Total Endpoints:** 22
 
@@ -81,6 +91,7 @@ Open browser: `http://localhost:8080/swagger-ui.html`
 ## 🔑 Common Request Examples
 
 ### Create Tracker
+
 ```bash
 curl -X POST http://localhost:8080/api/dsip-trackers \
   -H "Content-Type: application/json" \
@@ -96,6 +107,7 @@ curl -X POST http://localhost:8080/api/dsip-trackers \
 ```
 
 ### Execute Trade
+
 ```bash
 curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
   -H "Content-Type: application/json" \
@@ -108,11 +120,13 @@ curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
 ```
 
 ### Get Stock Price
+
 ```bash
 curl "http://localhost:8080/api/stocks/close?symbol=AAPL&exchange=US"
 ```
 
 ### Admin: Add Whitelist Email
+
 ```bash
 curl -X POST http://localhost:8080/api/admin/whitelist \
   -H "Content-Type: application/json" \
@@ -127,6 +141,7 @@ curl -X POST http://localhost:8080/api/admin/whitelist \
 ## 📝 Enums Reference
 
 ### Deployment Style
+
 ```
 0 = UNIFORM
 1 = AGGRESSIVE
@@ -134,6 +149,7 @@ curl -X POST http://localhost:8080/api/admin/whitelist \
 ```
 
 ### Tracker Status
+
 ```
 0 = INACTIVE
 1 = ACTIVE
@@ -142,6 +158,7 @@ curl -X POST http://localhost:8080/api/admin/whitelist \
 ```
 
 ### Partition Status
+
 ```
 0 = PENDING
 1 = ACTIVE
@@ -149,6 +166,7 @@ curl -X POST http://localhost:8080/api/admin/whitelist \
 ```
 
 ### Exchange
+
 ```
 US  = US Stock Market
 NSE = National Stock Exchange (India)
@@ -168,31 +186,34 @@ BSE = Bombay Stock Exchange (India)
 
 ## 📦 Response Status Codes
 
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request (validation error) |
-| 401 | Unauthorized (not authenticated) |
-| 403 | Forbidden (invalid admin key) |
-| 404 | Not Found |
-| 500 | Internal Server Error |
+| Code | Meaning                          |
+| ---- | -------------------------------- |
+| 200  | Success                          |
+| 201  | Created                          |
+| 400  | Bad Request (validation error)   |
+| 401  | Unauthorized (not authenticated) |
+| 403  | Forbidden (invalid admin key)    |
+| 404  | Not Found                        |
+| 500  | Internal Server Error            |
 
 ---
 
 ## 🛠️ Development Tools
 
 ### View Database
+
 ```bash
 docker-compose exec -T postgres psql -U postgres -d dsip
 ```
 
 ### Check Logs
+
 ```bash
 docker-compose logs -f app
 ```
 
 ### Restart Backend
+
 ```bash
 docker-compose restart app
 ```

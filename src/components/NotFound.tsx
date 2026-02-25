@@ -1,7 +1,7 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Icons } from '@/constants';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/constants";
+import { useNavigate } from "react-router-dom";
 
 const NotFound: React.FC = () => {
   const navigate = useNavigate();
@@ -9,7 +9,6 @@ const NotFound: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-8 text-center border border-slate-700">
-
         {/* Icon */}
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center">
@@ -24,13 +23,14 @@ const NotFound: React.FC = () => {
 
         {/* Description */}
         <p className="text-slate-300 mb-8 leading-relaxed">
-          Oops! The page you are looking for doesn’t exist. It might have been moved or deleted.
+          Oops! The page you are looking for doesn’t exist. It might have been
+          moved or deleted.
         </p>
 
         {/* Action Buttons */}
         <div className="space-y-4">
           <Button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-6 text-lg font-semibold transition-all duration-200"
             size="lg"
           >

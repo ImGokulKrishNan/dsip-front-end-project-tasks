@@ -21,19 +21,22 @@ src/
 ## 🏗️ Store Architecture
 
 ### 1. Auth Slice (`authSlice.ts`)
+
 Manages authentication state and user information.
 
 **State:**
+
 ```typescript
 {
-  isLoading: boolean
-  isAuthenticated: boolean
-  user: User | null
-  error: string | null
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  user: User | null;
+  error: string | null;
 }
 ```
 
 **Actions:**
+
 - `checkAuth()` - Async thunk to validate authentication
 - `logout()` - Async thunk to sign out user
 - `clearAuth()` - Clear auth state (used by API interceptor)
@@ -41,13 +44,14 @@ Manages authentication state and user information.
 - `setAuthError(message)` - Handle auth errors
 
 **Usage Example:**
+
 ```typescript
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { checkAuth, logout } from '../store/slices/authSlice';
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { checkAuth, logout } from "../store/slices/authSlice";
 
 const MyComponent = () => {
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated } = useAppSelector(state => state.auth);
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -56,9 +60,11 @@ const MyComponent = () => {
 ```
 
 ### 2. Stocks Slice (`stocksSlice.ts`)
+
 Manages portfolio stocks and related state.
 
 **State:**
+
 ```typescript
 {
   stocks: Stock[]
@@ -69,6 +75,7 @@ Manages portfolio stocks and related state.
 ```
 
 **Actions:**
+
 - `addStock(stock)` - Add new stock
 - `updateStock(stock)` - Update existing stock
 - `deleteStock(id)` - Remove stock
@@ -82,13 +89,14 @@ Manages portfolio stocks and related state.
 Automatically syncs with localStorage on every change.
 
 **Usage Example:**
+
 ```typescript
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addStock, updateStock } from '../store/slices/stocksSlice';
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { addStock, updateStock } from "../store/slices/stocksSlice";
 
 const MyComponent = () => {
   const dispatch = useAppDispatch();
-  const { stocks, selectedStockId } = useAppSelector(state => state.stocks);
+  const { stocks, selectedStockId } = useAppSelector((state) => state.stocks);
 
   const handleAddStock = (newStock: Stock) => {
     dispatch(addStock(newStock));
@@ -97,18 +105,21 @@ const MyComponent = () => {
 ```
 
 ### 3. UI Slice (`uiSlice.ts`)
+
 Manages UI state like current view and modals.
 
 **State:**
+
 ```typescript
 {
-  view: AppView
-  showCelebration: boolean
-  sidebarCollapsed: boolean
+  view: AppView;
+  showCelebration: boolean;
+  sidebarCollapsed: boolean;
 }
 ```
 
 **Actions:**
+
 - `setView(view)` - Set any view
 - `navigateToDashboard()` - Go to dashboard
 - `navigateToAddStock()` - Go to add stock view
@@ -120,13 +131,17 @@ Manages UI state like current view and modals.
 - `setSidebarCollapsed(collapsed)` - Set sidebar state
 
 **Usage Example:**
+
 ```typescript
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { navigateToDashboard, showCelebrationModal } from '../store/slices/uiSlice';
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  navigateToDashboard,
+  showCelebrationModal,
+} from "../store/slices/uiSlice";
 
 const MyComponent = () => {
   const dispatch = useAppDispatch();
-  const { view, showCelebration } = useAppSelector(state => state.ui);
+  const { view, showCelebration } = useAppSelector((state) => state.ui);
 
   const handleNavigate = () => {
     dispatch(navigateToDashboard());
@@ -137,13 +152,14 @@ const MyComponent = () => {
 ## 🔧 Setup & Configuration
 
 ### Store Configuration
+
 The store is configured in `src/store/index.ts`:
 
 ```typescript
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
-import stocksReducer from './slices/stocksSlice';
-import uiReducer from './slices/uiSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+import stocksReducer from "./slices/stocksSlice";
+import uiReducer from "./slices/uiSlice";
 
 export const store = configureStore({
   reducer: {
@@ -151,11 +167,12 @@ export const store = configureStore({
     stocks: stocksReducer,
     ui: uiReducer,
   },
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env.NODE_ENV !== "production",
 });
 ```
 
 ### Provider Setup
+
 The Redux Provider wraps the entire app in `src/App.tsx`:
 
 ```typescript
@@ -175,8 +192,8 @@ We use typed hooks for better TypeScript support:
 
 ```typescript
 // src/store/hooks.ts
-import { useDispatch, useSelector } from 'react-redux';
-import type { RootState, AppDispatch } from './index';
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "./index";
 
 export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
 export const useAppSelector = useSelector.withTypes<RootState>();
@@ -190,33 +207,35 @@ Redux Toolkit uses `createAsyncThunk` for async operations:
 
 ```typescript
 export const checkAuth = createAsyncThunk(
-  'auth/checkAuth',
+  "auth/checkAuth",
   async (_, { rejectWithValue }) => {
     try {
-      const data = await api<AuthStatusResponse>('/api/auth/status');
+      const data = await api<AuthStatusResponse>("/api/auth/status");
       return data;
     } catch (error) {
-      return rejectWithValue('Authentication failed');
+      return rejectWithValue("Authentication failed");
     }
-  }
+  },
 );
 ```
 
 Usage:
+
 ```typescript
 dispatch(checkAuth())
   .unwrap()
   .then((result) => {
-    console.log('Auth check succeeded:', result);
+    console.log("Auth check succeeded:", result);
   })
   .catch((error) => {
-    console.error('Auth check failed:', error);
+    console.error("Auth check failed:", error);
   });
 ```
 
 ## 🎯 Best Practices
 
 ### 1. Component Organization
+
 ```typescript
 const MyComponent = () => {
   // 1. Hooks first
@@ -239,26 +258,29 @@ const MyComponent = () => {
 ```
 
 ### 2. Selector Performance
+
 For complex selectors, consider using `reselect` or memoization:
 
 ```typescript
-import { createSelector } from '@reduxjs/toolkit';
+import { createSelector } from "@reduxjs/toolkit";
 
 const selectStocks = (state: RootState) => state.stocks.stocks;
 
-const selectTotalValue = createSelector(
-  [selectStocks],
-  (stocks) => stocks.reduce((sum, stock) => sum + stock.currentPrice, 0)
+const selectTotalValue = createSelector([selectStocks], (stocks) =>
+  stocks.reduce((sum, stock) => sum + stock.currentPrice, 0),
 );
 ```
 
 ### 3. Action Naming
+
 Follow the pattern: `slice/actionName`
+
 - Auth: `auth/checkAuth`, `auth/logout`
 - Stocks: `stocks/addStock`, `stocks/updateStock`
 - UI: `ui/setView`, `ui/navigateToDashboard`
 
 ### 4. State Normalization
+
 For large datasets, consider normalizing data:
 
 ```typescript
@@ -275,10 +297,12 @@ stocks: {
 ## 🐛 Redux DevTools
 
 Redux DevTools is enabled in development mode. Install the browser extension:
+
 - [Chrome](https://chrome.google.com/webstore/detail/redux-devtools)
 - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/reduxdevtools/)
 
 Features:
+
 - Time-travel debugging
 - Action replay
 - State inspection
@@ -287,21 +311,24 @@ Features:
 ## 🔍 Debugging Tips
 
 ### 1. Log State Changes
+
 ```typescript
 dispatch(someAction());
-console.log('New state:', store.getState());
+console.log("New state:", store.getState());
 ```
 
 ### 2. Track Action Dispatch
+
 ```typescript
 const result = await dispatch(someAsyncAction()).unwrap();
-console.log('Action result:', result);
+console.log("Action result:", result);
 ```
 
 ### 3. Monitor Specific Slices
+
 ```typescript
-const stocks = useAppSelector(state => {
-  console.log('Stocks state:', state.stocks);
+const stocks = useAppSelector((state) => {
+  console.log("Stocks state:", state.stocks);
   return state.stocks.stocks;
 });
 ```
@@ -311,14 +338,16 @@ const stocks = useAppSelector(state => {
 The previous Context API has been completely replaced:
 
 **Before (Context API):**
+
 ```typescript
 const { isAuthenticated, login, logout } = useAuth();
 ```
 
 **After (Redux):**
+
 ```typescript
 const dispatch = useAppDispatch();
-const { isAuthenticated } = useAppSelector(state => state.auth);
+const { isAuthenticated } = useAppSelector((state) => state.auth);
 const handleLogin = () => openLoginPopup();
 const handleLogout = () => dispatch(logout());
 ```
@@ -336,10 +365,11 @@ To add new state:
 7. **Use in components** with typed hooks
 
 Example:
+
 ```typescript
 // 1. Create slice
 const mySlice = createSlice({
-  name: 'myFeature',
+  name: "myFeature",
   initialState: { data: null },
   reducers: {
     setData: (state, action) => {
@@ -357,7 +387,7 @@ export const store = configureStore({
 });
 
 // 3. Use in components
-const data = useAppSelector(state => state.myFeature.data);
+const data = useAppSelector((state) => state.myFeature.data);
 ```
 
 ## 📚 Resources

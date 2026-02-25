@@ -53,6 +53,7 @@ X-Admin-API-Key: <your-admin-api-key>
 **Description:** Check if the application is running
 
 **Response:**
+
 ```json
 {
   "status": "UP",
@@ -61,6 +62,7 @@ X-Admin-API-Key: <your-admin-api-key>
 ```
 
 **cURL Example:**
+
 ```bash
 curl http://localhost:8080/health
 ```
@@ -74,6 +76,7 @@ curl http://localhost:8080/health
 **Description:** Get basic application information
 
 **Response:**
+
 ```json
 {
   "application": "DSIP Backend",
@@ -82,6 +85,7 @@ curl http://localhost:8080/health
 ```
 
 **cURL Example:**
+
 ```bash
 curl http://localhost:8080/
 ```
@@ -97,6 +101,7 @@ curl http://localhost:8080/
 **Description:** Check current authentication status
 
 **Response (Authenticated):**
+
 ```json
 {
   "authenticated": true,
@@ -111,6 +116,7 @@ curl http://localhost:8080/
 ```
 
 **Response (Not Authenticated):**
+
 ```json
 {
   "authenticated": false
@@ -118,6 +124,7 @@ curl http://localhost:8080/
 ```
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt http://localhost:8080/api/auth/status
 ```
@@ -131,6 +138,7 @@ curl -b cookies.txt http://localhost:8080/api/auth/status
 **Description:** Get details of the currently authenticated user
 
 **Response:**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -142,6 +150,7 @@ curl -b cookies.txt http://localhost:8080/api/auth/status
 ```
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt http://localhost:8080/api/user/me
 ```
@@ -155,6 +164,7 @@ curl -b cookies.txt http://localhost:8080/api/user/me
 **Description:** Get the number of active sessions for the current user
 
 **Response:**
+
 ```json
 {
   "activeSessions": 3
@@ -162,6 +172,7 @@ curl -b cookies.txt http://localhost:8080/api/user/me
 ```
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt http://localhost:8080/api/user/sessions/count
 ```
@@ -175,6 +186,7 @@ curl -b cookies.txt http://localhost:8080/api/user/sessions/count
 **Description:** Invalidate all active sessions for the current user
 
 **Response:**
+
 ```json
 {
   "message": "All sessions invalidated"
@@ -182,6 +194,7 @@ curl -b cookies.txt http://localhost:8080/api/user/sessions/count
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X POST -b cookies.txt http://localhost:8080/api/user/sessions/invalidate-all
 ```
@@ -197,6 +210,7 @@ curl -X POST -b cookies.txt http://localhost:8080/api/user/sessions/invalidate-a
 **Description:** Create a new DSIP investment tracker
 
 **Request Body:**
+
 ```json
 {
   "stock_symbol": "AAPL",
@@ -213,19 +227,20 @@ curl -X POST -b cookies.txt http://localhost:8080/api/user/sessions/invalidate-a
 
 **Field Descriptions:**
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `stock_symbol` | string | Yes | Not blank | Stock ticker symbol (e.g., "AAPL") |
-| `conviction_period_years` | number | Yes | ≥ 1 | Investment period in years |
-| `total_capital_planned` | number | Yes | ≥ 1 | Total capital to invest |
-| `partition_months` | integer | Yes | ≥ 1 | Months between investment partitions |
-| `deployment_style` | enum | Yes | UNIFORM, AGGRESSIVE, CONSERVATIVE | Investment deployment strategy |
-| `base_conviction_score` | integer | Yes | 0-100 | Base conviction score |
-| `initial_invested_amount` | number | No | ≥ 0 | Already invested amount (default: 0) |
-| `initial_shares_held` | number | No | ≥ 0 | Already held shares (default: 0) |
-| `is_fractional_shares_allowed` | boolean | No | - | Allow fractional shares (default: false) |
+| Field                          | Type    | Required | Validation                        | Description                              |
+| ------------------------------ | ------- | -------- | --------------------------------- | ---------------------------------------- |
+| `stock_symbol`                 | string  | Yes      | Not blank                         | Stock ticker symbol (e.g., "AAPL")       |
+| `conviction_period_years`      | number  | Yes      | ≥ 1                               | Investment period in years               |
+| `total_capital_planned`        | number  | Yes      | ≥ 1                               | Total capital to invest                  |
+| `partition_months`             | integer | Yes      | ≥ 1                               | Months between investment partitions     |
+| `deployment_style`             | enum    | Yes      | UNIFORM, AGGRESSIVE, CONSERVATIVE | Investment deployment strategy           |
+| `base_conviction_score`        | integer | Yes      | 0-100                             | Base conviction score                    |
+| `initial_invested_amount`      | number  | No       | ≥ 0                               | Already invested amount (default: 0)     |
+| `initial_shares_held`          | number  | No       | ≥ 0                               | Already held shares (default: 0)         |
+| `is_fractional_shares_allowed` | boolean | No       | -                                 | Allow fractional shares (default: false) |
 
 **Response:**
+
 ```json
 {
   "trackerId": 1,
@@ -249,6 +264,7 @@ curl -X POST -b cookies.txt http://localhost:8080/api/user/sessions/invalidate-a
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X POST http://localhost:8080/api/dsip-trackers \
   -H "Content-Type: application/json" \
@@ -273,6 +289,7 @@ curl -X POST http://localhost:8080/api/dsip-trackers \
 **Description:** Get all trackers for the current user with portfolio summary
 
 **Response:**
+
 ```json
 {
   "total_market_value": 125000.0,
@@ -300,6 +317,7 @@ curl -X POST http://localhost:8080/api/dsip-trackers \
 ```
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt http://localhost:8080/api/dsip-trackers
 ```
@@ -313,9 +331,11 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers
 **Description:** Get detailed information about a specific tracker
 
 **Path Parameters:**
+
 - `trackerId` (integer) - The tracker ID
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -339,7 +359,7 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers
     {
       "date": "2026-02-10T14:30:00Z",
       "executed_amount": 5000.0,
-      "executed_price": 175.50
+      "executed_price": 175.5
     }
   ],
   "live_investment_cycle": {
@@ -351,6 +371,7 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers
 ```
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt http://localhost:8080/api/dsip-trackers/1
 ```
@@ -364,9 +385,11 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers/1
 **Description:** Update tracker settings
 
 **Path Parameters:**
+
 - `trackerId` (integer) - The tracker ID
 
 **Request Body:**
+
 ```json
 {
   "deployment_style": "CONSERVATIVE",
@@ -380,20 +403,21 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers/1
 
 **Field Descriptions:**
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `deployment_style` | enum | No | UNIFORM, AGGRESSIVE, CONSERVATIVE | Investment deployment strategy |
-| `base_conviction_score` | integer | No | 0-100 | Base conviction score |
-| `status` | enum | No | INACTIVE, ACTIVE, COMPLETED, PAUSED | Tracker status |
-| `total_capital_planned` | number | No | ≥ 1 | Total capital to invest |
-| `conviction_period_years` | number | No | ≥ 1 | Investment period in years |
-| `partition_months` | integer | No | ≥ 1 | Months between partitions |
+| Field                     | Type    | Required | Validation                          | Description                    |
+| ------------------------- | ------- | -------- | ----------------------------------- | ------------------------------ |
+| `deployment_style`        | enum    | No       | UNIFORM, AGGRESSIVE, CONSERVATIVE   | Investment deployment strategy |
+| `base_conviction_score`   | integer | No       | 0-100                               | Base conviction score          |
+| `status`                  | enum    | No       | INACTIVE, ACTIVE, COMPLETED, PAUSED | Tracker status                 |
+| `total_capital_planned`   | number  | No       | ≥ 1                                 | Total capital to invest        |
+| `conviction_period_years` | number  | No       | ≥ 1                                 | Investment period in years     |
+| `partition_months`        | integer | No       | ≥ 1                                 | Months between partitions      |
 
 **Note:** All fields are optional. Only include fields you want to update.
 
 **Response:** Same as "Get Tracker Details"
 
 **cURL Example:**
+
 ```bash
 curl -X PUT http://localhost:8080/api/dsip-trackers/1 \
   -H "Content-Type: application/json" \
@@ -413,9 +437,11 @@ curl -X PUT http://localhost:8080/api/dsip-trackers/1 \
 **Description:** Execute a trade for a tracker
 
 **Path Parameters:**
+
 - `trackerId` (integer) - The tracker ID
 
 **Request Body:**
+
 ```json
 {
   "lock_in_percentage": -5.0,
@@ -427,14 +453,15 @@ curl -X PUT http://localhost:8080/api/dsip-trackers/1 \
 
 **Field Descriptions:**
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `lock_in_percentage` | number | Yes | ≤ 100 | Lock-in percentage (negative for below previous close) |
-| `conviction_override` | integer | Yes | 0-100 | Override conviction score |
-| `executed_amount` | number | Yes | ≥ 1 | Amount invested in this execution |
-| `execution_price` | number | Yes | ≥ 1 | Price per share at execution |
+| Field                 | Type    | Required | Validation | Description                                            |
+| --------------------- | ------- | -------- | ---------- | ------------------------------------------------------ |
+| `lock_in_percentage`  | number  | Yes      | ≤ 100      | Lock-in percentage (negative for below previous close) |
+| `conviction_override` | integer | Yes      | 0-100      | Override conviction score                              |
+| `executed_amount`     | number  | Yes      | ≥ 1        | Amount invested in this execution                      |
+| `execution_price`     | number  | Yes      | ≥ 1        | Price per share at execution                           |
 
 **Response:**
+
 ```json
 {
   "status": "EXECUTED",
@@ -443,6 +470,7 @@ curl -X PUT http://localhost:8080/api/dsip-trackers/1 \
 ```
 
 **Field Descriptions:**
+
 - `status`: Always "EXECUTED" when successful
 - `end_reason`: Reason partition ended (if applicable)
   - `SUCCESS` - Partition completed successfully
@@ -451,6 +479,7 @@ curl -X PUT http://localhost:8080/api/dsip-trackers/1 \
   - `null` - Partition still active
 
 **cURL Example:**
+
 ```bash
 curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
   -H "Content-Type: application/json" \
@@ -472,12 +501,15 @@ curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
 **Description:** Get daily investment recommendation with calculation breakdown
 
 **Path Parameters:**
+
 - `trackerId` (integer) - The tracker ID
 
 **Query Parameters:**
+
 - `lock_in_pct` (number, required) - Lock-in percentage (e.g., -5.0 for 5% below previous close)
 
 **Response:**
+
 ```json
 {
   "tracker_id": 1,
@@ -489,7 +521,7 @@ curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
     "final_multiplier": 1.5
   },
   "signals": {
-    "avg_holding_price": 170.50,
+    "avg_holding_price": 170.5,
     "avg_deviation_pct": -3.2,
     "avg_signal": 0.8,
     "lock_in_pct": -5.0,
@@ -515,12 +547,14 @@ curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
 **Field Descriptions:**
 
 **Breakdown:**
+
 - `neutral_capital`: Base capital allocation for the day
 - `opportunity_multiplier`: Multiplier based on market opportunity
 - `contingency_multiplier`: Multiplier based on partition progress
 - `final_multiplier`: Combined multiplier applied to neutral capital
 
 **Signals:**
+
 - `avg_holding_price`: Average price of held shares
 - `avg_deviation_pct`: Percentage deviation from average holding price
 - `avg_signal`: Signal strength from average deviation
@@ -531,6 +565,7 @@ curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
 - `is_abnormal_dip`: Whether current price is an abnormal dip
 
 **Partition Status:**
+
 - `partition_index`: Current partition index
 - `partition_progress_pct`: Overall partition progress
 - `return_progress_pct`: Return progress percentage
@@ -542,6 +577,7 @@ curl -X POST http://localhost:8080/api/dsip-trackers/1/execute \
 - `cumulative_return_pct`: Cumulative return percentage
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt "http://localhost:8080/api/dsip-trackers/1/recommendation?lock_in_pct=-5.0"
 ```
@@ -555,12 +591,15 @@ curl -b cookies.txt "http://localhost:8080/api/dsip-trackers/1/recommendation?lo
 **Description:** Get recent executions for a tracker
 
 **Path Parameters:**
+
 - `trackerId` (integer) - The tracker ID
 
 **Query Parameters:**
+
 - `limit` (integer, optional) - Number of recent executions to return (default: 6)
 
 **Response:**
+
 ```json
 [
   {
@@ -577,6 +616,7 @@ curl -b cookies.txt "http://localhost:8080/api/dsip-trackers/1/recommendation?lo
 ```
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt "http://localhost:8080/api/dsip-trackers/1/executions?limit=10"
 ```
@@ -590,10 +630,12 @@ curl -b cookies.txt "http://localhost:8080/api/dsip-trackers/1/executions?limit=
 **Description:** Get details of a specific partition
 
 **Path Parameters:**
+
 - `trackerId` (integer) - The tracker ID
 - `partitionIndex` (integer) - The partition index (1-based)
 
 **Response:**
+
 ```json
 {
   "partitionId": 3,
@@ -611,6 +653,7 @@ curl -b cookies.txt "http://localhost:8080/api/dsip-trackers/1/executions?limit=
 ```
 
 **cURL Example:**
+
 ```bash
 curl -b cookies.txt http://localhost:8080/api/dsip-trackers/1/partitions/3
 ```
@@ -624,9 +667,11 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers/1/partitions/3
 **Description:** Delete a tracker
 
 **Path Parameters:**
+
 - `trackerId` (integer) - The tracker ID
 
 **Response:**
+
 ```json
 {
   "message": "Tracker deleted successfully"
@@ -634,6 +679,7 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers/1/partitions/3
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X DELETE -b cookies.txt http://localhost:8080/api/dsip-trackers/1
 ```
@@ -647,12 +693,14 @@ curl -X DELETE -b cookies.txt http://localhost:8080/api/dsip-trackers/1
 **Description:** Manually end a partition
 
 **Query Parameters:**
+
 - `trackerId` (integer, required) - The tracker ID
 - `partitionIndex` (integer, required) - The partition index to end
 
 **Response:** 200 OK (empty body)
 
 **cURL Example:**
+
 ```bash
 curl -X POST -b cookies.txt \
   "http://localhost:8080/api/dsip-trackers/end-action?trackerId=1&partitionIndex=3"
@@ -669,6 +717,7 @@ curl -X POST -b cookies.txt \
 **Description:** Sync tracker data with external holdings (e.g., from broker)
 
 **Request Body:**
+
 ```json
 {
   "tracker_id": 1,
@@ -680,14 +729,15 @@ curl -X POST -b cookies.txt \
 
 **Field Descriptions:**
 
-| Field | Type | Required | Validation | Description |
-|-------|------|----------|------------|-------------|
-| `tracker_id` | integer | Yes | - | The tracker ID to sync |
-| `current_total_shares` | number | Yes | ≥ 0 | Current total shares held |
-| `current_total_invested_amount` | number | Yes | ≥ 0 | Current total invested amount |
-| `reason` | string | No | - | Reason for sync (optional) |
+| Field                           | Type    | Required | Validation | Description                   |
+| ------------------------------- | ------- | -------- | ---------- | ----------------------------- |
+| `tracker_id`                    | integer | Yes      | -          | The tracker ID to sync        |
+| `current_total_shares`          | number  | Yes      | ≥ 0        | Current total shares held     |
+| `current_total_invested_amount` | number  | Yes      | ≥ 0        | Current total invested amount |
+| `reason`                        | string  | No       | -          | Reason for sync (optional)    |
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -700,6 +750,7 @@ curl -X POST -b cookies.txt \
 ```
 
 **Response (Blocked):**
+
 ```json
 {
   "success": false,
@@ -708,6 +759,7 @@ curl -X POST -b cookies.txt \
 ```
 
 **Field Descriptions:**
+
 - `success`: Whether sync was successful
 - `message`: Status message
 - `dsip_shares`: Shares acquired through DSIP (excluding initials)
@@ -716,6 +768,7 @@ curl -X POST -b cookies.txt \
 - `total_invested_amount`: Total invested amount after sync
 
 **cURL Example:**
+
 ```bash
 curl -X POST http://localhost:8080/api/dsip/sync \
   -H "Content-Type: application/json" \
@@ -739,24 +792,28 @@ curl -X POST http://localhost:8080/api/dsip/sync \
 **Description:** Get the latest closing price for a stock (cached daily)
 
 **Query Parameters:**
+
 - `symbol` (string, required) - Stock ticker symbol
 - `exchange` (enum, required) - Exchange code: `US`, `NSE`, or `BSE`
 
 **Response:**
+
 ```json
 {
   "symbol": "AAPL",
   "stockName": "Apple Inc.",
-  "closePrice": 175.50,
+  "closePrice": 175.5,
   "lastUpdatedDate": "2026-02-14T00:00:00Z",
   "source": "cache"
 }
 ```
 
 **Field Descriptions:**
+
 - `source`: `"cache"` (from DB) or `"api"` (freshly fetched)
 
 **cURL Example:**
+
 ```bash
 curl "http://localhost:8080/api/stocks/close?symbol=AAPL&exchange=US"
 ```
@@ -770,9 +827,11 @@ curl "http://localhost:8080/api/stocks/close?symbol=AAPL&exchange=US"
 **Description:** Check if a stock is cached in the database
 
 **Query Parameters:**
+
 - `symbol` (string, required) - Stock ticker symbol
 
 **Response:**
+
 ```json
 {
   "symbol": "AAPL",
@@ -781,6 +840,7 @@ curl "http://localhost:8080/api/stocks/close?symbol=AAPL&exchange=US"
 ```
 
 **cURL Example:**
+
 ```bash
 curl "http://localhost:8080/api/stocks/cached?symbol=AAPL"
 ```
@@ -794,9 +854,11 @@ curl "http://localhost:8080/api/stocks/cached?symbol=AAPL"
 **Description:** Remove a stock from the cache
 
 **Query Parameters:**
+
 - `symbol` (string, required) - Stock ticker symbol
 
 **Response:**
+
 ```json
 {
   "symbol": "AAPL",
@@ -806,6 +868,7 @@ curl "http://localhost:8080/api/stocks/cached?symbol=AAPL"
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X DELETE "http://localhost:8080/api/stocks/cache?symbol=AAPL"
 ```
@@ -823,11 +886,13 @@ curl -X DELETE "http://localhost:8080/api/stocks/cache?symbol=AAPL"
 **Description:** Get all whitelisted emails
 
 **Headers:**
+
 ```
 X-Admin-API-Key: <your-admin-api-key>
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -840,6 +905,7 @@ X-Admin-API-Key: <your-admin-api-key>
 ```
 
 **cURL Example:**
+
 ```bash
 curl -H "X-Admin-API-Key: YOUR_KEY" \
   http://localhost:8080/api/admin/whitelist
@@ -854,12 +920,14 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 **Description:** Add an email to the whitelist
 
 **Headers:**
+
 ```
 X-Admin-API-Key: <your-admin-api-key>
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "newuser@example.com"
@@ -867,6 +935,7 @@ Content-Type: application/json
 ```
 
 **Response:** 201 Created
+
 ```json
 {
   "id": "660e8400-e29b-41d4-a716-446655440001",
@@ -877,6 +946,7 @@ Content-Type: application/json
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X POST http://localhost:8080/api/admin/whitelist \
   -H "Content-Type: application/json" \
@@ -893,21 +963,20 @@ curl -X POST http://localhost:8080/api/admin/whitelist \
 **Description:** Add multiple emails to the whitelist
 
 **Headers:**
+
 ```
 X-Admin-API-Key: <your-admin-api-key>
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
-[
-  "user1@example.com",
-  "user2@example.com",
-  "user3@example.com"
-]
+["user1@example.com", "user2@example.com", "user3@example.com"]
 ```
 
 **Response:**
+
 ```json
 {
   "added": [
@@ -925,6 +994,7 @@ Content-Type: application/json
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X POST http://localhost:8080/api/admin/whitelist/bulk \
   -H "Content-Type: application/json" \
@@ -941,14 +1011,17 @@ curl -X POST http://localhost:8080/api/admin/whitelist/bulk \
 **Description:** Remove an email from the whitelist
 
 **Headers:**
+
 ```
 X-Admin-API-Key: <your-admin-api-key>
 ```
 
 **Path Parameters:**
+
 - `email` (string) - Email to remove
 
 **Response:**
+
 ```json
 {
   "message": "Email removed from whitelist"
@@ -956,6 +1029,7 @@ X-Admin-API-Key: <your-admin-api-key>
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X DELETE \
   -H "X-Admin-API-Key: YOUR_KEY" \
@@ -971,14 +1045,17 @@ curl -X DELETE \
 **Description:** Check if an email is whitelisted
 
 **Headers:**
+
 ```
 X-Admin-API-Key: <your-admin-api-key>
 ```
 
 **Path Parameters:**
+
 - `email` (string) - Email to check
 
 **Response:**
+
 ```json
 {
   "whitelisted": true
@@ -986,6 +1063,7 @@ X-Admin-API-Key: <your-admin-api-key>
 ```
 
 **cURL Example:**
+
 ```bash
 curl -H "X-Admin-API-Key: YOUR_KEY" \
   http://localhost:8080/api/admin/whitelist/check/user@example.com
@@ -996,6 +1074,7 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 ## Data Models
 
 ### UserDto
+
 ```json
 {
   "id": "uuid",
@@ -1007,6 +1086,7 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 ```
 
 ### DsipTrackerDto
+
 ```json
 {
   "trackerId": "integer",
@@ -1030,6 +1110,7 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 ```
 
 ### DsipExecutionRequestDto
+
 ```json
 {
   "lock_in_percentage": "number (≤100)",
@@ -1040,6 +1121,7 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 ```
 
 ### SyncRequest
+
 ```json
 {
   "tracker_id": "integer",
@@ -1050,6 +1132,7 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 ```
 
 ### SyncResponse
+
 ```json
 {
   "success": "boolean",
@@ -1066,27 +1149,32 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 ## Enums Reference
 
 ### DeploymentStyle
+
 - `UNIFORM` - Uniform capital deployment
 - `AGGRESSIVE` - Aggressive deployment (front-loaded)
 - `CONSERVATIVE` - Conservative deployment (back-loaded)
 
 ### TrackerStatus
+
 - `INACTIVE` - Tracker is inactive
 - `ACTIVE` - Tracker is active
 - `COMPLETED` - Tracker completed
 - `PAUSED` - Tracker paused
 
 ### PartitionStatus
+
 - `PENDING` - Partition pending
 - `ACTIVE` - Partition active
 - `COMPLETED` - Partition completed
 
 ### EndReason
+
 - `SUCCESS` - Partition completed successfully
 - `KILL_SWITCH` - Partition killed due to poor performance
 - `NEUTRAL_PARTITION` - Partition ended as neutral
 
 ### Exchange
+
 - `US` - US Stock Market
 - `NSE` - National Stock Exchange (India)
 - `BSE` - Bombay Stock Exchange (India)
@@ -1098,6 +1186,7 @@ curl -H "X-Admin-API-Key: YOUR_KEY" \
 All endpoints may return the following error formats:
 
 ### 400 Bad Request
+
 ```json
 {
   "error": "Validation failed",
@@ -1107,6 +1196,7 @@ All endpoints may return the following error formats:
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "error": "Unauthorized",
@@ -1116,6 +1206,7 @@ All endpoints may return the following error formats:
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "error": "Forbidden",
@@ -1125,6 +1216,7 @@ All endpoints may return the following error formats:
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "error": "Not Found",
@@ -1134,6 +1226,7 @@ All endpoints may return the following error formats:
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "error": "Internal Server Error",
@@ -1148,17 +1241,18 @@ All endpoints may return the following error formats:
 
 **Total Endpoints:** 25
 
-| Category | Endpoints | Authentication |
-|----------|-----------|----------------|
-| Health & Info | 2 | None |
-| Authentication | 1 | Optional |
-| User Management | 3 | Session |
-| DSIP Tracker Management | 10 | Session |
-| DSIP Sync | 1 | Session |
-| Stock Management | 3 | None |
-| Admin - Whitelist | 5 | API Key |
+| Category                | Endpoints | Authentication |
+| ----------------------- | --------- | -------------- |
+| Health & Info           | 2         | None           |
+| Authentication          | 1         | Optional       |
+| User Management         | 3         | Session        |
+| DSIP Tracker Management | 10        | Session        |
+| DSIP Sync               | 1         | Session        |
+| Stock Management        | 3         | None           |
+| Admin - Whitelist       | 5         | API Key        |
 
 **New Endpoints:**
+
 - ⭐ `POST /api/dsip/sync` - Sync tracker data
 - ⭐ `GET /api/dsip-trackers/{trackerId}/recommendation` - Get investment recommendation
 - ⭐ `POST /api/dsip-trackers/end-action` - End partition action

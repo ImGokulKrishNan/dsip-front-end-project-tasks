@@ -1,37 +1,41 @@
-import React, { useState } from 'react';
-import { Icons } from '../constants';
-import { LoadFactor, Stock } from '../types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import React, { useState } from "react";
+import { Icons } from "../constants";
+import { LoadFactor } from "../types";
+import type { CreateTrackerRequest } from "@/types/tracker.types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { getStockClosingPrice } from "@/lib/api.fetcher";
+import { Exchange } from "@/types/tracker.types";
+import type { StockPriceResponse } from "@/types/tracker.types";
 
-interface StockPriceResponse {
-  symbol: string;
-  exchange: string;
-  date: string;
-  closePrice: number;
-  source: string;
-  company: {
-    name: string;
-    symbol: string;
-    exchange: string;
-    industry: string;
-    country: string;
-  } | null;
-}
+const LOAD_FACTOR_TO_DEPLOYMENT: Record<LoadFactor, string> = {
+  [LoadFactor.GRADUAL]: "GRADUAL",
+  [LoadFactor.MODERATE]: "MODERATE",
+  [LoadFactor.AGGRESSIVE]: "AGGRESSIVE",
+};
 
 interface AddStockProps {
   onBack: () => void;
-  onAdd: (stock: Stock) => void;
-  initialValues?: Partial<Stock>;
+  onAdd: (request: CreateTrackerRequest) => void;
 }
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
@@ -49,26 +53,28 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
   </TooltipProvider>
 );
 
-const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => {
-  // const [step, setStep] = useState<1 | 2>(1); // Removed stepper
+const AddStock: React.FC<AddStockProps> = ({ onAdd }) => {
   const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
-  const [symbol, setSymbol] = useState(initialValues?.symbol || '');
-  const [budget, setBudget] = useState(initialValues?.totalBudget?.toString() || '');
-  const [partition, setPartition] = useState(initialValues?.partitionMonths?.toString() || '');
-  const [convictionYears, setConvictionYears] = useState(initialValues?.convictionYears?.toString() || '');
-  const [loadFactor, setLoadFactor] = useState<LoadFactor>(initialValues?.loadFactor || LoadFactor.MODERATE);
+  const [symbol, setSymbol] = useState("");
+  const [budget, setBudget] = useState("");
+  const [partition, setPartition] = useState("");
+  const [convictionYears, setConvictionYears] = useState("");
+  const [loadFactor, setLoadFactor] = useState<LoadFactor>(LoadFactor.MODERATE);
 
-  const [quantityOwned, setQuantityOwned] = useState('');
-  const [averagePriceOwned, setAveragePriceOwned] = useState('');
+  const [quantityOwned, setQuantityOwned] = useState("");
+  const [averagePriceOwned, setAveragePriceOwned] = useState("");
 
   // Helper functions to handle numeric input validation
-  const handlePositiveIntegerInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
+  const handlePositiveIntegerInput = (
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+  ) => {
     // Allow empty string or positive integers only
-    if (value === '' || /^\d+$/.test(value)) {
+    if (value === "" || /^\d+$/.test(value)) {
       setter(value);
       // Clear validation error for this field when user types
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         const newErrors = { ...prev };
         // Clear the error based on which setter is being used
         if (setter === setBudget) delete newErrors.budget;
@@ -79,12 +85,15 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
     }
   };
 
-  const handlePositiveDecimalInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
+  const handlePositiveDecimalInput = (
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+  ) => {
     // Allow empty string, positive integers, or positive decimals
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setter(value);
       // Clear validation error for this field when user types
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         const newErrors = { ...prev };
         if (setter === setAveragePriceOwned) delete newErrors.averagePriceOwned;
         if (setter === setQuantityOwned) delete newErrors.quantityOwned;
@@ -100,47 +109,62 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
     if (amount > 0 && shares > 0) {
       return (amount / shares).toFixed(2);
     }
-    return '0.00';
+    return "0.00";
   };
 
-  const [convictionLevel, setConvictionLevel] = useState([initialValues?.convictionLevel || 75]);
+  const [convictionLevel, setConvictionLevel] = useState([75]);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [stockData, setStockData] = useState<StockPriceResponse | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
     // Validate symbol
-    if (!symbol || symbol.trim() === '') {
-      errors.symbol = 'Stock symbol is required';
+    if (!symbol || symbol.trim() === "") {
+      errors.symbol = "Stock symbol is required";
     }
 
     // Validate budget
-    if (!budget || budget.trim() === '' || Number(budget) <= 0) {
-      errors.budget = 'Total Capital Allocation must be greater than 0';
+    if (!budget || budget.trim() === "" || Number(budget) <= 0) {
+      errors.budget = "Total Capital Allocation must be greater than 0";
     }
 
     // Validate conviction years
-    if (!convictionYears || convictionYears.trim() === '' || Number(convictionYears) <= 0) {
-      errors.convictionYears = 'Conviction period must be at least 1 year';
+    if (
+      !convictionYears ||
+      convictionYears.trim() === "" ||
+      Number(convictionYears) <= 0
+    ) {
+      errors.convictionYears = "Conviction period must be at least 1 year";
     }
 
     // Validate partition months
-    if (!partition || partition.trim() === '' || Number(partition) <= 0) {
-      errors.partition = 'Investment cycle length must be at least 1 month';
+    if (!partition || partition.trim() === "" || Number(partition) <= 0) {
+      errors.partition = "Investment cycle length must be at least 1 month";
     }
 
     // Validate already invested fields if checkbox is checked
     if (alreadyInvested) {
-      if (!averagePriceOwned || averagePriceOwned.trim() === '' || Number(averagePriceOwned) <= 0) {
-        errors.averagePriceOwned = 'Total amount invested must be greater than 0';
+      if (
+        !averagePriceOwned ||
+        averagePriceOwned.trim() === "" ||
+        Number(averagePriceOwned) <= 0
+      ) {
+        errors.averagePriceOwned =
+          "Total amount invested must be greater than 0";
       }
-      if (!quantityOwned || quantityOwned.trim() === '' || Number(quantityOwned) <= 0) {
-        errors.quantityOwned = 'Total shares held must be greater than 0';
+      if (
+        !quantityOwned ||
+        quantityOwned.trim() === "" ||
+        Number(quantityOwned) <= 0
+      ) {
+        errors.quantityOwned = "Total shares held must be greater than 0";
       }
     }
 
@@ -160,13 +184,16 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
     setFetchError(null);
 
     try {
-      const data = await api<StockPriceResponse>(
-        `/api/stocks/close?symbol=${encodeURIComponent(symbol.trim())}&exchange=US`
-      );
+      const data = await getStockClosingPrice({
+        symbol: symbol.trim(),
+        exchange: Exchange.US,
+      });
       setStockData(data);
       setShowConfirmModal(true);
     } catch {
-      setFetchError(`Could not find stock "${symbol.trim().toUpperCase()}". Please check the symbol and try again.`);
+      setFetchError(
+        `Could not find stock "${symbol.trim().toUpperCase()}". Please check the symbol and try again.`,
+      );
     } finally {
       setFetchLoading(false);
     }
@@ -175,43 +202,28 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
   const handleConfirm = () => {
     if (!stockData) return;
 
-    const newStock: Stock = {
-      id: Date.now().toString(),
-      symbol: stockData.symbol,
-      name: stockData.company?.name || stockData.symbol,
-      totalBudget: Number(budget),
-      partitionMonths: Number(partition),
-      convictionYears: Number(convictionYears),
-      loadFactor,
-      deployedAmount: 0,
-      currentAverage: Number(averagePriceOwned),
-      currentPrice: stockData.closePrice,
-      isPaused: false,
-      history: [],
-      quantityOwned: alreadyInvested ? Number(quantityOwned) : 0,
-      averagePriceOwned: alreadyInvested ? Number(averagePriceOwned) : 0,
-      convictionLevel: convictionLevel[0],
-      priceMovementPct: 0,
+    const request: CreateTrackerRequest = {
+      stock_symbol: stockData.symbol,
+      conviction_period_years: Number(convictionYears),
+      total_capital_planned: Number(budget),
+      partition_months: Number(partition),
+      deployment_style: LOAD_FACTOR_TO_DEPLOYMENT[loadFactor],
+      base_conviction_score: convictionLevel[0],
+      initial_invested_amount: alreadyInvested ? Number(averagePriceOwned) : 0,
+      initial_shares_held: alreadyInvested ? Number(quantityOwned) : 0,
+      is_fractional_shares_allowed: true,
     };
     setShowConfirmModal(false);
-    onAdd(newStock);
+    onAdd(request);
   };
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background">
-      <div className="p-6 border-b flex items-center gap-4 sticky top-0 bg-background/95 backdrop-blur z-10 transition-all">
-        <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
-          <Icons.ArrowLeft size={20} />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">New Stock Engine</h1>
-          <p className="text-xs text-muted-foreground">Configure Dynamic SIP Parameters</p>
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto">
-        <form onSubmit={handleSubmit} className="p-6 md:p-8 lg:px-16 xl:px-24 w-full space-y-8 pb-32">
-
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 md:p-8 lg:px-16 xl:px-24 w-full space-y-8 pb-32"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-8">
               <div className="space-y-4">
@@ -226,9 +238,9 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                     autoFocus
                     placeholder="NFLX"
                     value={symbol}
-                    onChange={e => {
+                    onChange={(e) => {
                       setSymbol(e.target.value);
-                      setValidationErrors(prev => {
+                      setValidationErrors((prev) => {
                         const newErrors = { ...prev };
                         delete newErrors.symbol;
                         return newErrors;
@@ -236,7 +248,8 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                     }}
                     className={cn(
                       "text-lg font-bold uppercase tracking-wider",
-                      validationErrors.symbol && "border-red-500 focus-visible:ring-red-500"
+                      validationErrors.symbol &&
+                        "border-red-500 focus-visible:ring-red-500",
                     )}
                   />
                   {validationErrors.symbol && (
@@ -251,7 +264,9 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                   <Checkbox
                     id="fresh"
                     checked={!alreadyInvested}
-                    onCheckedChange={(checked) => setAlreadyInvested(checked === false)}
+                    onCheckedChange={(checked) =>
+                      setAlreadyInvested(checked === false)
+                    }
                   />
                   <Label htmlFor="fresh" className="font-medium cursor-pointer">
                     This is a fresh investment (I don't own this stock yet)
@@ -266,11 +281,17 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                         <Input
                           inputMode="decimal"
                           value={averagePriceOwned}
-                          onChange={e => handlePositiveDecimalInput(e.target.value, setAveragePriceOwned)}
+                          onChange={(e) =>
+                            handlePositiveDecimalInput(
+                              e.target.value,
+                              setAveragePriceOwned,
+                            )
+                          }
                           placeholder="$ Total Amount"
                           className={cn(
                             "bg-background",
-                            validationErrors.averagePriceOwned && "border-red-500 focus-visible:ring-red-500"
+                            validationErrors.averagePriceOwned &&
+                              "border-red-500 focus-visible:ring-red-500",
                           )}
                         />
                         {validationErrors.averagePriceOwned && (
@@ -285,11 +306,17 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                         <Input
                           inputMode="decimal"
                           value={quantityOwned}
-                          onChange={e => handlePositiveDecimalInput(e.target.value, setQuantityOwned)}
+                          onChange={(e) =>
+                            handlePositiveDecimalInput(
+                              e.target.value,
+                              setQuantityOwned,
+                            )
+                          }
                           placeholder="Shares"
                           className={cn(
                             "bg-background",
-                            validationErrors.quantityOwned && "border-red-500 focus-visible:ring-red-500"
+                            validationErrors.quantityOwned &&
+                              "border-red-500 focus-visible:ring-red-500",
                           )}
                         />
                         {validationErrors.quantityOwned && (
@@ -322,15 +349,20 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                     <InfoTooltip text="How much total capital do you want to deploy over this conviction period?" />
                   </Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">
+                      $
+                    </span>
                     <Input
                       inputMode="numeric"
                       className={cn(
                         "text-lg font-bold pl-8",
-                        validationErrors.budget && "border-red-500 focus-visible:ring-red-500"
+                        validationErrors.budget &&
+                          "border-red-500 focus-visible:ring-red-500",
                       )}
                       value={budget}
-                      onChange={e => handlePositiveIntegerInput(e.target.value, setBudget)}
+                      onChange={(e) =>
+                        handlePositiveIntegerInput(e.target.value, setBudget)
+                      }
                       placeholder="5000"
                     />
                   </div>
@@ -351,10 +383,16 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                   <Input
                     inputMode="numeric"
                     value={convictionYears}
-                    onChange={e => handlePositiveIntegerInput(e.target.value, setConvictionYears)}
+                    onChange={(e) =>
+                      handlePositiveIntegerInput(
+                        e.target.value,
+                        setConvictionYears,
+                      )
+                    }
                     placeholder="3"
                     className={cn(
-                      validationErrors.convictionYears && "border-red-500 focus-visible:ring-red-500"
+                      validationErrors.convictionYears &&
+                        "border-red-500 focus-visible:ring-red-500",
                     )}
                   />
                   {validationErrors.convictionYears && (
@@ -365,8 +403,6 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                   )}
                 </div>
 
-
-
                 <div className="grid gap-2">
                   <Label className="flex items-center gap-2">
                     Investment Cycle Length (Months)
@@ -375,10 +411,13 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                   <Input
                     inputMode="numeric"
                     value={partition}
-                    onChange={e => handlePositiveIntegerInput(e.target.value, setPartition)}
+                    onChange={(e) =>
+                      handlePositiveIntegerInput(e.target.value, setPartition)
+                    }
                     placeholder="8"
                     className={cn(
-                      validationErrors.partition && "border-red-500 focus-visible:ring-red-500"
+                      validationErrors.partition &&
+                        "border-red-500 focus-visible:ring-red-500",
                     )}
                   />
                   {validationErrors.partition && (
@@ -400,7 +439,6 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-8 pt-8">
-
                   <div className="space-y-4">
                     <Label className="flex items-center gap-2">
                       Deployment Style
@@ -408,25 +446,52 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                     </Label>
                     <div className="grid grid-cols-1 gap-3">
                       {[
-                        { id: LoadFactor.AGGRESSIVE, label: 'Aggressive Early Build', desc: 'Invest more in early phases to capture early growth' },
-                        { id: LoadFactor.MODERATE, label: 'Balanced Build', desc: 'Steady early exposure with flexibility to adapt' },
-                        { id: LoadFactor.GRADUAL, label: 'Gradual Build', desc: 'Spread capital slowly and evenly over time' }
-                      ].map(option => (
+                        {
+                          id: LoadFactor.AGGRESSIVE,
+                          label: "Aggressive Early Build",
+                          desc: "Invest more in early phases to capture early growth",
+                        },
+                        {
+                          id: LoadFactor.MODERATE,
+                          label: "Balanced Build",
+                          desc: "Steady early exposure with flexibility to adapt",
+                        },
+                        {
+                          id: LoadFactor.GRADUAL,
+                          label: "Gradual Build",
+                          desc: "Spread capital slowly and evenly over time",
+                        },
+                      ].map((option) => (
                         <div
                           key={option.id}
                           onClick={() => setLoadFactor(option.id)}
                           className={cn(
                             "cursor-pointer border rounded-lg p-3 transition-all hover:bg-accent",
-                            loadFactor === option.id ? "border-primary bg-primary/5 shadow-sm" : "border-border"
+                            loadFactor === option.id
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border",
                           )}
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center", loadFactor === option.id ? "border-primary" : "border-muted-foreground")}>
-                              {loadFactor === option.id && <div className="w-2 h-2 rounded-full bg-primary" />}
+                            <div
+                              className={cn(
+                                "w-4 h-4 rounded-full border flex items-center justify-center",
+                                loadFactor === option.id
+                                  ? "border-primary"
+                                  : "border-muted-foreground",
+                              )}
+                            >
+                              {loadFactor === option.id && (
+                                <div className="w-2 h-2 rounded-full bg-primary" />
+                              )}
                             </div>
-                            <span className="font-bold text-sm">{option.label}</span>
+                            <span className="font-bold text-sm">
+                              {option.label}
+                            </span>
                           </div>
-                          <p className="text-xs text-muted-foreground pl-6">{option.desc}</p>
+                          <p className="text-xs text-muted-foreground pl-6">
+                            {option.desc}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -436,8 +501,12 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <Label className="font-bold">Conviction strength (X-Factor)</Label>
-                      <span className="text-3xl font-black text-primary">{convictionLevel[0]}%</span>
+                      <Label className="font-bold">
+                        Conviction strength (X-Factor)
+                      </Label>
+                      <span className="text-3xl font-black text-primary">
+                        {convictionLevel[0]}%
+                      </span>
                     </div>
                     <Slider
                       value={convictionLevel}
@@ -447,12 +516,16 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                       className="py-4"
                     />
                   </div>
-
                 </CardContent>
               </Card>
 
               <div className="pt-4 space-y-3">
-                <Button type="submit" size="lg" disabled={fetchLoading} className="w-full text-lg h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform">
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={fetchLoading}
+                  className="w-full text-lg h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform"
+                >
                   {fetchLoading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
@@ -466,7 +539,9 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                   )}
                 </Button>
                 {fetchError && (
-                  <p className="text-center text-sm text-red-500 font-medium">{fetchError}</p>
+                  <p className="text-center text-sm text-red-500 font-medium">
+                    {fetchError}
+                  </p>
                 )}
                 <p className="text-center text-xs text-muted-foreground">
                   Smart deployment will be active from the next trading day.
@@ -480,7 +555,9 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
       <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Confirm Stock Details</DialogTitle>
+            <DialogTitle className="text-xl font-bold">
+              Confirm Stock Details
+            </DialogTitle>
           </DialogHeader>
 
           {stockData && (
@@ -491,7 +568,9 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
                 </div>
                 <div>
                   <p className="text-lg font-bold">{stockData.symbol}</p>
-                  <p className="text-sm text-muted-foreground">{stockData.company?.name || 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {stockData.company?.name || "N/A"}
+                  </p>
                 </div>
               </div>
 
@@ -499,20 +578,36 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Exchange</p>
-                  <p className="font-bold">{stockData.company?.exchange || stockData.exchange}</p>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">
+                    Exchange
+                  </p>
+                  <p className="font-bold">
+                    {stockData.company?.exchange || stockData.exchange}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Industry</p>
-                  <p className="font-bold">{stockData.company?.industry || 'N/A'}</p>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">
+                    Industry
+                  </p>
+                  <p className="font-bold">
+                    {stockData.company?.industry || "N/A"}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Country</p>
-                  <p className="font-bold">{stockData.company?.country || 'N/A'}</p>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">
+                    Country
+                  </p>
+                  <p className="font-bold">
+                    {stockData.company?.country || "N/A"}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Close Price</p>
-                  <p className="font-bold text-lg">${stockData.closePrice?.toFixed(2)}</p>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">
+                    Close Price
+                  </p>
+                  <p className="font-bold text-lg">
+                    ${stockData.closePrice?.toFixed(2)}
+                  </p>
                 </div>
               </div>
 
@@ -523,7 +618,10 @@ const AddStock: React.FC<AddStockProps> = ({ onBack, onAdd, initialValues }) => 
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleConfirm}>

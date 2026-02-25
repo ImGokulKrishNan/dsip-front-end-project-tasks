@@ -27,9 +27,9 @@ export enum PartitionStatus {
 }
 
 export enum Exchange {
-  US = 'US',
-  NSE = 'NSE',
-  BSE = 'BSE',
+  US = "US",
+  NSE = "NSE",
+  BSE = "BSE",
 }
 
 // ============================================================================
@@ -175,20 +175,32 @@ export interface GetTrackerDetailsResponse {
 }
 
 export interface ExecuteTradeResponse {
-  status: 'EXECUTED';
-  code: 'SUCCESS' | 'ONGOING' | 'KILL_SWITCH_STAGNATION' | 'KILL_SWITCH_POOR_GROWTH' | 'NEUTRAL_PARTITION';
+  status: "EXECUTED";
+  code:
+    | "SUCCESS"
+    | "ONGOING"
+    | "KILL_SWITCH_STAGNATION"
+    | "KILL_SWITCH_POOR_GROWTH"
+    | "NEUTRAL_PARTITION";
   title?: string;
   message?: string;
   deployed_amount: number;
   profit_pct: number;
 }
 
-export interface StockPrice {
+export interface StockPriceResponse {
   symbol: string;
-  stockName: string;
+  exchange: string;
+  date: string;
   closePrice: number;
-  lastUpdatedDate: string;
-  source: 'cache' | 'api';
+  source: string;
+  company: {
+    name: string;
+    symbol: string;
+    exchange: string;
+    industry: string;
+    country: string;
+  } | null;
 }
 
 export interface DeleteTrackerResponse {
@@ -196,46 +208,43 @@ export interface DeleteTrackerResponse {
 }
 
 export interface EndActionResponse {
-  action: 'ALREADY_PROCESSED' | 'PARTITION_ENDED';
+  action: "ALREADY_PROCESSED" | "PARTITION_ENDED";
   message: string;
   partition_index: number;
 }
 
 // ============================================================================
-// State Management Types
+// Recommendation (used by execution engine)
 // ============================================================================
 
-export interface TrackersState {
-  // Portfolio data
-  trackers: TrackerSummary[];
-  portfolioSummary: PortfolioSummary | null;
-
-  // Selected tracker details
-  selectedTracker: GetTrackerDetailsResponse | null;
-  selectedTrackerId: number | null;
-
-  // Partition details (when viewing specific partition)
-  selectedPartition: Partition | null;
-
-  // Loading states
-  isLoadingTrackers: boolean;
-  isLoadingTrackerDetails: boolean;
-  isLoadingPartition: boolean;
-  isCreatingTracker: boolean;
-  isUpdatingTracker: boolean;
-  isExecutingTrade: boolean;
-  isDeletingTracker: boolean;
-
-  // Error states
-  error: string | null;
-  trackerDetailsError: string | null;
-  partitionError: string | null;
-
-  // Success messages
-  successMessage: string | null;
-
-  // Stock prices cache (for quick lookups)
-  stockPrices: Record<string, StockPrice>;
-  isLoadingStockPrice: boolean;
-  stockPriceError: string | null;
+export interface RecommendationResponse {
+  tracker_id: number;
+  recommended_amount: number;
+  breakdown: {
+    neutral_capital: number;
+    opportunity_multiplier: number;
+    contingency_multiplier: number;
+    final_multiplier: number;
+  };
+  signals: {
+    avg_holding_price: number;
+    avg_deviation_pct: number;
+    avg_signal: number;
+    lock_in_pct: number;
+    lock_in_signal: number;
+    raw_opportunity_signal: number;
+    conviction_amplifier: number;
+    is_abnormal_dip: boolean;
+  };
+  partition_status: {
+    partition_index: number;
+    partition_progress_pct: number;
+    return_progress_pct: number;
+    growth_persistence_pct: number;
+    time_progress_pct: number;
+    capital_progress_pct: number;
+    capital_deployed: number;
+    capital_remaining: number;
+    cumulative_return_pct: number;
+  };
 }

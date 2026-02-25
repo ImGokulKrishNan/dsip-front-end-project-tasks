@@ -5,9 +5,11 @@ This project includes comprehensive API documentation in multiple formats:
 ## 📚 Available Documentation
 
 ### 1. **Markdown Documentation** 📖
+
 **File:** `API_DOCUMENTATION.md`
 
 Complete API reference with:
+
 - All 22 endpoints documented
 - Request/response examples
 - Field descriptions and validations
@@ -15,33 +17,40 @@ Complete API reference with:
 - Enum references
 
 ### 2. **Postman Collection** 📮
+
 **File:** `DSIP_Backend_Postman_Collection.json`
 
 Ready-to-import Postman collection with:
+
 - All endpoints pre-configured
 - Example request bodies
 - Environment variables for base URL and admin API key
 - Organized into logical folders
 
 **How to Import:**
+
 1. Open Postman
 2. Click "Import" button
 3. Select `DSIP_Backend_Postman_Collection.json`
 4. Start testing!
 
 ### 3. **Quick Reference Guide** ⚡
+
 **File:** `API_QUICK_REFERENCE.md`
 
 Quick lookup guide with:
+
 - Endpoint summary table
 - Common cURL examples
 - Enum reference
 - Development tips
 
 ### 4. **Interactive Swagger UI** 🎯
+
 **URL:** `http://localhost:8080/swagger-ui.html`
 
 Interactive API documentation with:
+
 - Try-it-out functionality
 - Real-time testing
 - Auto-generated from code
@@ -52,6 +61,7 @@ Interactive API documentation with:
 ## 🚀 Quick Start
 
 ### Option 1: Use Swagger UI (Recommended for Testing)
+
 ```bash
 # Start the backend
 docker-compose up -d
@@ -61,6 +71,7 @@ open http://localhost:8080/swagger-ui.html
 ```
 
 ### Option 2: Use Postman
+
 ```bash
 # Import the collection file
 # DSIP_Backend_Postman_Collection.json
@@ -71,6 +82,7 @@ open http://localhost:8080/swagger-ui.html
 ```
 
 ### Option 3: Use cURL
+
 ```bash
 # Example: Get stock price
 curl "http://localhost:8080/api/stocks/close?symbol=AAPL&exchange=US"
@@ -92,26 +104,30 @@ curl -X POST http://localhost:8080/api/dsip-trackers \
 
 **Total Endpoints:** 22
 
-| Category | Endpoints | Authentication Required |
-|----------|-----------|------------------------|
-| Health & Info | 2 | ❌ No |
-| Authentication | 1 | ✅ Yes |
-| User Management | 3 | ✅ Yes |
-| DSIP Tracker Management | 8 | ✅ Yes |
-| Stock Management | 3 | ❌ No |
-| Admin - Whitelist | 5 | 🔐 Admin Key Required |
+| Category                | Endpoints | Authentication Required |
+| ----------------------- | --------- | ----------------------- |
+| Health & Info           | 2         | ❌ No                   |
+| Authentication          | 1         | ✅ Yes                  |
+| User Management         | 3         | ✅ Yes                  |
+| DSIP Tracker Management | 8         | ✅ Yes                  |
+| Stock Management        | 3         | ❌ No                   |
+| Admin - Whitelist       | 5         | 🔐 Admin Key Required   |
 
 ## 🔑 Authentication
 
 ### User Endpoints
+
 Most endpoints require Google OAuth2 authentication:
+
 1. Navigate to `/oauth2/authorization/google`
 2. Complete Google login
 3. Session cookie is automatically set
 4. Use session cookie for subsequent requests
 
 ### Admin Endpoints
+
 Admin endpoints require the `X-Admin-API-Key` header:
+
 ```bash
 curl -H "X-Admin-API-Key: YOUR_API_KEY" \
   http://localhost:8080/api/admin/whitelist
@@ -122,6 +138,7 @@ curl -H "X-Admin-API-Key: YOUR_API_KEY" \
 ## 📝 Common Use Cases
 
 ### 1. Create a New Investment Tracker
+
 ```json
 POST /api/dsip-trackers
 {
@@ -136,6 +153,7 @@ POST /api/dsip-trackers
 ```
 
 ### 2. Execute a Trade
+
 ```json
 POST /api/dsip-trackers/{trackerId}/execute
 {
@@ -147,16 +165,19 @@ POST /api/dsip-trackers/{trackerId}/execute
 ```
 
 ### 3. Get Portfolio Overview
+
 ```
 GET /api/dsip-trackers
 ```
 
 ### 4. Get Stock Price (with caching)
+
 ```
 GET /api/stocks/close?symbol=AAPL&exchange=US
 ```
 
 ### 5. Manage Whitelist (Admin)
+
 ```json
 POST /api/admin/whitelist
 Headers: X-Admin-API-Key: YOUR_KEY
@@ -168,6 +189,7 @@ Headers: X-Admin-API-Key: YOUR_KEY
 ## 🛠️ Development
 
 ### View All Endpoints
+
 ```bash
 # Using Swagger
 open http://localhost:8080/swagger-ui.html
@@ -177,6 +199,7 @@ curl http://localhost:8080/v3/api-docs | jq
 ```
 
 ### Test Endpoints
+
 ```bash
 # Health check
 curl http://localhost:8080/health
@@ -197,6 +220,7 @@ curl -b cookies.txt http://localhost:8080/api/dsip-trackers
 Current API Version: **v1.0.0**
 
 All endpoints are prefixed with `/api/` except:
+
 - Health check: `/health`
 - Root info: `/`
 - OAuth2 endpoints: `/oauth2/*`
@@ -204,6 +228,7 @@ All endpoints are prefixed with `/api/` except:
 ## 📞 Support
 
 For API questions or issues:
+
 1. Check the Swagger UI for interactive documentation
 2. Review the detailed API documentation in `API_DOCUMENTATION.md`
 3. Use the Postman collection for testing

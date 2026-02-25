@@ -1,10 +1,14 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Icons } from '@/constants';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/constants";
 
 const UnauthorizedAccess: React.FC = () => {
   const handleJoinCourse = () => {
-    window.open('https://jayabhuvanesh.mn.co/', '_blank', 'noopener,noreferrer');
+    window.open(
+      "https://jayabhuvanesh.mn.co/",
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   return (
@@ -24,7 +28,8 @@ const UnauthorizedAccess: React.FC = () => {
 
         {/* Description */}
         <p className="text-slate-300 mb-8 leading-relaxed">
-          You don't have permission to access this application. Please contact your administrator or join our Finance Mastery course to get started.
+          You don't have permission to access this application. Please contact
+          your administrator or join our Finance Mastery course to get started.
         </p>
 
         {/* Action Buttons */}
@@ -47,7 +52,7 @@ const UnauthorizedAccess: React.FC = () => {
         <div className="mt-8 pt-6 border-t border-slate-700">
           <Button
             variant="ghost"
-            onClick={() => window.location.href = '/'}
+            onClick={() => (window.location.href = "/")}
             className="text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <Icons.ArrowLeft className="mr-2 h-4 w-4" />

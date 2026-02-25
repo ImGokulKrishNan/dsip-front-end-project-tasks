@@ -1,12 +1,15 @@
 # API Response Debug Guide
 
 ## Problem
+
 The Dashboard shows blank screen even though API returns data.
 
 ## Root Cause
+
 The API response structure doesn't match our TypeScript types.
 
 ### API Actually Returns:
+
 ```json
 {
   "dsip_total_capital_invested_so_far": 500,
@@ -39,6 +42,7 @@ The API response structure doesn't match our TypeScript types.
 ```
 
 ### We Expected:
+
 ```typescript
 {
   trackers: [{
@@ -64,6 +68,7 @@ The API response structure doesn't match our TypeScript types.
 ```
 
 ## Solution Applied
+
 Added transformation layer in `src/lib/api.fetcher.ts` to map API response to our expected format.
 
 ## To Debug Further
@@ -102,6 +107,7 @@ If the transformation doesn't work, we need to see the EXACT API response. Pleas
 If you need the Dashboard working immediately, you can temporarily disable API integration:
 
 In `Dashboard.tsx`, change line 45:
+
 ```typescript
 // From:
 const useApiData = trackers.length > 0;
