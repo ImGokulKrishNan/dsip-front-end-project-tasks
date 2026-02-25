@@ -298,30 +298,29 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
   return (
     <div className="h-full bg-background overflow-auto">
       <div className="px-4 py-5 md:p-6 space-y-6 pb-12 xl:pb-32">
-        <DailyExecutionZone
-          executionState={executionState}
-          setExecutionState={setExecutionState}
-          lockInPct={lockInPct}
-          setLockInPct={setLockInPct}
-          convictionOverride={convictionOverride}
-          setConvictionOverride={setConvictionOverride}
-          recommendation={recommendation}
-          isCalculating={isCalculating}
-          calculationError={calculationError}
-          executedAmount={executedAmount}
-          setExecutedAmount={setExecutedAmount}
-          executionPrice={executionPrice}
-          setExecutionPrice={setExecutionPrice}
-          isConfirming={isConfirming}
-          confirmError={confirmError}
-          onCalculate={handleCalculate}
-          onConfirm={handleConfirm}
-          totalInvested={totalInvested}
-          totalShares={totalShares}
-          trackerData={trackerData}
-        />
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div className="flex h-full gap-2">
+          <DailyExecutionZone
+            executionState={executionState}
+            setExecutionState={setExecutionState}
+            lockInPct={lockInPct}
+            setLockInPct={setLockInPct}
+            convictionOverride={convictionOverride}
+            setConvictionOverride={setConvictionOverride}
+            recommendation={recommendation}
+            isCalculating={isCalculating}
+            calculationError={calculationError}
+            executedAmount={executedAmount}
+            setExecutedAmount={setExecutedAmount}
+            executionPrice={executionPrice}
+            setExecutionPrice={setExecutionPrice}
+            isConfirming={isConfirming}
+            confirmError={confirmError}
+            onCalculate={handleCalculate}
+            onConfirm={handleConfirm}
+            totalInvested={totalInvested}
+            totalShares={totalShares}
+            trackerData={trackerData}
+          />
           <EngineConfigurationCard
             displayValues={{
               convictionYears: displayConvictionYears,
@@ -337,22 +336,21 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
             }}
             trackerData={trackerData}
           />
-
-          <LiveInvestmentCycleCard
-            currentCycle={currentCycle}
-            totalCycles={totalCycles}
-            daysInvested={daysInvested}
-            cycleLength={cycleLength}
-            displayDeployedAmount={displayDeployedAmount}
-            displayTotalBudget={displayTotalBudget}
-            selectedTracker={selectedTracker}
-            totalShares={totalShares}
-            currentReturnPercent={currentReturnPercent}
-            stock={stock}
-            onPartitionClick={handlePartitionClick}
-            onPartitionGroupClick={handlePartitionGroupClick}
-          />
         </div>
+        <LiveInvestmentCycleCard
+          currentCycle={currentCycle}
+          totalCycles={totalCycles}
+          daysInvested={daysInvested}
+          cycleLength={cycleLength}
+          displayDeployedAmount={displayDeployedAmount}
+          displayTotalBudget={displayTotalBudget}
+          selectedTracker={selectedTracker}
+          totalShares={totalShares}
+          currentReturnPercent={currentReturnPercent}
+          stock={stock}
+          onPartitionClick={handlePartitionClick}
+          onPartitionGroupClick={handlePartitionGroupClick}
+        />
 
         <PartitionSection
           selectedPartition={selectedPartition}

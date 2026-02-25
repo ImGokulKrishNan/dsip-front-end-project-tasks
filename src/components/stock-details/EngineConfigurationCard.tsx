@@ -136,8 +136,9 @@ export const EngineConfigurationCard: React.FC<
   };
 
   return (
-    <>
-      <Card className="bg-muted/20 border-border/50 shadow-sm">
+    <div className="flex flex-col space-y-3">
+      <div className="size-7"></div>
+      <Card className="bg-muted/20 border-border/50 shadow-sm h-full">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
@@ -423,6 +424,6 @@ export const EngineConfigurationCard: React.FC<
           )}
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };
