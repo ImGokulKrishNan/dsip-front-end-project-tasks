@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Icons } from "../../constants";
-import { Stock, LoadFactor } from "../../types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,25 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { InfoTooltip } from "./InfoTooltip";
+import { useUpdateTracker } from "@/hooks/useTrackers";
+import { InfoTooltip } from "../InfoTooltip";
 import { DisplayValues } from "./types";
 
 interface EngineConfigurationCardProps {
-  stock: Stock;
-  onUpdate: (stock: Stock) => void;
-  onCopyStrategy?: (config: Partial<Stock>) => void;
   displayValues: DisplayValues;
-  useApiData: boolean;
   trackerData: any;
-  dispatch: any;
 }
 
 const LOAD_FACTOR_TO_KEY: Record<string, string> = {
@@ -42,28 +29,20 @@ const LOAD_FACTOR_TO_KEY: Record<string, string> = {
 
 export const EngineConfigurationCard: React.FC<
   EngineConfigurationCardProps
-> = ({
-  stock,
-  onUpdate,
-  onCopyStrategy,
-  displayValues,
-  useApiData,
-  trackerData,
-  dispatch,
-}) => {
+> = ({ displayValues, trackerData }) => {
+  const updateTrackerM = useUpdateTracker();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editConfig, setEditConfig] = useState({
-    totalBudget: stock.totalBudget,
-    convictionYears: stock.convictionYears,
-    loadFactor: stock.loadFactor as string,
-    partitionMonths: stock.partitionMonths,
-    convictionLevel: stock.convictionLevel,
+    totalBudget: displayValues.totalBudget,
+    convictionYears: displayValues.convictionYears,
+    loadFactor: displayValues.loadFactor,
+    partitionMonths: displayValues.partitionMonths,
+    convictionLevel: displayValues.convictionLevel,
   });
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
-  const [showWarning, setShowWarning] = useState(false);
 
   const handleStartEdit = () => {
     setEditConfig({
@@ -80,11 +59,11 @@ export const EngineConfigurationCard: React.FC<
 
   const handleCancelEdit = () => {
     setEditConfig({
-      totalBudget: stock.totalBudget,
-      convictionYears: stock.convictionYears,
-      loadFactor: stock.loadFactor,
-      partitionMonths: stock.partitionMonths,
-      convictionLevel: stock.convictionLevel,
+      totalBudget: displayValues.totalBudget,
+      convictionYears: displayValues.convictionYears,
+      loadFactor: displayValues.loadFactor,
+      partitionMonths: displayValues.partitionMonths,
+      convictionLevel: displayValues.convictionLevel,
     });
     setValidationErrors({});
     setIsEditing(false);
@@ -118,11 +97,7 @@ export const EngineConfigurationCard: React.FC<
     setValidationErrors({});
 
     const currentLoadFactor =
-      useApiData && trackerData
-        ? ["GRADUAL", "MODERATE", "AGGRESSIVE"][
-            trackerData.deployment_style - 1
-          ] || "MODERATE"
-        : stock.loadFactor;
+      LOAD_FACTOR_TO_KEY[displayValues.loadFactor] || displayValues.loadFactor;
 
     const hasChanges =
       editConfig.totalBudget !== currentTotalBudget ||
@@ -138,48 +113,25 @@ export const EngineConfigurationCard: React.FC<
       return;
     }
 
-    const isSafe =
-      editConfig.totalBudget >= stock.totalBudget &&
-      editConfig.convictionYears >= stock.convictionYears &&
-      editConfig.loadFactor === stock.loadFactor &&
-      editConfig.convictionLevel === stock.convictionLevel;
+    if (!trackerData?.trackerId) return;
 
-    if (isSafe || useApiData) {
-      if (useApiData && trackerData?.trackerId) {
-        setIsSaving(true);
-        try {
-          const { updateTracker } = await import("../../lib/api.fetcher");
-
-          await updateTracker(trackerData.trackerId, {
-            total_capital_planned: editConfig.totalBudget,
-            conviction_period_years: editConfig.convictionYears,
-            partition_months: editConfig.partitionMonths,
-            deployment_style: editConfig.loadFactor,
-            base_conviction_score: editConfig.convictionLevel,
-          });
-
-          const { fetchTrackerDetails } =
-            await import("../../store/slices/trackersSlice");
-          dispatch(fetchTrackerDetails(trackerData.trackerId));
-
-          console.log("[StockDetails] Tracker updated successfully");
-        } catch (error) {
-          console.error("[StockDetails] Failed to update tracker:", error);
-          alert("Failed to update tracker. Please try again.");
-          return;
-        } finally {
-          setIsSaving(false);
-        }
-      }
-
-      onUpdate({
-        ...stock,
-        ...editConfig,
-        loadFactor: editConfig.loadFactor as LoadFactor,
+    setIsSaving(true);
+    try {
+      await updateTrackerM.mutateAsync({
+        trackerId: trackerData.trackerId,
+        data: {
+          total_capital_planned: editConfig.totalBudget,
+          conviction_period_years: editConfig.convictionYears,
+          partition_months: editConfig.partitionMonths,
+          deployment_style: editConfig.loadFactor,
+          base_conviction_score: editConfig.convictionLevel,
+        },
       });
       setIsEditing(false);
-    } else {
-      setShowWarning(true);
+    } catch {
+      alert("Failed to update tracker. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -405,8 +357,7 @@ export const EngineConfigurationCard: React.FC<
                     }
                   />
                   {editConfig.partitionMonths !==
-                    (trackerData?.partition_months ??
-                      stock.partitionMonths) && (
+                    displayValues.partitionMonths && (
                     <div className="flex items-start gap-1.5 text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-md px-2.5 py-2">
                       <Icons.AlertTriangle
                         size={12}
@@ -472,54 +423,6 @@ export const EngineConfigurationCard: React.FC<
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={showWarning} onOpenChange={setShowWarning}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-600">
-              <Icons.AlertTriangle className="w-5 h-5" />
-              Stock Engine Modification Warning
-            </DialogTitle>
-            <DialogDescription className="pt-2">
-              This change is not recommended for an existing stock engine.
-              Reducing budget, conviction, or changing structural parameters can
-              disrupt the mathematical execution.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setEditConfig({
-                  totalBudget: stock.totalBudget,
-                  convictionYears: stock.convictionYears,
-                  loadFactor: stock.loadFactor,
-                  partitionMonths: stock.partitionMonths,
-                  convictionLevel: stock.convictionLevel,
-                });
-                setShowWarning(false);
-                setIsEditing(false);
-              }}
-            >
-              Discard Changes
-            </Button>
-            <Button
-              onClick={() => {
-                if (onCopyStrategy) {
-                  onCopyStrategy({
-                    symbol: stock.symbol,
-                    name: stock.name,
-                    ...editConfig,
-                    loadFactor: editConfig.loadFactor as LoadFactor,
-                  });
-                }
-              }}
-            >
-              Activate Stock Engine
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

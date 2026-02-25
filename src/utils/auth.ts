@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../lib/api";
+import { API_BASE_URL } from "../lib/api.fetcher";
 
 const GOOGLE_LOGIN_URL = `${API_BASE_URL}/oauth2/authorization/google`;
 

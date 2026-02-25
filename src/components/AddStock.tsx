@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Icons } from "../constants";
-import { LoadFactor, Stock } from "../types";
+import { LoadFactor } from "../types";
+import type { CreateTrackerRequest } from "@/types/tracker.types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,27 +23,19 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { api } from "@/lib/api";
+import { getStockClosingPrice } from "@/lib/api.fetcher";
+import { Exchange } from "@/types/tracker.types";
+import type { StockPriceResponse } from "@/types/tracker.types";
 
-interface StockPriceResponse {
-  symbol: string;
-  exchange: string;
-  date: string;
-  closePrice: number;
-  source: string;
-  company: {
-    name: string;
-    symbol: string;
-    exchange: string;
-    industry: string;
-    country: string;
-  } | null;
-}
+const LOAD_FACTOR_TO_DEPLOYMENT: Record<LoadFactor, string> = {
+  [LoadFactor.GRADUAL]: "GRADUAL",
+  [LoadFactor.MODERATE]: "MODERATE",
+  [LoadFactor.AGGRESSIVE]: "AGGRESSIVE",
+};
 
 interface AddStockProps {
   onBack: () => void;
-  onAdd: (stock: Stock) => void;
-  initialValues?: Partial<Stock>;
+  onAdd: (request: CreateTrackerRequest) => void;
 }
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
@@ -60,23 +53,14 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
   </TooltipProvider>
 );
 
-const AddStock: React.FC<AddStockProps> = ({ onAdd, initialValues }) => {
-  // const [step, setStep] = useState<1 | 2>(1); // Removed stepper
+const AddStock: React.FC<AddStockProps> = ({ onAdd }) => {
   const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
-  const [symbol, setSymbol] = useState(initialValues?.symbol || "");
-  const [budget, setBudget] = useState(
-    initialValues?.totalBudget?.toString() || "",
-  );
-  const [partition, setPartition] = useState(
-    initialValues?.partitionMonths?.toString() || "",
-  );
-  const [convictionYears, setConvictionYears] = useState(
-    initialValues?.convictionYears?.toString() || "",
-  );
-  const [loadFactor, setLoadFactor] = useState<LoadFactor>(
-    initialValues?.loadFactor || LoadFactor.MODERATE,
-  );
+  const [symbol, setSymbol] = useState("");
+  const [budget, setBudget] = useState("");
+  const [partition, setPartition] = useState("");
+  const [convictionYears, setConvictionYears] = useState("");
+  const [loadFactor, setLoadFactor] = useState<LoadFactor>(LoadFactor.MODERATE);
 
   const [quantityOwned, setQuantityOwned] = useState("");
   const [averagePriceOwned, setAveragePriceOwned] = useState("");
@@ -128,9 +112,7 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd, initialValues }) => {
     return "0.00";
   };
 
-  const [convictionLevel, setConvictionLevel] = useState([
-    initialValues?.convictionLevel || 75,
-  ]);
+  const [convictionLevel, setConvictionLevel] = useState([75]);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [stockData, setStockData] = useState<StockPriceResponse | null>(null);
@@ -202,9 +184,10 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd, initialValues }) => {
     setFetchError(null);
 
     try {
-      const data = await api<StockPriceResponse>(
-        `/api/stocks/close?symbol=${encodeURIComponent(symbol.trim())}&exchange=US`,
-      );
+      const data = await getStockClosingPrice({
+        symbol: symbol.trim(),
+        exchange: Exchange.US,
+      });
       setStockData(data);
       setShowConfirmModal(true);
     } catch {
@@ -219,26 +202,19 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd, initialValues }) => {
   const handleConfirm = () => {
     if (!stockData) return;
 
-    const newStock: Stock = {
-      id: Date.now().toString(),
-      symbol: stockData.symbol,
-      name: stockData.company?.name || stockData.symbol,
-      totalBudget: Number(budget),
-      partitionMonths: Number(partition),
-      convictionYears: Number(convictionYears),
-      loadFactor,
-      deployedAmount: 0,
-      currentAverage: Number(averagePriceOwned),
-      currentPrice: stockData.closePrice,
-      isPaused: false,
-      history: [],
-      quantityOwned: alreadyInvested ? Number(quantityOwned) : 0,
-      averagePriceOwned: alreadyInvested ? Number(averagePriceOwned) : 0,
-      convictionLevel: convictionLevel[0],
-      priceMovementPct: 0,
+    const request: CreateTrackerRequest = {
+      stock_symbol: stockData.symbol,
+      conviction_period_years: Number(convictionYears),
+      total_capital_planned: Number(budget),
+      partition_months: Number(partition),
+      deployment_style: LOAD_FACTOR_TO_DEPLOYMENT[loadFactor],
+      base_conviction_score: convictionLevel[0],
+      initial_invested_amount: alreadyInvested ? Number(averagePriceOwned) : 0,
+      initial_shares_held: alreadyInvested ? Number(quantityOwned) : 0,
+      is_fractional_shares_allowed: true,
     };
     setShowConfirmModal(false);
-    onAdd(newStock);
+    onAdd(request);
   };
 
   return (

@@ -1,13 +1,13 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icons } from "../constants";
 import { Button } from "@/components/ui/button";
-import { useAppSelector } from "../store/hooks";
+import { useTrackers } from "../hooks/useTrackers";
 import { useSelectedStockId } from "@/hooks/use-selected-stock-id";
 
 function usePageTitle(): { title: string; showBack: boolean } {
   const location = useLocation();
   const selectedStockId = useSelectedStockId();
-  const { stocks } = useAppSelector((state) => state.stocks);
+  const { stocks } = useTrackers();
 
   if (selectedStockId) {
     const stock = stocks.find((s) => s.id === selectedStockId);

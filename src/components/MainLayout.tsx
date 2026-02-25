@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-import { useAppSelector } from "../store/hooks";
+import { useTrackers } from "../hooks/useTrackers";
 import { UserDropdown } from "./UserDropdown";
 import MobileStockSearch from "./MobileStockSearch";
 import PageHeader from "./PageHeader";
@@ -24,7 +24,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const selectedStockId = useSelectedStockId();
   const isTracker = !!selectedStockId;
 
-  const { stocks } = useAppSelector((state) => state.stocks);
+  const { stocks } = useTrackers();
 
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

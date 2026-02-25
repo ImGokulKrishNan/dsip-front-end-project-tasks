@@ -17,7 +17,6 @@ interface LiveInvestmentCycleCardProps {
   cycleLength: number;
   displayDeployedAmount: number;
   displayTotalBudget: number;
-  useApiData: boolean;
   selectedTracker: any;
   totalShares: number;
   currentReturnPercent: number;
@@ -39,7 +38,6 @@ export const LiveInvestmentCycleCard: React.FC<
   cycleLength,
   displayDeployedAmount,
   displayTotalBudget,
-  useApiData,
   selectedTracker,
   totalShares,
   currentReturnPercent,
@@ -50,24 +48,16 @@ export const LiveInvestmentCycleCard: React.FC<
   const liveCycle = selectedTracker?.tracker?.live_investment_cycle;
 
   const investedAmount =
-    useApiData && liveCycle?.total_capital_invested_so_far
-      ? liveCycle.total_capital_invested_so_far
-      : totalShares * stock.currentPrice;
+    liveCycle?.total_capital_invested_so_far ??
+    totalShares * stock.currentPrice;
 
-  const profitPct =
-    useApiData && liveCycle?.net_profit_percentage !== undefined
-      ? liveCycle.net_profit_percentage
-      : currentReturnPercent;
+  const profitPct = liveCycle?.net_profit_percentage ?? currentReturnPercent;
 
   const cycleProgress =
-    useApiData && liveCycle?.partition_progress
-      ? liveCycle.partition_progress
-      : ((daysInvested % cycleLength) / cycleLength) * 100;
+    liveCycle?.partition_progress ??
+    (cycleLength > 0 ? ((daysInvested % cycleLength) / cycleLength) * 100 : 0);
 
-  const progressPercentage =
-    useApiData && liveCycle?.partition_progress
-      ? liveCycle.partition_progress
-      : 0;
+  const progressPercentage = liveCycle?.partition_progress ?? 0;
 
   return (
     <Card className="border-primary/10 shadow-sm bg-background">

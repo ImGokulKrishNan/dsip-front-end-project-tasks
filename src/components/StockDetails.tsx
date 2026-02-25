@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Icons } from "../constants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useExecuteTrade, useEndPartition } from "@/hooks/useTrackers";
+import { getRecommendation, getPartitionDetails } from "../lib/api.fetcher";
 
 import { useStockDetailsData } from "./stock-details/useStockDetailsData";
 import { DailyExecutionZone } from "./stock-details/DailyExecutionZone";
@@ -15,19 +17,16 @@ import {
   ExecutionState,
 } from "./stock-details/types";
 
-const StockDetails: React.FC<StockDetailsProps> = ({
-  stock,
-  onBack,
-  onUpdate,
-  onCopyStrategy,
-}) => {
-  const data = useStockDetailsData(stock);
+const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
+  const trackerId = stock.id ? parseInt(stock.id) : undefined;
+  const validTrackerId = trackerId && !isNaN(trackerId) ? trackerId : undefined;
+  const data = useStockDetailsData(validTrackerId);
+  const executeTradeM = useExecuteTrade();
+  const endPartitionM = useEndPartition();
   const {
-    dispatch,
     selectedTracker,
     isLoadingTrackerDetails,
     trackerDetailsError,
-    useApiData,
     trackerData,
     displayConvictionYears,
     displayTotalBudget,
@@ -104,11 +103,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({
   };
 
   const getPartitionData = (index: number) => {
-    if (index >= (stock.currentCycle || 2)) return null;
+    if (index >= currentCycle) return null;
     const seed = index * 123;
     const amount = Math.floor(2000 + (seed % 3000));
     const variation = (seed % 20) - 10;
-    const price = stock.currentAverage * (1 + variation / 100);
+    const price = data.displayCurrentPrice * (1 + variation / 100);
     return {
       partitionIndex: index + 1,
       amountInvested: amount,
@@ -121,15 +120,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({
     setShowPartitionSelector(false);
     setSelectedPartition(index);
 
-    if (useApiData && trackerData?.trackerId) {
+    if (trackerData?.trackerId) {
       setIsLoadingPartition(true);
       try {
-        const { getPartitionDetails } = await import("../lib/api.fetcher");
         const details = await getPartitionDetails(trackerData.trackerId, index);
         setPartitionDetails(details);
-        console.log("[Partition Details]", details);
-      } catch (error) {
-        console.error("[Partition Details Error]", error);
+      } catch {
         setPartitionDetails(getPartitionData(index));
       } finally {
         setIsLoadingPartition(false);
@@ -155,7 +151,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({
         throw new Error("Please enter a valid lock-in percentage");
       }
 
-      const { getRecommendation } = await import("../lib/api.fetcher");
       const result = await getRecommendation(trackerId, lockIn);
 
       setRecommendation(result);
@@ -203,15 +198,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({
         throw new Error("Please enter a valid lock-in percentage");
       }
 
-      const { executeTrade } = await import("../lib/api.fetcher");
-      const result = await executeTrade(trackerId, {
-        lock_in_percentage: lockInPercentage,
-        conviction_override: conviction,
-        executed_amount: amount,
-        execution_price: price,
+      const result = await executeTradeM.mutateAsync({
+        trackerId,
+        data: {
+          lock_in_percentage: lockInPercentage,
+          conviction_override: conviction,
+          executed_amount: amount,
+          execution_price: price,
+        },
       });
-
-      console.log("[Execute Trade Response]", result);
 
       setExecutionState("IDLE");
       setLockInPct("");
@@ -219,10 +214,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({
       setRecommendation(null);
       setExecutedAmount("");
       setExecutionPrice("");
-
-      const { fetchTrackerDetails } =
-        await import("../store/slices/trackersSlice");
-      dispatch(fetchTrackerDetails(trackerId));
 
       setExecutionResponse(result);
 
@@ -241,10 +232,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({
           );
 
           if (shouldEndPartition) {
-            const { endPartitionAction } = await import("../lib/api.fetcher");
-            await endPartitionAction(trackerId, partitionIndex);
-            dispatch(fetchTrackerDetails(trackerId));
-            console.log("[Partition Ended]");
+            await endPartitionM.mutateAsync({ trackerId, partitionIndex });
 
             if (
               result.code === "KILL_SWITCH_STAGNATION" ||
@@ -260,7 +248,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({
         setShowSuccessPopup(true);
       }
     } catch (error: any) {
-      console.log("[Confirm Error]", error);
       setConfirmError(error.message || "Failed to confirm execution");
     } finally {
       setIsConfirming(false);
@@ -289,7 +276,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({
               <div>
                 <p className="font-semibold">Failed to load tracker details</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {trackerDetailsError}
+                  {trackerDetailsError?.message}
                 </p>
                 <Button
                   onClick={onBack}
@@ -336,9 +323,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           <EngineConfigurationCard
-            stock={stock}
-            onUpdate={onUpdate}
-            onCopyStrategy={onCopyStrategy}
             displayValues={{
               convictionYears: displayConvictionYears,
               totalBudget: displayTotalBudget,
@@ -351,9 +335,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({
               initialInvestedAmount: displayInitialInvestedAmount,
               initialSharesHeld: displayInitialSharesHeld,
             }}
-            useApiData={useApiData}
             trackerData={trackerData}
-            dispatch={dispatch}
           />
 
           <LiveInvestmentCycleCard
@@ -363,7 +345,6 @@ const StockDetails: React.FC<StockDetailsProps> = ({
             cycleLength={cycleLength}
             displayDeployedAmount={displayDeployedAmount}
             displayTotalBudget={displayTotalBudget}
-            useApiData={useApiData}
             selectedTracker={selectedTracker}
             totalShares={totalShares}
             currentReturnPercent={currentReturnPercent}

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../store/hooks";
-import { checkAuth } from "../store/slices/authSlice";
+import { useQueryClient } from "@tanstack/react-query";
+import { authKeys } from "../hooks/useAuth";
 
 const AuthCallback: React.FC = () => {
-  const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"processing" | "success" | "error">(
     "processing",
@@ -29,11 +29,11 @@ const AuthCallback: React.FC = () => {
       setTimeout(() => navigate("/", { replace: true }), 3000);
     } else {
       setStatus("success");
-      dispatch(checkAuth()).then(() => {
+      queryClient.invalidateQueries({ queryKey: authKeys.status }).then(() => {
         navigate("/", { replace: true });
       });
     }
-  }, [dispatch, navigate]);
+  }, [queryClient, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center">

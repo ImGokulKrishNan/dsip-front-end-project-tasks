@@ -14,37 +14,31 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import InfoTooltip from "./InfoTooltip";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { setShowDsipOnly } from "../store/slices/stocksSlice";
-import { fetchTrackerDetails } from "../store/slices/trackersSlice";
-import { syncTrackerData } from "../lib/api.fetcher";
+import { useTrackerDetails, useSyncTracker } from "../hooks/useTrackers";
+import { useSelectedStockId } from "@/hooks/use-selected-stock-id";
 import { useToast } from "@/hooks/use-toast";
 import { Execution } from "../types/tracker.types";
 
 const Performance: React.FC = () => {
-  const dispatch = useAppDispatch();
   const { toast } = useToast();
+  const selectedStockId = useSelectedStockId();
+  const trackerId = selectedStockId ? parseInt(selectedStockId) : undefined;
+  const validTrackerId = trackerId && !isNaN(trackerId) ? trackerId : undefined;
+  const { data: selectedTracker } = useTrackerDetails(validTrackerId);
+  const syncTracker = useSyncTracker();
+  const [showDsipOnly, setShowDsipOnly] = useState(false);
 
-  // Redux state
-  const { stocks, showDsipOnly } = useAppSelector((state) => state.stocks);
-  const { selectedTracker } = useAppSelector((state) => state.trackers);
-
-  // Sync state
   const [showSyncPopup, setShowSyncPopup] = useState(false);
   const [syncForm, setSyncForm] = useState({
     totalInvested: "",
     totalShares: "",
   });
-  const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Derive data source
   const trackerData = selectedTracker?.tracker || null;
-  const selectedStockId = trackerData?.trackerId?.toString() || null;
 
-  // Memoized metrics computation
   const metrics = useMemo(() => {
-    if (!selectedStockId || !trackerData) return null;
+    if (!trackerData) return null;
 
     let history: Array<Execution> = [];
 
@@ -82,53 +76,52 @@ const Performance: React.FC = () => {
       percentageChange,
       sortedHistory,
     };
-  }, [stocks, selectedStockId, selectedTracker, trackerData, showDsipOnly]);
+  }, [selectedTracker, trackerData, showDsipOnly]);
 
-  // Sync handler — memoized to avoid recreation on each render
-  const handleSync = useCallback(async () => {
+  const handleSync = useCallback(() => {
     const userInvested = Number(syncForm.totalInvested);
     const userShares = Number(syncForm.totalShares);
 
     if (!userInvested || !userShares) return;
 
-    const trackerId = trackerData?.trackerId;
-    if (!trackerId) {
+    const syncTrackerId = trackerData?.trackerId;
+    if (!syncTrackerId) {
       setSyncError("No tracker selected. Please select a tracker first.");
       return;
     }
 
-    setIsSyncing(true);
     setSyncError(null);
 
-    try {
-      const result = await syncTrackerData({
-        tracker_id: trackerId,
+    syncTracker.mutate(
+      {
+        tracker_id: syncTrackerId,
         current_total_shares: userShares,
         current_total_invested_amount: userInvested,
         reason: "Manual sync from broker statement",
-      });
-
-      if (result.success) {
-        dispatch(fetchTrackerDetails(trackerId));
-        setShowSyncPopup(false);
-        setSyncForm({ totalInvested: "", totalShares: "" });
-        toast({
-          title: "✅ Portfolio Synced",
-          description: "Your holdings have been updated successfully.",
-        });
-      } else {
-        setSyncError(result.message || "Sync failed");
-      }
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to sync portfolio data";
-      setSyncError(message);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [syncForm, trackerData, dispatch, toast]);
+      },
+      {
+        onSuccess: (result) => {
+          if (result.success) {
+            setShowSyncPopup(false);
+            setSyncForm({ totalInvested: "", totalShares: "" });
+            toast({
+              title: "Portfolio Synced",
+              description: "Your holdings have been updated successfully.",
+            });
+          } else {
+            setSyncError(result.message || "Sync failed");
+          }
+        },
+        onError: (error: unknown) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to sync portfolio data";
+          setSyncError(message);
+        },
+      },
+    );
+  }, [syncForm, trackerData, syncTracker, toast]);
 
   // Early return after all hooks
   if (!metrics) return null;
@@ -159,7 +152,7 @@ const Performance: React.FC = () => {
           <Switch
             id="dsip-toggle-perf"
             checked={showDsipOnly}
-            onCheckedChange={(show) => dispatch(setShowDsipOnly(show))}
+            onCheckedChange={setShowDsipOnly}
             className="scale-75"
           />
         </div>
@@ -408,10 +401,12 @@ const Performance: React.FC = () => {
             <Button
               onClick={handleSync}
               disabled={
-                !syncForm.totalInvested || !syncForm.totalShares || isSyncing
+                !syncForm.totalInvested ||
+                !syncForm.totalShares ||
+                syncTracker.isPending
               }
             >
-              {isSyncing ? (
+              {syncTracker.isPending ? (
                 <>
                   <Icons.Refresh className="mr-2 h-4 w-4 animate-spin" />
                   Syncing...

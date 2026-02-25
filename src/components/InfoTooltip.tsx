@@ -44,4 +44,5 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({ text }) => {
   );
 };
 
+export { InfoTooltip };
 export default InfoTooltip;

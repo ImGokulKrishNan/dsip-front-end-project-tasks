@@ -1,97 +1,43 @@
-import { useEffect } from "react";
-import { Stock } from "../../types";
-import { useAppSelector, useAppDispatch } from "../../store/hooks";
+import { useTrackerDetails } from "../../hooks/useTrackers";
 
-export function useStockDetailsData(stock: Stock) {
-  const dispatch = useAppDispatch();
+const DEPLOYMENT_STYLE_LABELS: Record<number, string> = {
+  1: "Gradual Build",
+  2: "Balanced Build",
+  3: "Aggressive Early Build",
+};
 
-  const { selectedTracker, isLoadingTrackerDetails, trackerDetailsError } =
-    useAppSelector((state) => state.trackers);
+export function useStockDetailsData(trackerId: number | undefined) {
+  const {
+    data: selectedTracker,
+    isLoading: isLoadingTrackerDetails,
+    error: trackerDetailsError,
+  } = useTrackerDetails(trackerId);
 
-  useEffect(() => {
-    console.log("[StockDetails] API Data:", {
-      selectedTracker,
-      isLoadingTrackerDetails,
-      trackerDetailsError,
-    });
-  }, [selectedTracker, isLoadingTrackerDetails, trackerDetailsError]);
+  const trackerData = selectedTracker?.tracker ?? null;
 
-  const useApiData = selectedTracker !== null;
-  const trackerData = useApiData ? selectedTracker?.tracker : null;
+  const displayConvictionYears = trackerData?.conviction_period_years ?? 0;
+  const displayTotalBudget = trackerData?.total_capital_planned ?? 0;
+  const displayConvictionLevel = trackerData?.base_conviction_score ?? 0;
+  const displayPartitionMonths = trackerData?.partition_months ?? 0;
+  const displayDeployedAmount =
+    trackerData?.dsip_total_capital_invested_so_far ?? 0;
+  const displaySharesHeld = trackerData?.shares_held_so_far ?? 0;
+  const displayCurrentPrice = trackerData?.currentPrice ?? 0;
+  const displayInitialInvestedAmount =
+    trackerData?.initial_invested_amount ?? null;
+  const displayInitialSharesHeld = trackerData?.initial_shares_held ?? null;
+  const displayLoadFactor =
+    DEPLOYMENT_STYLE_LABELS[trackerData?.deployment_style ?? 2] ??
+    "Balanced Build";
 
-  console.log("[StockDetails] Using data:", useApiData ? "API" : "Hardcoded", {
-    trackerData,
-    stock,
-  });
+  const totalInvested = trackerData?.total_capital_invested_so_far ?? 0;
 
-  const getDisplayValue = (apiValue: any, stockValue: any) => {
-    return useApiData && trackerData ? apiValue : stockValue;
-  };
-
-  const displayConvictionYears = getDisplayValue(
-    trackerData?.conviction_period_years,
-    stock.convictionYears,
-  );
-  const displayTotalBudget = getDisplayValue(
-    trackerData?.total_capital_planned,
-    stock.totalBudget,
-  );
-  const displayConvictionLevel = getDisplayValue(
-    trackerData?.base_conviction_score,
-    stock.convictionLevel,
-  );
-  const displayPartitionMonths = getDisplayValue(
-    trackerData?.partition_months,
-    stock.partitionMonths,
-  );
-  const displayDeployedAmount = getDisplayValue(
-    trackerData?.dsip_total_capital_invested_so_far,
-    stock.deployedAmount,
-  );
-  const displaySharesHeld = getDisplayValue(
-    trackerData?.shares_held_so_far,
-    stock.quantityOwned,
-  );
-  const displayCurrentPrice = getDisplayValue(
-    trackerData?.currentPrice,
-    stock.currentPrice,
-  );
-  const displayInitialInvestedAmount = getDisplayValue(
-    trackerData?.initial_invested_amount,
-    null,
-  );
-  const displayInitialSharesHeld = getDisplayValue(
-    trackerData?.initial_shares_held,
-    null,
-  );
-
-  const getDeploymentStyleText = () => {
-    if (!useApiData || !trackerData) return stock.loadFactor;
-    const styleMap: Record<number, string> = {
-      1: "Gradual Build",
-      2: "Balanced Build",
-      3: "Aggressive Early Build",
-    };
-    return styleMap[trackerData.deployment_style] || "Balanced Build";
-  };
-  const displayLoadFactor = getDeploymentStyleText();
-
-  const totalInvested =
-    useApiData && trackerData
-      ? trackerData.total_capital_invested_so_far
-      : stock.quantityOwned * stock.averagePriceOwned + stock.deployedAmount;
-
-  const sipQuantity =
-    useApiData && selectedTracker
-      ? selectedTracker.recentExecutions.reduce(
-          (acc: number, curr: any) =>
-            acc + curr.executedAmount / (curr.executionPrice || 1),
-          0,
-        )
-      : stock.history.reduce(
-          (acc: number, curr: any) => acc + curr.amount / curr.price,
-          0,
-        );
+  const sipQuantity = selectedTracker
+    ? selectedTracker.recentExecutions.reduce(
+        (acc, curr) => acc + curr.executedAmount / (curr.executionPrice || 1),
+        0,
+      )
+    : 0;
 
   const totalShares = displaySharesHeld + sipQuantity;
   const currentMarketValue = totalShares * displayCurrentPrice;
@@ -100,29 +46,15 @@ export function useStockDetailsData(stock: Stock) {
       ? ((currentMarketValue - totalInvested) / totalInvested) * 100
       : 0;
 
-  const currentCycle =
-    useApiData && trackerData
-      ? trackerData.active_partition_index || 1
-      : stock.currentCycle || 10;
-
-  const totalCycles =
-    useApiData && trackerData
-      ? trackerData.total_cycles
-      : stock.totalCycles || 20;
-
-  const daysInvested =
-    useApiData && selectedTracker
-      ? selectedTracker.recentExecutions.length
-      : stock.daysInvested || 14;
-
+  const currentCycle = trackerData?.active_partition_index ?? 1;
+  const totalCycles = trackerData?.total_cycles ?? 0;
+  const daysInvested = selectedTracker?.recentExecutions.length ?? 0;
   const cycleLength = displayPartitionMonths;
 
   return {
-    dispatch,
-    selectedTracker,
+    selectedTracker: selectedTracker ?? null,
     isLoadingTrackerDetails,
     trackerDetailsError,
-    useApiData,
     trackerData,
     displayConvictionYears,
     displayTotalBudget,

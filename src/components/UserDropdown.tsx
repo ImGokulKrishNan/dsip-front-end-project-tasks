@@ -9,16 +9,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
 import { ChevronDown, LogOut, Moon, Sun } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { logout } from "../store/slices/authSlice";
+import { useAuth, useLogout } from "../hooks/useAuth";
 
 export const UserDropdown = () => {
-  const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.auth.user);
+  const { user } = useAuth();
+  const { mutate: logout } = useLogout();
   const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
-    dispatch(logout());
+    logout();
   };
 
   return (

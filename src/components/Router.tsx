@@ -1,8 +1,5 @@
-import { setOnUnauthorized } from "@/lib/api";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { checkAuth, clearAuth } from "@/store/slices/authSlice";
-import { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import AuthCallback from "./AuthCallback";
 import UnauthorizedAccess from "./UnauthorizedAccess";
 import { AppShell, LandingGuard } from "@/App";
@@ -18,18 +15,7 @@ const LoadingSpinner: React.FC = () => (
 );
 
 export const AppRoutes: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((state) => state.auth);
-
-  useEffect(() => {
-    setOnUnauthorized(() => {
-      dispatch(clearAuth());
-    });
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner />;

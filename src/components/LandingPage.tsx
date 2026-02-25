@@ -1,9 +1,9 @@
 import React from "react";
-import { useAppSelector } from "../store/hooks";
+import { useAuth } from "../hooks/useAuth";
 import { redirectToGoogleLogin } from "../utils/auth";
 
 const LandingPage: React.FC = () => {
-  const isLoading = useAppSelector((state) => state.auth.isLoading);
+  const { isLoading } = useAuth();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gradient-to-b from-slate-900 to-slate-950 text-white selection:bg-indigo-500/30">
       {/* Background Ambience */}
