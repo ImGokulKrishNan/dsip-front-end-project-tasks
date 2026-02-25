@@ -31,20 +31,20 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: $IMAGE_TAG:${{ github.sha }}
+          tags: ${{ env.IMAGE_TAG }}:${{ github.sha }}
 
       - name: Checkout ops repo
         uses: actions/checkout@v4
         with:
-          repository: $MANIFESTS_REPO
+          repository: ${{ env.MANIFESTS_REPO }}
           token: ${{ secrets.PAT }}
           path: ops
       - name: Update image tag and push
         working-directory: ops
         run: |
-          sed -i 's|image: $IMAGE_TAG:.*|image: $IMAGE_TAG:${{ github.sha }}|' $MANIFEST_FILE_PATH
+          sed -i 's|image: ${{ env.IMAGE_TAG }}:.*|image: ${{ env.IMAGE_TAG }}:${{ github.sha }}|' ${{ env.MANIFEST_FILE_PATH }}
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add $MANIFEST_FILE_PATH
+          git add ${{ env.MANIFEST_FILE_PATH }}
           git commit -m "Update image to ${{ github.sha }}" || echo "No changes to commit"
           git push origin main
