@@ -1,6 +1,7 @@
 FROM node:20-alpine AS builder
 
-ARG VITE_API_BASE_URL=https://api.dsipengine.com
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 WORKDIR /app
 
