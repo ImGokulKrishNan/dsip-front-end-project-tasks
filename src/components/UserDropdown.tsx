@@ -25,17 +25,17 @@ export const UserDropdown = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="items-center gap-2 px-2.5 py-1.5 h-auto rounded-lg md:border md:bg-muted/30 md:backdrop-blur-sm hover:bg-muted/50"
+          className="items-center gap-2 p-0 md:px-2.5 md:py-1.5 h-auto rounded-lg md:border md:bg-muted/30 md:backdrop-blur-sm hover:bg-muted/50"
         >
           {user?.profilePicture ? (
             <img
               src={user.profilePicture}
               alt=""
               referrerPolicy="no-referrer"
-              className="w-7 h-7 rounded-full border border-border"
+              className="w-9 h-9 md:w-7 md:h-7 rounded-full border border-border"
             />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold border border-border">
+            <div className="w-9 h-9 md:w-7 md:h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm md:text-xs font-bold border border-border">
               {user?.name?.charAt(0) || "?"}
             </div>
           )}

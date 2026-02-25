@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icons } from "../constants";
-import { Button } from "@/components/ui/button";
 import { useTrackers } from "../hooks/useTrackers";
 import { useSelectedStockId } from "@/hooks/use-selected-stock-id";
 
@@ -29,13 +28,13 @@ const PageHeader: React.FC = () => {
   const { title, showBack } = usePageTitle();
 
   return (
-    <div className="flex items-center gap-3 px-2">
+    <div className="flex items-center gap-3 px-1.5">
       {showBack && (
         <div onClick={() => navigate("/home")} className="cursor-pointer">
-          <Icons.ArrowLeft size={18} />
+          <Icons.ArrowLeft size={22} />
         </div>
       )}
-      <h1 className="text-xl md:text-xl font-bold tracking-tight text-foreground">
+      <h1 className="text-2xl md:text-2xl font-bold tracking-tight text-foreground">
         {title}
       </h1>
     </div>

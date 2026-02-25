@@ -58,18 +58,18 @@ const MobileStockSearch: React.FC<MobileStockSearchProps> = ({ stocks }) => {
       {/* Search icon trigger -- sits inside the pill bar */}
       <button
         onClick={() => setIsOpen(true)}
-        className="shrink-0 p-1 text-muted-foreground/70 hover:text-foreground transition-colors md:hidden"
+        className="shrink-0 p-2 text-muted-foreground/70 hover:text-foreground transition-colors md:hidden"
       >
-        <Icons.Search size={18} />
+        <Icons.Search size={24} />
       </button>
 
       {/* Dropdown panel -- anchored below the pill bar */}
       {isOpen && (
         <div className="fixed left-3 right-3 top-[60px] z-50 md:hidden bg-background border border-border/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Search input */}
-          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/40">
+          <div className="flex items-center gap-2.5 px-3 py-3 border-b border-border/40">
             <Icons.Search
-              size={16}
+              size={18}
               className="shrink-0 text-muted-foreground/60"
             />
             <Input
@@ -78,7 +78,7 @@ const MobileStockSearch: React.FC<MobileStockSearchProps> = ({ stocks }) => {
               placeholder="Search stocks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 border-0 bg-transparent shadow-none focus-visible:ring-offset-0 focus-visible:ring-0 px-0 text-sm placeholder:text-muted-foreground/50"
+              className="h-10 border-0 bg-transparent shadow-none focus-visible:ring-offset-0 focus-visible:ring-0 px-0 text-base placeholder:text-muted-foreground/50"
             />
             {searchQuery ? (
               <button
@@ -88,14 +88,14 @@ const MobileStockSearch: React.FC<MobileStockSearchProps> = ({ stocks }) => {
                 }}
                 className="shrink-0 p-0.5 text-muted-foreground/50 hover:text-muted-foreground"
               >
-                <Icons.Close size={14} />
+                <Icons.Close size={16} />
               </button>
             ) : (
               <button
                 onClick={() => setIsOpen(false)}
                 className="shrink-0 p-0.5 text-muted-foreground/50 hover:text-muted-foreground"
               >
-                <Icons.Close size={14} />
+                <Icons.Close size={16} />
               </button>
             )}
           </div>
