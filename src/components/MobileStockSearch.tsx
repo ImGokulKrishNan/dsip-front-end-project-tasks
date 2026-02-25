@@ -78,7 +78,7 @@ const MobileStockSearch: React.FC<MobileStockSearchProps> = ({ stocks }) => {
               placeholder="Search stocks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 text-sm placeholder:text-muted-foreground/50"
+              className="h-8 border-0 bg-transparent shadow-none focus-visible:ring-offset-0 focus-visible:ring-0 px-0 text-sm placeholder:text-muted-foreground/50"
             />
             {searchQuery ? (
               <button

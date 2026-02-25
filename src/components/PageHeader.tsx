@@ -29,11 +29,11 @@ const PageHeader: React.FC = () => {
   const { title, showBack } = usePageTitle();
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 px-2">
       {showBack && (
-        <Button variant="ghost" size="icon" onClick={() => navigate("/home")}>
+        <div onClick={() => navigate("/home")} className="cursor-pointer">
           <Icons.ArrowLeft size={18} />
-        </Button>
+        </div>
       )}
       <h1 className="text-xl md:text-xl font-bold tracking-tight text-foreground">
         {title}
