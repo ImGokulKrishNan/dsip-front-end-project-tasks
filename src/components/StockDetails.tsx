@@ -298,7 +298,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
   return (
     <div className="h-full bg-background overflow-auto">
       <div className="px-4 py-5 md:p-6 space-y-6 pb-12 xl:pb-32">
-        <div className="flex h-full gap-2">
+        <div className="flex flex-col 2xl:flex-row h-full gap-2">
           <DailyExecutionZone
             executionState={executionState}
             setExecutionState={setExecutionState}
