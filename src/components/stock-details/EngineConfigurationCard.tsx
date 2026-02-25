@@ -137,7 +137,7 @@ export const EngineConfigurationCard: React.FC<
 
   return (
     <div className="flex flex-col space-y-3">
-      <div className="size-7"></div>
+      <div className="2xl:size-7"></div>
       <Card className="bg-muted/20 border-border/50 shadow-sm h-full">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between w-full">

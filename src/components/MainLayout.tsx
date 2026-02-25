@@ -58,7 +58,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <ScrollArea className="flex-1 min-w-0 h-full">
               {children}
               {isTracker && (
-                <div className="p-6 space-y-6 pb-32 xl:hidden">
+                <div className="p-6 space-y-6 xl:hidden border m-4 mt-0 sm:m-6 sm:mt-0 rounded-md">
                   <Performance />
                 </div>
               )}
