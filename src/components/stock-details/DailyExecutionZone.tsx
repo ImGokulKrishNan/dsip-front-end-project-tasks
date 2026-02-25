@@ -62,7 +62,7 @@ export const DailyExecutionZone: React.FC<DailyExecutionZoneProps> = ({
   trackerData,
 }) => {
   return (
-    <div className="flex-1 space-y-3">
+    <div className="flex-1 space-y-3 min-w-[30vw]">
       <div className="flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-md shadow-primary/30">
           <Icons.Zap size={16} />
