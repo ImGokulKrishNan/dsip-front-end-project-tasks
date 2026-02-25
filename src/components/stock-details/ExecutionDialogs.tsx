@@ -138,8 +138,8 @@ export const ExecutionDialogs: React.FC<ExecutionDialogsProps> = ({
               <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-900/20 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.3)] animate-in zoom-in-50 duration-700">
                 <Icons.Target className="w-12 h-12 text-amber-600 dark:text-amber-400 drop-shadow-sm" />
               </div>
-              <div className="absolute -inset-2 rounded-full border border-amber-500/20 animate-spin-slow duration-[10s]" />
-              <div className="absolute -inset-4 rounded-full border border-amber-500/10 animate-pulse duration-[3s]" />
+              <div className="absolute -inset-2 rounded-full border border-amber-500/20 animate-[spin_10s_linear_infinite]" />
+              <div className="absolute -inset-4 rounded-full border border-amber-500/10 animate-[pulse_3s_cubic-bezier(0.4,0,0.6,1)_infinite]" />
             </div>
 
             <div className="space-y-2 max-w-sm mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
