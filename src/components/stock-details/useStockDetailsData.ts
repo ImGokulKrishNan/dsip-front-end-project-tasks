@@ -1,9 +1,14 @@
 import { useTrackerDetails } from "../../hooks/useTrackers";
 
-const DEPLOYMENT_STYLE_LABELS: Record<number, string> = {
-  1: "Gradual Build",
+const DEPLOYMENT_STYLE_LABELS: Record<string, string> = {
+  // String keys — what the API actually returns
+  GRADUAL: "Gradual Build",
+  MODERATE: "Balanced Build",
+  AGGRESSIVE: "Aggressive Early Build",
+  // Numeric enum fallbacks (legacy / edge cases)
+  0: "Gradual Build",
+  1: "Aggressive Early Build",
   2: "Balanced Build",
-  3: "Aggressive Early Build",
 };
 
 export function useStockDetailsData(trackerId: number | undefined) {
@@ -27,7 +32,7 @@ export function useStockDetailsData(trackerId: number | undefined) {
     trackerData?.initial_invested_amount ?? null;
   const displayInitialSharesHeld = trackerData?.initial_shares_held ?? null;
   const displayLoadFactor =
-    DEPLOYMENT_STYLE_LABELS[trackerData?.deployment_style ?? 2] ??
+    DEPLOYMENT_STYLE_LABELS[trackerData?.deployment_style ?? "MODERATE"] ??
     "Balanced Build";
 
   const totalInvested = trackerData?.total_capital_invested_so_far ?? 0;

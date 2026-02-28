@@ -198,7 +198,8 @@ export async function getTrackerDetails(
       total_capital_planned: data.total_capital_planned ?? 0,
       partition_days: data.partition_days ?? 0,
       partition_months: data.partition_months ?? 0,
-      deployment_style: (data.deployment_style ?? 1) as DeploymentStyle,
+      deployment_style: (data.deployment_style ??
+        "MODERATE") as DeploymentStyle,
       base_conviction_score: data.base_conviction_score ?? 0,
       initial_invested_amount: data.initial_invested_amount ?? 0,
       initial_shares_held: data.initial_shares_held ?? 0,
