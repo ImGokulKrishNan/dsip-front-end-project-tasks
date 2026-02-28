@@ -134,13 +134,25 @@ export const LiveInvestmentCycleCard: React.FC<
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
-              <Icons.Target size={14} className="text-cyan-500" />
+              <Icons.Target size={14} className="text-emerald-500" />
               Deployment Progress
             </h3>
-            <span className="text-xs font-mono font-medium text-muted-foreground">
-              {((displayDeployedAmount / displayTotalBudget) * 100).toFixed(1)}%
-              Complete
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground">
+                Cycle{" "}
+                <span className="font-bold text-foreground">
+                  {currentCycle}
+                </span>{" "}
+                of{" "}
+                <span className="font-bold text-foreground">{totalCycles}</span>
+              </span>
+              <span className="text-[10px] font-semibold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                {((displayDeployedAmount / displayTotalBudget) * 100).toFixed(
+                  1,
+                )}
+                % deployed
+              </span>
+            </div>
           </div>
 
           <PartitionProgressBar
@@ -151,23 +163,24 @@ export const LiveInvestmentCycleCard: React.FC<
             onPartitionGroupClick={onPartitionGroupClick}
           />
 
-          <style>{`
-            @keyframes wave {
-              0%, 100% { 
-                transform: translateX(-50%) translateY(0);
-              }
-              50% { 
-                transform: translateX(-50%) translateY(-2px);
-              }
-            }
-          `}</style>
-
-          <div className="flex justify-between text-[10px] text-muted-foreground font-mono px-1">
-            <span>START</span>
-            <span className="font-semibold">
-              {currentCycle}/{totalCycles}
+          <div className="flex justify-between items-center text-[10px] text-muted-foreground px-0.5">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                Done
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full border-2 border-emerald-400 inline-block" />
+                Active
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-slate-700 inline-block" />
+                Ahead
+              </span>
+            </div>
+            <span className="font-mono text-muted-foreground/60">
+              {currentCycle}/{totalCycles} cycles
             </span>
-            <span>END</span>
           </div>
         </div>
       </CardContent>
@@ -210,50 +223,60 @@ const PartitionPill: React.FC<{
             if (!isUpcoming) onClick();
           }}
           disabled={isUpcoming}
-          className={`flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden ${
-            isCompleted
-              ? "bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 cursor-pointer"
-              : isActive
-                ? "bg-muted dark:bg-slate-800 border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] hover:shadow-[0_0_25px_rgba(34,211,238,0.8)] scale-105 cursor-pointer"
-                : "bg-muted/70 dark:bg-slate-800/50 border border-border cursor-not-allowed opacity-50"
-          }`}
+          className={`
+            relative overflow-hidden transition-all duration-300 rounded-full h-9
+            ${isActive ? "flex-[1.4]" : "flex-1"}
+            ${
+              isCompleted
+                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.45)] hover:shadow-[0_0_16px_rgba(16,185,129,0.65)] hover:scale-105 cursor-pointer"
+                : isActive
+                  ? "bg-slate-900 border-2 border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.55)] cursor-pointer"
+                  : "bg-slate-800/60 border border-slate-700/40 cursor-not-allowed"
+            }
+          `}
         >
+          {/* Completed: highlight sheen + check */}
+          {isCompleted && (
+            <>
+              <span className="absolute inset-0 bg-gradient-to-t from-black/15 to-white/15 rounded-full" />
+              <span className="absolute inset-0 flex items-center justify-center z-10">
+                <svg
+                  className="w-3.5 h-3.5 text-white drop-shadow"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+            </>
+          )}
+
+          {/* Active: horizontal left-to-right fill + pulse ring + % label */}
           {isActive && (
             <>
+              {/* Horizontal progress fill */}
               <span
-                className="absolute inset-0 rounded-full overflow-hidden"
-                style={{ clipPath: "inset(0 round 9999px)" }}
-              >
-                <span
-                  className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500"
-                  style={{
-                    bottom: 0,
-                    height: `${progressPercentage}%`,
-                    top: "auto",
-                  }}
-                >
-                  <span
-                    className="absolute inset-x-0 -top-2"
-                    style={{
-                      height: "8px",
-                      background:
-                        "radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 70%)",
-                      animation: "wave 2s ease-in-out infinite",
-                    }}
-                  />
-                </span>
-              </span>
-              <span className="absolute -inset-0.5 rounded-full bg-cyan-400/20 animate-pulse" />
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground dark:text-white z-20">
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500/40 to-emerald-400/25 rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${Math.max(progressPercentage, 4)}%` }}
+              />
+              {/* Outer pulse ring */}
+              <span className="absolute -inset-px rounded-full border border-emerald-400/40 animate-pulse" />
+              {/* Percentage text */}
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-emerald-300 z-10 tracking-wide">
                 {progressPercentage.toFixed(0)}%
               </span>
             </>
           )}
-          {isCompleted && (
-            <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
-          )}
+
+          {/* Upcoming: partition number */}
           {isUpcoming && (
-            <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-slate-500">
+              {partitionIndex}
+            </span>
           )}
         </button>
       </TooltipTrigger>
@@ -262,12 +285,12 @@ const PartitionPill: React.FC<{
         className="text-xs font-semibold bg-popover text-popover-foreground border-border px-3 py-1.5"
       >
         <div className="text-center">
-          <div className="font-bold">Partition {partitionIndex}</div>
+          <div className="font-bold">Cycle {partitionIndex}</div>
           <div className="text-[10px] text-muted-foreground mt-0.5">
             {isCompleted
-              ? "Success"
+              ? "✓ Completed"
               : isActive
-                ? `Active (${progressPercentage.toFixed(1)}%)`
+                ? `In progress · ${progressPercentage.toFixed(1)}% done`
                 : "Upcoming"}
           </div>
         </div>
@@ -332,11 +355,11 @@ const PartitionProgressBar: React.FC<PartitionProgressBarProps> = ({
                 onClick={(e) =>
                   onPartitionGroupClick(groupedStart, groupedEnd, e)
                 }
-                className="flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden cursor-pointer bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105"
+                className="flex-1 h-9 rounded-full transition-all duration-300 relative overflow-hidden cursor-pointer bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.45)] hover:shadow-[0_0_16px_rgba(16,185,129,0.65)] hover:scale-105"
               >
-                <span className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white/90 z-10">
-                  {groupedStart}-{groupedEnd}
+                <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/15 to-white/15" />
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white z-10">
+                  {groupedStart}–{groupedEnd}
                 </span>
               </button>
             </TooltipTrigger>
@@ -385,11 +408,10 @@ const PartitionProgressBar: React.FC<PartitionProgressBarProps> = ({
             <TooltipTrigger asChild>
               <button
                 disabled
-                className="flex-1 h-8 rounded-full transition-all duration-300 relative group overflow-hidden bg-muted/70 dark:bg-slate-800/50 border border-border cursor-not-allowed opacity-50"
+                className="flex-1 h-9 rounded-full relative overflow-hidden bg-slate-800/60 border border-slate-700/40 cursor-not-allowed"
               >
-                <div className="absolute inset-0 m-auto w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-muted-foreground">
-                  {groupedStart}-{groupedEnd}
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-slate-500">
+                  {groupedStart}–{groupedEnd}
                 </span>
               </button>
             </TooltipTrigger>
@@ -413,8 +435,8 @@ const PartitionProgressBar: React.FC<PartitionProgressBarProps> = ({
   }
 
   return (
-    <div className="relative w-full bg-muted/60 dark:bg-slate-900/30 rounded-full p-2 ring-1 ring-border shadow-inner">
-      <div className="flex gap-2 w-full">{pills}</div>
+    <div className="relative w-full bg-slate-900/40 rounded-full p-1.5 border border-slate-800/60">
+      <div className="flex gap-1.5 w-full">{pills}</div>
     </div>
   );
 };

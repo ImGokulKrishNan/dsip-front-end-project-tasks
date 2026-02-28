@@ -1,6 +1,5 @@
 import React from "react";
 import { Icons } from "../../constants";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { PartitionDetailsView } from "./types";
 
@@ -17,6 +16,15 @@ interface PartitionSectionProps {
   onPartitionClick: (index: number) => void;
 }
 
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export const PartitionSection: React.FC<PartitionSectionProps> = ({
   selectedPartition,
   setSelectedPartition,
@@ -29,35 +37,71 @@ export const PartitionSection: React.FC<PartitionSectionProps> = ({
   selectorAnchor,
   onPartitionClick,
 }) => {
+  const isCompleted =
+    partitionDetails?.status === "COMPLETED" || partitionDetails?.status === 2;
+  const isActive =
+    partitionDetails?.status === "ACTIVE" || partitionDetails?.status === 1;
+
+  // Normalize dual field names
+  const capitalDeployed =
+    partitionDetails?.capital_deployed ??
+    partitionDetails?.capitalInvestedSoFar ??
+    0;
+  const capitalAllocated =
+    partitionDetails?.capital_allocated ??
+    partitionDetails?.partitionCapitalAllocated ??
+    0;
+  const expectedDays =
+    partitionDetails?.expected_days ??
+    partitionDetails?.expectedPartitionDays ??
+    displayPartitionMonths;
+  const sharesBought =
+    partitionDetails?.shares_bought ?? partitionDetails?.noOfSharesBought ?? 0;
+  const partitionIndex =
+    partitionDetails?.partition_index ??
+    partitionDetails?.partitionIndex ??
+    (selectedPartition !== null ? selectedPartition + 1 : 1);
+  const startDate = partitionDetails?.start_date ?? partitionDetails?.createdAt;
+  const endDate =
+    partitionDetails?.end_date ?? partitionDetails?.partitionEndDate;
+  const netReturn = partitionDetails?.net_profit_percentage ?? 0;
+  const returnPositive = netReturn >= 0;
+
   return (
     <div>
+      {/* Partition group selector popup */}
       {showPartitionSelector && selectorAnchor && (
         <div
           className="fixed inset-0 z-50"
           onClick={() => setShowPartitionSelector(false)}
         >
           <div
-            className="absolute bg-slate-900/95 backdrop-blur-sm border border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/20 p-4 animate-in fade-in zoom-in-95 duration-200"
+            className="absolute bg-[#060d09] border border-emerald-500/25 rounded-2xl shadow-2xl shadow-emerald-900/30 p-4 animate-in fade-in zoom-in-95 duration-200"
             style={{
-              top: `${selectorAnchor.getBoundingClientRect().top - 120}px`,
+              top: `${selectorAnchor.getBoundingClientRect().top - 130}px`,
               left: `${selectorAnchor.getBoundingClientRect().left}px`,
-              minWidth: "280px",
+              minWidth: "240px",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-xs font-semibold text-cyan-400 mb-3 flex items-center gap-2">
-              <Icons.Target size={14} />
-              Select Partition
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-emerald-500/40" />
+              <span className="text-[10px] font-bold tracking-[0.2em] text-emerald-400 uppercase">
+                Select Cycle
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-emerald-500/40" />
             </div>
             <div className="grid grid-cols-4 gap-2">
               {selectorPartitions.map((partitionNum) => (
                 <button
                   key={partitionNum}
                   onClick={() => onPartitionClick(partitionNum)}
-                  className="h-12 rounded-xl bg-gradient-to-br from-cyan-400 via-cyan-500 to-blue-600 hover:from-cyan-300 hover:via-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-105 active:scale-95 flex items-center justify-center text-white font-bold text-sm relative overflow-hidden group"
+                  className="h-11 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.35)] hover:shadow-[0_0_16px_rgba(16,185,129,0.55)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center relative overflow-hidden"
                 >
-                  <span className="absolute inset-0 rounded-xl bg-gradient-to-t from-transparent to-white/20" />
-                  <span className="relative z-10">{partitionNum}</span>
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/15 to-white/15 rounded-xl" />
+                  <span className="relative z-10 text-white font-bold text-sm">
+                    {partitionNum}
+                  </span>
                 </button>
               ))}
             </div>
@@ -65,201 +109,243 @@ export const PartitionSection: React.FC<PartitionSectionProps> = ({
         </div>
       )}
 
+      {/* Partition detail dialog */}
       <Dialog
         open={selectedPartition !== null}
         onOpenChange={(open) => !open && setSelectedPartition(null)}
       >
         <DialogContent
           hideCloseButton
-          className="max-w-lg p-0 overflow-hidden bg-slate-950 border-slate-800 shadow-2xl rounded-3xl"
+          className="max-w-md p-0 overflow-hidden bg-[#060d09] border border-slate-800/60 shadow-2xl rounded-2xl"
         >
           {isLoadingPartition ? (
-            <div className="py-12 text-center">
-              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm text-muted-foreground mt-3">
-                Loading partition details...
-              </p>
+            <div className="py-16 flex flex-col items-center gap-4">
+              <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-slate-500">Loading cycle details…</p>
             </div>
           ) : (
             selectedPartition !== null && (
               <>
-                <div className="relative bg-gradient-to-br from-indigo-600/20 via-purple-600/10 to-transparent p-6 pb-8">
+                {/* Header */}
+                <div className="relative overflow-hidden px-6 pt-6 pb-5">
+                  {/* Status-tinted radial glow */}
+                  <div
+                    className={`absolute inset-0 pointer-events-none ${
+                      isCompleted
+                        ? "bg-[radial-gradient(ellipse_70%_60%_at_20%_0%,rgba(16,185,129,0.18),transparent)]"
+                        : isActive
+                          ? "bg-[radial-gradient(ellipse_70%_60%_at_20%_0%,rgba(16,185,129,0.12),transparent)]"
+                          : "bg-[radial-gradient(ellipse_70%_60%_at_20%_0%,rgba(100,116,139,0.12),transparent)]"
+                    }`}
+                  />
+
+                  {/* Close button */}
                   <button
                     onClick={() => setSelectedPartition(null)}
-                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all z-10 backdrop-blur-sm"
+                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all z-10"
                   >
-                    ✕
+                    <Icons.Close size={14} />
                   </button>
 
-                  <div className="flex items-start gap-4 pr-8">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
-                      <span className="font-mono font-black text-2xl text-white">
-                        I
-                        {partitionDetails?.partition_index ||
-                          selectedPartition + 1}
+                  <div className="flex items-center gap-4 pr-10 relative">
+                    {/* Cycle number badge */}
+                    <div
+                      className={`relative w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                        isCompleted
+                          ? "bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+                          : isActive
+                            ? "bg-slate-800 border-2 border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.4)]"
+                            : "bg-slate-800 border border-slate-700"
+                      }`}
+                    >
+                      {isCompleted && (
+                        <span className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/20 to-white/15" />
+                      )}
+                      {isActive && (
+                        <span className="absolute -inset-px rounded-2xl border border-emerald-400/30 animate-pulse" />
+                      )}
+                      <span className="relative z-10 font-black text-xl text-white">
+                        {partitionIndex}
                       </span>
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <DialogTitle className="font-bold text-xl text-white leading-none">
-                          Investment Cycle
+                      <div className="flex items-center gap-2 mb-1">
+                        <DialogTitle className="text-lg font-bold text-white leading-none">
+                          Cycle {partitionIndex}
                         </DialogTitle>
-                        <Badge
-                          variant={
-                            partitionDetails?.status === 2
-                              ? "default"
-                              : "outline"
-                          }
-                          className={
-                            partitionDetails?.status === 2
-                              ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30 px-3 py-0.5 text-xs font-semibold"
-                              : partitionDetails?.status === 1
-                                ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 border-cyan-500/30 px-3 py-0.5 text-xs font-semibold"
-                                : "bg-slate-700/50 text-slate-400 border-slate-600 px-3 py-0.5 text-xs font-semibold"
-                          }
+                        <span
+                          className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full border ${
+                            isCompleted
+                              ? "text-emerald-400 bg-emerald-500/15 border-emerald-500/25"
+                              : isActive
+                                ? "text-emerald-300 bg-emerald-500/10 border-emerald-500/20"
+                                : "text-slate-400 bg-slate-700/30 border-slate-600/30"
+                          }`}
                         >
-                          {partitionDetails?.status === "COMPLETED"
-                            ? "Success"
-                            : "Active"}
-                        </Badge>
+                          {isCompleted
+                            ? "✓ Completed"
+                            : isActive
+                              ? "● Active"
+                              : "Upcoming"}
+                        </span>
                       </div>
-
-                      <p className="text-sm text-slate-400 font-mono">
-                        Current Cycle{" "}
-                        {partitionDetails?.partition_index ||
-                          selectedPartition + 1}{" "}
-                        •{" "}
-                        {partitionDetails?.expected_days ||
-                          displayPartitionMonths}{" "}
-                        days
+                      <p className="text-xs text-slate-500">
+                        {expectedDays} day cycle
+                        {startDate && (
+                          <span className="ml-2 text-slate-600">
+                            · started {formatDate(startDate)}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 pb-8 space-y-6">
+                {/* Body */}
+                <div className="px-6 pb-6 space-y-4">
                   {partitionDetails ? (
                     <>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800">
-                          <div className="flex items-center gap-2 text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
-                            <Icons.Wallet size={14} />
+                      {/* Stats cards */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4">
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2 flex items-center gap-1.5">
+                            <Icons.Wallet size={11} />
                             Capital Invested
-                          </div>
-                          <div className="text-3xl font-black text-white tracking-tight">
-                            $
-                            {(
-                              partitionDetails?.capital_deployed || 0
-                            ).toLocaleString()}
-                          </div>
-                          <div className="text-xs text-slate-500 mt-1">
-                            of $
-                            {(
-                              partitionDetails?.capital_allocated || 0
-                            ).toLocaleString()}{" "}
-                            allocated
-                          </div>
+                          </p>
+                          <p className="text-2xl font-black text-white tracking-tight">
+                            ${capitalDeployed.toLocaleString()}
+                          </p>
+                          {capitalAllocated > 0 && (
+                            <p className="text-[10px] text-slate-500 mt-1">
+                              of ${capitalAllocated.toLocaleString()} allocated
+                            </p>
+                          )}
                         </div>
 
                         <div
-                          className={`p-4 rounded-2xl border ${
-                            (partitionDetails?.net_profit_percentage || 0) >= 0
-                              ? "bg-emerald-500/10 border-emerald-500/30"
-                              : "bg-red-500/10 border-red-500/30"
+                          className={`rounded-xl p-4 border ${
+                            returnPositive
+                              ? "bg-emerald-500/10 border-emerald-500/25"
+                              : "bg-red-500/10 border-red-500/25"
                           }`}
                         >
-                          <div className="flex items-center gap-2 text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
-                            <Icons.Activity size={14} />
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2 flex items-center gap-1.5">
+                            <Icons.TrendingUp size={11} />
                             Net Return
-                          </div>
-                          <div
-                            className={`text-3xl font-black tracking-tight ${
-                              (partitionDetails?.net_profit_percentage || 0) >=
-                              0
+                          </p>
+                          <p
+                            className={`text-2xl font-black tracking-tight ${
+                              returnPositive
                                 ? "text-emerald-400"
                                 : "text-red-400"
                             }`}
                           >
-                            {(partitionDetails?.net_profit_percentage || 0) >= 0
-                              ? "+"
-                              : ""}
-                            {(
-                              partitionDetails?.net_profit_percentage || 0
-                            ).toFixed(2)}
-                            %
-                          </div>
+                            {returnPositive ? "+" : ""}
+                            {netReturn.toFixed(2)}%
+                          </p>
                         </div>
                       </div>
 
-                      <div className="space-y-3 pt-2">
-                        {partitionDetails?.end_date && (
-                          <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
-                            <span className="text-sm text-slate-400">
-                              End Date
-                            </span>
-                            <span className="text-sm font-semibold text-white font-mono">
-                              {new Date(
-                                partitionDetails.end_date,
-                              ).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })}
-                            </span>
+                      {/* Timeline row */}
+                      {(startDate || endDate) && (
+                        <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-4">
+                          <div className="flex items-center justify-between relative">
+                            <div className="text-center">
+                              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">
+                                Start
+                              </p>
+                              <p className="text-xs font-semibold text-white font-mono">
+                                {formatDate(startDate)}
+                              </p>
+                            </div>
+
+                            {/* Timeline connector */}
+                            <div className="flex-1 mx-4 flex items-center gap-1">
+                              <div className="flex-1 h-px bg-slate-700" />
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  isCompleted
+                                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+                                    : "bg-slate-700 border border-slate-600"
+                                }`}
+                              >
+                                {isCompleted ? (
+                                  <svg
+                                    className="w-2.5 h-2.5 text-white"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : (
+                                  <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                                )}
+                              </div>
+                              <div className="flex-1 h-px bg-slate-700" />
+                            </div>
+
+                            <div className="text-center">
+                              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">
+                                End
+                              </p>
+                              <p className="text-xs font-semibold text-white font-mono">
+                                {formatDate(endDate)}
+                              </p>
+                            </div>
                           </div>
-                        )}
-                        <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
-                          <span className="text-sm text-slate-400">
-                            Expected Days
-                          </span>
-                          <span className="text-sm font-semibold text-white">
-                            {partitionDetails?.expected_days ||
-                              displayPartitionMonths}{" "}
-                            days
-                          </span>
                         </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
-                          <span className="text-sm text-slate-400">
-                            Units Acquired
-                          </span>
-                          <span className="text-sm font-semibold text-white font-mono">
-                            {(
-                              partitionDetails?.shares_bought || 0
-                            ).toLocaleString(undefined, {
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                        </div>
-                        {partitionDetails?.start_date && (
-                          <div className="flex justify-between items-center py-2">
-                            <span className="text-sm text-slate-400">
-                              Start Date
-                            </span>
-                            <span className="text-sm font-semibold text-white font-mono">
-                              {new Date(
-                                partitionDetails.start_date,
-                              ).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })}
-                            </span>
+                      )}
+
+                      {/* Metadata row */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center flex-shrink-0">
+                            <Icons.Clock className="w-3.5 h-3.5 text-slate-400" />
                           </div>
-                        )}
+                          <div>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wide">
+                              Duration
+                            </p>
+                            <p className="text-sm font-bold text-white">
+                              {expectedDays} days
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl px-4 py-3 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center flex-shrink-0">
+                            <Icons.Activity className="w-3.5 h-3.5 text-slate-400" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wide">
+                              Units
+                            </p>
+                            <p className="text-sm font-bold text-white font-mono">
+                              {sharesBought.toLocaleString(undefined, {
+                                maximumFractionDigits: 4,
+                              })}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </>
                   ) : (
-                    <div className="py-12 text-center space-y-4">
-                      <div className="w-20 h-20 rounded-full bg-slate-800/30 flex items-center justify-center mx-auto text-slate-600 border-2 border-dashed border-slate-700">
-                        <Icons.Clock className="w-10 h-10" />
+                    /* Upcoming / no data state */
+                    <div className="py-10 flex flex-col items-center gap-4 text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-slate-800/50 border border-dashed border-slate-700 flex items-center justify-center">
+                        <Icons.Clock className="w-7 h-7 text-slate-600" />
                       </div>
-                      <div className="space-y-2">
-                        <p className="font-semibold text-white text-lg">
+                      <div className="space-y-1">
+                        <p className="font-bold text-white">
                           Awaiting Execution
                         </p>
-                        <p className="text-sm text-slate-400 max-w-[250px] mx-auto">
-                          This investment cycle is scheduled for a future date.
+                        <p className="text-xs text-slate-500 max-w-[220px]">
+                          This cycle is scheduled for a future date.
                         </p>
                       </div>
                     </div>
