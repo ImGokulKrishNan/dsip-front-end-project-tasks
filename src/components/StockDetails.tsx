@@ -174,7 +174,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
   };
 
   const handleCalculate = () => {
-    performCalculation();
+    const today = new Date().toDateString();
+    const executedToday = selectedTracker?.recentExecutions?.some(
+      (exec) => new Date(String(exec.createdAt)).toDateString() === today,
+    );
+    if (executedToday) {
+      setShowDailyLimitWarning(true);
+    } else {
+      performCalculation();
+    }
   };
 
   const handleConfirm = async () => {
