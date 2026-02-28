@@ -5,8 +5,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ExecuteTradeResponse } from "../../types/tracker.types";
@@ -299,61 +297,116 @@ export const ExecutionDialogs: React.FC<ExecutionDialogsProps> = ({
 
       {/* Kill Switch Popup */}
       <Dialog open={showKillSwitchPopup} onOpenChange={setShowKillSwitchPopup}>
-        <DialogContent className="sm:max-w-md text-center border-l-4 border-l-red-500">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-center gap-2 text-red-600 text-xl">
-              <Icons.AlertTriangle className="w-6 h-6" />
-              Stop Execution Warning
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {executionResponse?.message ||
-                "We noticed your portfolio is currently down. Since you are more than halfway through the cycle, it is recommended to halt further investment to protect capital."}
-            </p>
+        <DialogContent className="sm:max-w-md text-center border border-red-500/20 bg-[#0c0505] shadow-2xl shadow-red-900/40 p-0 overflow-hidden">
+          {/* Radial red glow from top */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(239,68,68,0.18),transparent)] pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-red-500/8 via-transparent to-red-900/8 pointer-events-none" />
+
+          {/* Subtle warning particles */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-7 left-9 w-1.5 h-1.5 rounded-full bg-red-400/50 animate-pulse [animation-delay:0.2s]" />
+            <div className="absolute top-5 right-11 w-1 h-1 rounded-full bg-red-300/40 animate-pulse [animation-delay:0.6s]" />
+            <div className="absolute top-12 left-[42%] w-1 h-1 rounded-full bg-red-500/50 animate-pulse [animation-delay:1s]" />
+            <div className="absolute top-9 right-[32%] w-1.5 h-1.5 rounded-full bg-red-400/35 animate-pulse [animation-delay:0.4s]" />
+          </div>
+
+          <div className="flex flex-col items-center justify-center space-y-5 px-6 pt-9 pb-7 relative">
+            {/* Shield icon with warning rings */}
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-32 h-32 rounded-full border border-red-500/10 animate-pulse" />
+              <div className="absolute w-24 h-24 rounded-full border border-dashed border-red-500/15 animate-[spin_12s_linear_infinite]" />
+              <div className="absolute w-16 h-16 rounded-full bg-red-500/8 animate-pulse [animation-delay:0.5s]" />
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-red-500/30 to-red-800/20 border border-red-400/30 flex items-center justify-center shadow-[0_0_35px_rgba(239,68,68,0.45)] animate-in zoom-in-50 duration-500">
+                <svg
+                  className="w-8 h-8 text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.9)]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M12 8v4" />
+                  <path d="M12 16h.01" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="space-y-2 max-w-sm mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-150">
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-px w-8 bg-gradient-to-r from-transparent to-red-500/50" />
+                <span className="text-[10px] font-bold tracking-[0.25em] text-red-400 uppercase">
+                  Risk Alert
+                </span>
+                <div className="h-px w-8 bg-gradient-to-l from-transparent to-red-500/50" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight text-white">
+                {executionResponse?.title || "Stop Execution Warning"}
+              </DialogTitle>
+              <DialogDescription className="text-center text-sm text-slate-400 leading-relaxed">
+                {executionResponse?.message ||
+                  "Your portfolio is down and you're more than halfway through this cycle. Halting now protects your capital."}
+              </DialogDescription>
+              <DialogDescription className="hidden"></DialogDescription>
+            </div>
+
+            {/* Stats grid */}
             {executionResponse?.deployed_amount !== undefined &&
               executionResponse?.profit_pct !== undefined && (
-                <div className="text-xs text-center text-muted-foreground space-y-1 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30 mb-3">
-                  <p>
-                    Capital Deployed:{" "}
-                    <span className="font-semibold">
+                <div className="w-full grid grid-cols-2 gap-3 animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
+                  <div className="bg-red-500/8 border border-red-500/20 rounded-xl p-3.5 text-center">
+                    <p className="text-[11px] text-slate-500 mb-1 uppercase tracking-wide">
+                      Capital Deployed
+                    </p>
+                    <p className="text-xl font-bold text-white">
                       ${executionResponse.deployed_amount.toLocaleString()}
-                    </span>
-                  </p>
-                  <p>
-                    Net Return:{" "}
-                    <span className="font-semibold text-red-600">
+                    </p>
+                  </div>
+                  <div className="bg-red-500/8 border border-red-500/20 rounded-xl p-3.5 text-center">
+                    <p className="text-[11px] text-slate-500 mb-1 uppercase tracking-wide">
+                      Net Return
+                    </p>
+                    <p
+                      className={`text-xl font-bold ${executionResponse.profit_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                    >
+                      {executionResponse.profit_pct >= 0 ? "+" : ""}
                       {executionResponse.profit_pct.toFixed(2)}%
-                    </span>
-                  </p>
+                    </p>
+                  </div>
                 </div>
               )}
-            <p className="hidden"></p>
-            <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
-              <p className="text-xs font-semibold text-red-700 dark:text-red-400">
-                &quot;Good Investors know when to throttle down.&quot;
+
+            {/* Quote card */}
+            <div className="w-full bg-red-500/8 border border-red-500/15 rounded-xl px-4 py-3 animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
+              <p className="text-xs text-slate-500 italic text-center">
+                &ldquo;Good investors know when to protect capital — patience is
+                its own return.&rdquo;
               </p>
             </div>
+
+            {/* Actions */}
+            <div className="pt-1 w-full space-y-2.5 animate-in slide-in-from-bottom-5 fade-in duration-700 delay-400">
+              <Button
+                onClick={() => setShowKillSwitchPopup(false)}
+                className="w-full h-12 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white text-base font-bold tracking-wide border-0 shadow-[0_0_24px_rgba(239,68,68,0.4)] hover:shadow-[0_0_36px_rgba(239,68,68,0.6)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Icons.Zap className="mr-2 w-4 h-4" />
+                Activate Kill Switch
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full h-10 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 text-sm font-medium transition-all"
+                onClick={() => {
+                  setShowKillSwitchPopup(false);
+                  performCalculation();
+                }}
+              >
+                Ignore & Continue Anyway
+              </Button>
+            </div>
           </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="destructive"
-              className="w-full sm:w-auto flex-1 shadow-md"
-              onClick={() => setShowKillSwitchPopup(false)}
-            >
-              <Icons.Zap className="w-4 h-4 mr-2" /> Kill Switch (Stop)
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                setShowKillSwitchPopup(false);
-                performCalculation();
-              }}
-            >
-              Ignore & Execute
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
