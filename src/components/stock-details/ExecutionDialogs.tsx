@@ -105,54 +105,87 @@ export const ExecutionDialogs: React.FC<ExecutionDialogsProps> = ({
 
       {/* Success Popup */}
       <Dialog open={showSuccessPopup} onOpenChange={setShowSuccessPopup}>
-        <DialogContent className="sm:max-w-md text-center border-0 bg-background/95 backdrop-blur-3xl shadow-2xl p-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
+        <DialogContent className="sm:max-w-md text-center border border-emerald-500/15 bg-[#060d09] shadow-2xl shadow-emerald-900/30 p-0 overflow-hidden">
+          {/* Radial glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_45%_at_50%_0%,rgba(16,185,129,0.18),transparent)] pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/8 via-transparent to-transparent pointer-events-none" />
 
-          <div className="flex flex-col items-center justify-center space-y-5 px-6 py-10 relative">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-100 to-emerald-50 dark:from-emerald-900/40 dark:to-emerald-900/20 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)] animate-in zoom-in-50 duration-500 delay-150">
-                <Icons.Check className="w-10 h-10 text-emerald-600 dark:text-emerald-400 drop-shadow-sm" />
+          {/* Subtle floating particles */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-8 left-10 w-1.5 h-1.5 rounded-full bg-emerald-400/60 animate-bounce [animation-delay:0.2s]" />
+            <div className="absolute top-6 right-12 w-1 h-1 rounded-full bg-green-300/50 animate-ping [animation-delay:0.5s]" />
+            <div className="absolute top-12 left-[45%] w-1.5 h-1.5 rounded-full bg-emerald-500/50 animate-bounce [animation-delay:0.8s]" />
+            <div className="absolute top-5 right-[35%] w-1 h-1 rounded-full bg-green-400/60 animate-ping [animation-delay:0.3s]" />
+          </div>
+
+          <div className="flex flex-col items-center justify-center space-y-5 px-6 pt-9 pb-7 relative">
+            {/* Animated check icon */}
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-32 h-32 rounded-full border border-emerald-500/10 animate-pulse" />
+              <div className="absolute w-24 h-24 rounded-full border border-dashed border-emerald-500/20 animate-[spin_8s_linear_infinite]" />
+              <div className="absolute w-16 h-16 rounded-full bg-emerald-500/8 animate-pulse [animation-delay:0.4s]" />
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400/30 to-emerald-700/20 border border-emerald-400/35 flex items-center justify-center shadow-[0_0_35px_rgba(16,185,129,0.5)] animate-in zoom-in-50 duration-500">
+                <Icons.Check className="w-8 h-8 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
               </div>
-              <div className="absolute -inset-2 rounded-full border border-emerald-500/10 animate-pulse" />
             </div>
 
-            <div className="space-y-2 max-w-xs mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-200">
-              <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">
+            {/* Title */}
+            <div className="space-y-2 max-w-sm mx-auto animate-in slide-in-from-bottom-5 fade-in duration-700 delay-150">
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-px w-8 bg-gradient-to-r from-transparent to-emerald-500/50" />
+                <span className="text-[10px] font-bold tracking-[0.25em] text-emerald-400 uppercase">
+                  Daily Execution
+                </span>
+                <div className="h-px w-8 bg-gradient-to-l from-transparent to-emerald-500/50" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight text-white">
                 {executionResponse?.title || "Order Executed!"}
               </DialogTitle>
-              <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed">
+              <DialogDescription className="text-center text-sm text-slate-400 leading-relaxed">
                 {executionResponse?.message ||
                   "Great discipline! Your investment has been successfully recorded for today."}
               </DialogDescription>
-              {executionResponse?.deployed_amount !== undefined &&
-                executionResponse?.profit_pct !== undefined && (
-                  <div className="text-xs text-center text-muted-foreground space-y-1 pt-2 border-t border-emerald-500/10 mt-3 pt-3">
-                    <p>
-                      Capital Deployed:{" "}
-                      <span className="font-semibold">
-                        ${executionResponse.deployed_amount.toLocaleString()}
-                      </span>
-                    </p>
-                    <p>
-                      Net Return:{" "}
-                      <span
-                        className={`font-semibold ${executionResponse.profit_pct >= 0 ? "text-emerald-600" : "text-red-600"}`}
-                      >
-                        {executionResponse.profit_pct.toFixed(2)}%
-                      </span>
-                    </p>
-                  </div>
-                )}
               <DialogDescription className="hidden"></DialogDescription>
             </div>
 
-            <div className="pt-2 w-full animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
+            {/* Stats grid */}
+            {executionResponse?.deployed_amount !== undefined &&
+              executionResponse?.profit_pct !== undefined && (
+                <div className="w-full grid grid-cols-2 gap-3 animate-in slide-in-from-bottom-5 fade-in duration-700 delay-300">
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5 text-center">
+                    <p className="text-[11px] text-slate-500 mb-1 uppercase tracking-wide">
+                      Capital Deployed
+                    </p>
+                    <p className="text-xl font-bold text-white">
+                      ${executionResponse.deployed_amount.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5 text-center">
+                    <p className="text-[11px] text-slate-500 mb-1 uppercase tracking-wide">
+                      Net Return
+                    </p>
+                    <p
+                      className={`text-xl font-bold ${executionResponse.profit_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                    >
+                      {executionResponse.profit_pct >= 0 ? "+" : ""}
+                      {executionResponse.profit_pct.toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+              )}
+
+            {/* Button */}
+            <div className="pt-1 w-full animate-in slide-in-from-bottom-5 fade-in duration-700 delay-400">
               <Button
                 onClick={() => setShowSuccessPopup(false)}
-                className="w-full h-11 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-semibold tracking-wide"
+                className="w-full h-12 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white text-base font-bold tracking-wide border-0 shadow-[0_0_24px_rgba(16,185,129,0.4)] hover:shadow-[0_0_36px_rgba(16,185,129,0.6)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
               >
+                <Icons.Check className="mr-2 w-4 h-4" />
                 Continue
               </Button>
+              <p className="text-xs text-slate-600 mt-2.5 text-center">
+                One step closer — stay consistent
+              </p>
             </div>
           </div>
         </DialogContent>
