@@ -86,7 +86,7 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
           <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 font-sans">
             <AppRoutes />
             <Toaster />
