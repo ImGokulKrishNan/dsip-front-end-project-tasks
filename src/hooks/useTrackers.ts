@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import * as trackerApi from "../lib/api.fetcher";
+import { TrackerStatus } from "../types/tracker.types";
 import type {
   GetAllTrackersResponse,
   GetTrackerDetailsResponse,
@@ -40,7 +41,7 @@ export function useTrackers() {
       totalBudget: tracker.totalCapitalPlanned,
       deployedAmount: tracker.totalCapitalInvestedSoFar,
       currentPrice: tracker.currentPrice,
-      isPaused: tracker.status === 3,
+      isPaused: tracker.status === TrackerStatus.PAUSED,
       quantityOwned: tracker.sharesHeldSoFar,
       averagePriceOwned:
         tracker.sharesHeldSoFar > 0

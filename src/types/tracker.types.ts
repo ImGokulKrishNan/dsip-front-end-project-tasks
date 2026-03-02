@@ -14,16 +14,16 @@ export enum DeploymentStyle {
 }
 
 export enum TrackerStatus {
-  INACTIVE = 0,
-  ACTIVE = 1,
-  COMPLETED = 2,
-  PAUSED = 3,
+  INACTIVE = "INACTIVE",
+  ACTIVE = "ACTIVE",
+  COMPLETED = "COMPLETED",
+  PAUSED = "PAUSED",
 }
 
 export enum PartitionStatus {
-  PENDING = 0,
-  ACTIVE = 1,
-  COMPLETED = 2,
+  PENDING = "PENDING",
+  ACTIVE = "ACTIVE",
+  COMPLETED = "COMPLETED",
 }
 
 export enum Exchange {

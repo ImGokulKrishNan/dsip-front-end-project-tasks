@@ -37,10 +37,8 @@ export const PartitionSection: React.FC<PartitionSectionProps> = ({
   selectorAnchor,
   onPartitionClick,
 }) => {
-  const isCompleted =
-    partitionDetails?.status === "COMPLETED" || partitionDetails?.status === 2;
-  const isActive =
-    partitionDetails?.status === "ACTIVE" || partitionDetails?.status === 1;
+  const isCompleted = partitionDetails?.status === "COMPLETED";
+  const isActive = partitionDetails?.status === "ACTIVE";
 
   // Normalize dual field names
   const capitalDeployed =

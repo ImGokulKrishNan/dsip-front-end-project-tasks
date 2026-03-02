@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { API_BASE_URL } from "../lib/api.fetcher";
-import { DEV_CONFIG } from "../config/dev";
 
 export interface User {
   id: string;
@@ -22,10 +21,6 @@ async function fetchAuthStatus(): Promise<{
   isAuthenticated: boolean;
   user: User | null;
 }> {
-  if (DEV_CONFIG.BYPASS_AUTH) {
-    return { isAuthenticated: true, user: DEV_CONFIG.MOCK_USER };
-  }
-
   const res = await fetch(`${API_BASE_URL}/api/auth/status`, {
     credentials: "include",
   });

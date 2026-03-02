@@ -106,36 +106,20 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
     setShowPartitionSelector(true);
   };
 
-  const getPartitionData = (index: number) => {
-    if (index >= currentCycle) return null;
-    const seed = index * 123;
-    const amount = Math.floor(2000 + (seed % 3000));
-    const variation = (seed % 20) - 10;
-    const price = data.displayCurrentPrice * (1 + variation / 100);
-    return {
-      partitionIndex: index + 1,
-      amountInvested: amount,
-      avgPrice: price,
-      status: "COMPLETED",
-    };
-  };
-
   const handlePartitionClick = async (index: number) => {
     setShowPartitionSelector(false);
     setSelectedPartition(index);
 
-    if (trackerData?.trackerId) {
-      setIsLoadingPartition(true);
-      try {
-        const details = await getPartitionDetails(trackerData.trackerId, index);
-        setPartitionDetails(details);
-      } catch {
-        setPartitionDetails(getPartitionData(index) as PartitionDetailsView);
-      } finally {
-        setIsLoadingPartition(false);
-      }
-    } else {
-      setPartitionDetails(getPartitionData(index) as PartitionDetailsView);
+    if (!trackerData?.trackerId) return;
+
+    setIsLoadingPartition(true);
+    try {
+      const details = await getPartitionDetails(trackerData.trackerId, index);
+      setPartitionDetails(details);
+    } catch {
+      setPartitionDetails(null);
+    } finally {
+      setIsLoadingPartition(false);
     }
   };
 
