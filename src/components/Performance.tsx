@@ -8,8 +8,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -314,109 +312,216 @@ const Performance: React.FC = () => {
 
       {/* Sync Dialog */}
       <Dialog open={showSyncPopup} onOpenChange={setShowSyncPopup}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Icons.Refresh className="w-5 h-5 text-primary" />
-              Sync Portfolio
-            </DialogTitle>
-            <DialogDescription>
-              Manually update your total holdings to match your broker.
-              We&apos;ll adjust the base records while keeping your current
-              cycle intact.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-slate-800 bg-[#050a10]">
+          {/* Radial glow */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div
+              className="absolute inset-0 opacity-40"
+              style={{
+                background:
+                  "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(59,130,246,0.18) 0%, transparent 70%)",
+              }}
+            />
+          </div>
 
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground">
-                Total Invested Amount ($)
-              </Label>
-              <Input
-                type="number"
-                placeholder="e.g. 150000"
-                value={syncForm.totalInvested}
-                onChange={(e) =>
-                  setSyncForm({ ...syncForm, totalInvested: e.target.value })
-                }
-                className="h-11 font-mono text-lg"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground">
-                Total Shares Quantity
-              </Label>
-              <Input
-                type="number"
-                placeholder="e.g. 50.5"
-                value={syncForm.totalShares}
-                onChange={(e) =>
-                  setSyncForm({ ...syncForm, totalShares: e.target.value })
-                }
-                className="h-11 font-mono text-lg"
-              />
-            </div>
-
-            {syncForm.totalInvested && syncForm.totalShares && (
-              <div className="rounded-md bg-muted/50 p-3 text-xs space-y-1 border border-dashed">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Calculated Avg Price:
-                  </span>
-                  <span className="font-mono font-bold">
-                    $
-                    {(
-                      Number(syncForm.totalInvested) /
-                      Number(syncForm.totalShares)
-                    ).toFixed(2)}
+          <div className="relative p-6 space-y-5">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                {/* Icon with ring */}
+                <div className="relative flex items-center justify-center w-11 h-11 flex-shrink-0">
+                  <svg
+                    className="absolute inset-0 w-full h-full animate-spin"
+                    style={{ animationDuration: "8s" }}
+                    viewBox="0 0 44 44"
+                    fill="none"
+                  >
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="20"
+                      stroke="rgba(59,130,246,0.35)"
+                      strokeWidth="1.5"
+                      strokeDasharray="6 4"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                    <Icons.Refresh className="w-4 h-4 text-blue-400" />
+                  </div>
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold text-foreground">
+                    Sync Portfolio
+                  </DialogTitle>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">
+                    Manual Override
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Info card */}
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3.5">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Match your holdings to your broker statement. Base records will
+                be adjusted while keeping your{" "}
+                <span className="text-slate-200 font-semibold">
+                  current cycle intact
+                </span>
+                .
+              </p>
+            </div>
+
+            {/* Inputs */}
+            <div className="space-y-3">
+              {/* Single unified tile */}
+              <div className="bg-slate-900/60 border border-slate-800/60 focus-within:border-blue-500/40 rounded-xl overflow-hidden transition-colors duration-200">
+                {/* Field 1 — Invested Amount */}
+                <div className="px-4 pt-4 pb-3 focus-within:bg-slate-800/40 transition-colors duration-150">
+                  <Label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
+                    Total Invested Amount
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-bold text-base leading-none w-4 text-center flex-shrink-0">
+                      $
+                    </span>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="75.00"
+                      value={syncForm.totalInvested}
+                      onKeyDown={(e) => {
+                        const blocked = ["-", "+", "e", "E"];
+                        if (blocked.includes(e.key)) e.preventDefault();
+                        if (
+                          e.key === "." &&
+                          syncForm.totalInvested.includes(".")
+                        )
+                          e.preventDefault();
+                      }}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, "");
+                        const parts = val.split(".");
+                        const clean =
+                          parts.length > 2
+                            ? parts[0] + "." + parts.slice(1).join("")
+                            : val;
+                        setSyncForm({ ...syncForm, totalInvested: clean });
+                      }}
+                      className="h-9 font-mono text-base bg-transparent border-0 rounded-xl shadow-none outline-none ring-0 pl-2 pr-0 focus-visible:ring-0 focus-visible:outline-none text-foreground placeholder:text-slate-600"
+                    />
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-slate-800/80 mx-4" />
+
+                {/* Field 2 — Shares Quantity */}
+                <div className="px-4 pt-3 pb-4 focus-within:bg-slate-800/40 transition-colors duration-150">
+                  <Label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">
+                    Total Shares Quantity
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-bold text-base leading-none w-4 text-center flex-shrink-0">
+                      #
+                    </span>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="1.525"
+                      value={syncForm.totalShares}
+                      onKeyDown={(e) => {
+                        const blocked = ["-", "+", "e", "E"];
+                        if (blocked.includes(e.key)) e.preventDefault();
+                        if (e.key === "." && syncForm.totalShares.includes("."))
+                          e.preventDefault();
+                      }}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, "");
+                        const parts = val.split(".");
+                        const clean =
+                          parts.length > 2
+                            ? parts[0] + "." + parts.slice(1).join("")
+                            : val;
+                        setSyncForm({ ...syncForm, totalShares: clean });
+                      }}
+                      className="h-9 font-mono text-base bg-transparent border-0 rounded-xl shadow-none outline-none ring-0 pl-2 pr-0 focus-visible:ring-0 focus-visible:outline-none text-foreground placeholder:text-slate-600"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculated preview */}
+            {syncForm.totalInvested && syncForm.totalShares && (
+              <div className="flex items-center justify-between bg-blue-500/5 border border-blue-500/20 rounded-xl px-4 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  Calculated Avg Price
+                </span>
+                <span className="font-mono font-black text-blue-400">
+                  $
+                  {(
+                    Number(syncForm.totalInvested) /
+                    Number(syncForm.totalShares)
+                  ).toFixed(2)}
+                </span>
+              </div>
             )}
 
+            {/* Error */}
             {syncError && (
-              <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
-                <div className="flex items-start gap-2">
-                  <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <p className="font-semibold">Sync Error</p>
-                    <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3.5">
+                <div className="flex items-start gap-2.5 text-red-400">
+                  <Icons.AlertCircle size={15} className="mt-0.5 shrink-0" />
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold">Sync Failed</p>
+                    <p className="text-xs leading-relaxed text-red-400/80">
                       {syncError}
                     </p>
                   </div>
                 </div>
               </div>
             )}
-          </div>
 
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setShowSyncPopup(false);
-                setSyncError(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSync}
-              disabled={
-                !syncForm.totalInvested ||
-                !syncForm.totalShares ||
-                syncTracker.isPending
-              }
-            >
-              {syncTracker.isPending ? (
-                <>
-                  <Icons.Refresh className="mr-2 h-4 w-4 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                "Update Portfolio"
-              )}
-            </Button>
-          </DialogFooter>
+            {/* Actions */}
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="ghost"
+                className="flex-1 h-10 text-sm text-slate-400 hover:text-foreground border border-slate-800 hover:bg-slate-800/50"
+                onClick={() => {
+                  setShowSyncPopup(false);
+                  setSyncError(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 h-10 text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white border-0 shadow-lg shadow-blue-500/20 disabled:opacity-40"
+                onClick={handleSync}
+                disabled={
+                  !syncForm.totalInvested ||
+                  !syncForm.totalShares ||
+                  syncTracker.isPending
+                }
+              >
+                {syncTracker.isPending ? (
+                  <>
+                    <Icons.Refresh className="mr-2 h-4 w-4 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <Icons.Refresh className="mr-2 h-4 w-4" />
+                    Update Portfolio
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          <DialogDescription className="sr-only">
+            Manually update your total holdings to match your broker.
+          </DialogDescription>
         </DialogContent>
       </Dialog>
     </>
