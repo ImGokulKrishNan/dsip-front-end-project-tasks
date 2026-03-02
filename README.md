@@ -1,17 +1,46 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# DSIP — Daily SIP Investment Engine
 
-# Run and deploy your AI Studio app
+A React-based frontend for managing smart daily investment plans (SIP) with AI-assisted execution logic.
 
-This contains everything you need to run your app locally.
+## Overview
+
+DSIP lets you configure stock engines, track portfolio performance, and execute smart daily orders based on market conditions. Each stock engine defines an investment strategy with conviction-based allocation across a fixed budget and time horizon.
+
+**Key screens:**
+
+- **Home** — Portfolio overview showing Total Market Value, Invested Capital, Active Engines, Net Yield, and per-engine performance cards with deployment progress.
+- **Tracker** — Per-stock execution interface with daily Market Context input (price change %, conviction slider), Engine Configuration details, Live Investment Cycle progress, and an Investment Performance panel.
+
+## Tech Stack
+
+- **React 19** + **TypeScript**
+- **Vite** — build tool
+- **Tailwind CSS** — styling
+- **Radix UI** — accessible component primitives
+- **TanStack Query** — server state management
+- **React Router v7** — routing
 
 ## Run Locally
 
 **Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+
+   ```
+   npm install
+   ```
+
+2. Start the dev server:
+   ```
+   npm run dev
+   ```
+
+## Scripts
+
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `npm run dev`     | Start development server |
+| `npm run build`   | Production build         |
+| `npm run preview` | Preview production build |
+| `npm run lint`    | Run ESLint               |
+| `npm run format`  | Format with Prettier     |
