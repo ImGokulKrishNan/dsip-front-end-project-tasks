@@ -20,6 +20,7 @@ export interface DisplayValues {
   loadFactor: string;
   initialInvestedAmount: number | null;
   initialSharesHeld: number | null;
+  displayName: string;
 }
 
 /** Partition details as shown in UI (supports both API shapes) */

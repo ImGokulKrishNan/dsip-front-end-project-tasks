@@ -46,6 +46,7 @@ export interface CreateTrackerRequest {
   initial_invested_amount?: number; // Double type
   initial_shares_held?: number; // Double type
   is_fractional_shares_allowed?: boolean;
+  display_name?: string;
 }
 
 export interface UpdateTrackerRequest {
@@ -56,6 +57,7 @@ export interface UpdateTrackerRequest {
   conviction_period_years?: number;
   partition_days?: number;
   partition_months?: number; // Added for API compatibility
+  display_name?: string;
 }
 
 export interface ExecuteTradeRequest {
@@ -79,6 +81,7 @@ export interface Tracker {
   userId: string;
   stock_id: number;
   stock_symbol: string;
+  display_name?: string;
   conviction_period_years: number;
   total_capital_planned: number;
   partition_days: number;
@@ -113,6 +116,7 @@ export interface TrackerSummary {
   trackerId: number;
   stockSymbol: string;
   stockName: string;
+  displayName: string;
   currentPrice: number;
   totalCapitalPlanned: number;
   totalCapitalInvestedSoFar: number;

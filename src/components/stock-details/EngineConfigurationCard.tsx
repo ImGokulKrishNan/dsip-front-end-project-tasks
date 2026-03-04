@@ -40,6 +40,7 @@ export const EngineConfigurationCard: React.FC<
     loadFactor: displayValues.loadFactor,
     partitionMonths: displayValues.partitionMonths,
     convictionLevel: displayValues.convictionLevel,
+    displayName: displayValues.displayName,
   });
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
@@ -53,6 +54,7 @@ export const EngineConfigurationCard: React.FC<
         displayValues.loadFactor) as string,
       partitionMonths: displayValues.partitionMonths,
       convictionLevel: displayValues.convictionLevel,
+      displayName: displayValues.displayName,
     });
     setValidationErrors({});
     setIsEditing(true);
@@ -65,6 +67,7 @@ export const EngineConfigurationCard: React.FC<
       loadFactor: displayValues.loadFactor,
       partitionMonths: displayValues.partitionMonths,
       convictionLevel: displayValues.convictionLevel,
+      displayName: displayValues.displayName,
     });
     setValidationErrors({});
     setIsEditing(false);
@@ -105,7 +108,8 @@ export const EngineConfigurationCard: React.FC<
       editConfig.convictionYears !== currentConvictionYears ||
       editConfig.partitionMonths !== displayValues.partitionMonths ||
       editConfig.loadFactor !== currentLoadFactor ||
-      editConfig.convictionLevel !== displayValues.convictionLevel;
+      editConfig.convictionLevel !== displayValues.convictionLevel ||
+      editConfig.displayName !== displayValues.displayName;
 
     if (!hasChanges) {
       setValidationErrors({
@@ -126,6 +130,7 @@ export const EngineConfigurationCard: React.FC<
           partition_months: editConfig.partitionMonths,
           deployment_style: editConfig.loadFactor,
           base_conviction_score: editConfig.convictionLevel,
+          display_name: editConfig.displayName,
         },
       });
       setIsEditing(false);
@@ -176,6 +181,10 @@ export const EngineConfigurationCard: React.FC<
                   <p className="font-semibold">
                     {displayValues.convictionYears} Years
                   </p>
+                </div>
+                <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
+                  <p className="text-xs text-muted-foreground">Display Name</p>
+                  <p className="font-semibold">{displayValues.displayName}</p>
                 </div>
                 <div className="flex justify-between md:block border-b md:border-0 pb-2 md:pb-0 border-dashed border-muted">
                   <p className="text-xs text-muted-foreground">Total Budget</p>
@@ -238,6 +247,19 @@ export const EngineConfigurationCard: React.FC<
               </>
             ) : (
               <>
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="text-xs font-semibold">Display Name</Label>
+                  <Input
+                    className="h-10 md:h-8"
+                    value={editConfig.displayName || ""}
+                    onChange={(e) =>
+                      setEditConfig({
+                        ...editConfig,
+                        displayName: e.target.value,
+                      })
+                    }
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">
                     Conviction Period (Years)

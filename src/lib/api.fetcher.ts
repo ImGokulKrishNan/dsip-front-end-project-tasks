@@ -85,6 +85,7 @@ interface RawTrackerItem {
   id?: number;
   symbol?: string;
   name?: string;
+  display_name?: string;
   total_capital_planned?: number;
   total_capital_invested_so_far?: number;
   dsip_total_capital_invested_so_far?: number;
@@ -107,6 +108,7 @@ export async function getAllTrackers(): Promise<GetAllTrackersResponse> {
       trackerId: tracker.id ?? 0,
       stockSymbol: tracker.symbol ?? "",
       stockName: tracker.name ?? "",
+      displayName: tracker.display_name || tracker.name || tracker.symbol || "",
       currentPrice: sharesHeld > 0 ? totalSoFar / sharesHeld : 0,
       totalCapitalPlanned: tracker.total_capital_planned ?? 0,
       totalCapitalInvestedSoFar: tracker.total_capital_invested_so_far ?? 0,
@@ -162,6 +164,7 @@ interface RawTrackerDetailResponse {
   is_fractional_shares_allowed?: boolean;
   created_at?: string;
   name?: string;
+  display_name?: string;
   current_total_value?: number;
   current_avg?: number;
   dsip_current_avg?: number;
@@ -194,6 +197,7 @@ export async function getTrackerDetails(
       userId: data.user_id ?? "",
       stock_id: data.stock_id ?? 0,
       stock_symbol: data.symbol ?? "",
+      display_name: data.display_name || data.name || data.symbol,
       conviction_period_years: data.conviction_period_years ?? 0,
       total_capital_planned: data.total_capital_planned ?? 0,
       partition_days: data.partition_days ?? 0,

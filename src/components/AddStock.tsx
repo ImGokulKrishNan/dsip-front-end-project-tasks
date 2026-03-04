@@ -57,6 +57,7 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd }) => {
   const [alreadyInvested, setAlreadyInvested] = useState<boolean>(false);
 
   const [symbol, setSymbol] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [budget, setBudget] = useState("");
   const [partition, setPartition] = useState("");
   const [convictionYears, setConvictionYears] = useState("");
@@ -212,6 +213,7 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd }) => {
       initial_invested_amount: alreadyInvested ? Number(averagePriceOwned) : 0,
       initial_shares_held: alreadyInvested ? Number(quantityOwned) : 0,
       is_fractional_shares_allowed: true,
+      display_name: displayName.trim() !== "" ? displayName.trim() : undefined,
     };
     setShowConfirmModal(false);
     onAdd(request);
@@ -258,6 +260,22 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd }) => {
                       {validationErrors.symbol}
                     </p>
                   )}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label className="flex items-center gap-2">
+                    Display Name{" "}
+                    <span className="text-xs text-muted-foreground font-normal">
+                      (Optional)
+                    </span>
+                    <InfoTooltip text="Custom name for this tracker. It will fallback to the stock name if empty." />
+                  </Label>
+                  <Input
+                    placeholder="Siva's NFLX"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="text-lg tracking-wider"
+                  />
                 </div>
 
                 <div className="flex items-center space-x-2 border p-4 rounded-lg bg-card/50">
@@ -563,12 +581,14 @@ const AddStock: React.FC<AddStockProps> = ({ onAdd }) => {
           {stockData && (
             <div className="space-y-4 py-2">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-lg">
+                <div className="w-14 h-14 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-lg">
                   {stockData.symbol.substring(0, 2)}
                 </div>
-                <div>
-                  <p className="text-lg font-bold">{stockData.symbol}</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg font-bold truncate">
+                    {stockData.symbol}
+                  </p>
+                  <p className="text-sm text-muted-foreground truncate">
                     {stockData.company?.name || "N/A"}
                   </p>
                 </div>

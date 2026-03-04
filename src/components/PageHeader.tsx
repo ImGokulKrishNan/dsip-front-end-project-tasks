@@ -11,7 +11,7 @@ function usePageTitle(): { title: string; showBack: boolean } {
   if (selectedStockId) {
     const stock = stocks.find((s) => s.id === selectedStockId);
     return {
-      title: `${stock?.symbol || ""} Tracker`,
+      title: `${stock?.displayName || ""} Tracker`,
       showBack: true,
     };
   }

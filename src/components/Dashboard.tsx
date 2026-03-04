@@ -42,15 +42,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onAddStock, onSelectStock }) => {
   const [trackerToDelete, setTrackerToDelete] = useState<{
     id: number;
     symbol: string;
+    displayName: string;
   } | null>(null);
 
   const handleDeleteClick = (
     trackerId: number,
     symbol: string,
+    displayName: string,
     e: React.MouseEvent,
   ) => {
     e.stopPropagation();
-    setTrackerToDelete({ id: trackerId, symbol });
+    setTrackerToDelete({ id: trackerId, symbol, displayName });
     setDeleteDialogOpen(true);
   };
 
@@ -64,7 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onAddStock, onSelectStock }) => {
       },
       onError: () => {
         alert(
-          `Failed to delete tracker ${trackerToDelete.symbol}. Please try again.`,
+          `Failed to delete tracker ${trackerToDelete.displayName}. Please try again.`,
         );
       },
     });
@@ -310,12 +312,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onAddStock, onSelectStock }) => {
 
                             {/* Ticker + status */}
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-foreground leading-none">
-                                  {tracker.stockSymbol}
+                              <div className="flex items-center gap-2 min-w-0">
+                                <h4 className="font-bold text-foreground leading-none truncate flex-1">
+                                  {tracker.displayName}
                                 </h4>
                                 <span
-                                  className={`text-xs font-black tracking-tight ${
+                                  className={`text-xs font-black tracking-tight flex-shrink-0 ${
                                     isStockProfit
                                       ? "text-emerald-500 dark:text-emerald-400"
                                       : "text-red-500 dark:text-red-400"
@@ -368,6 +370,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onAddStock, onSelectStock }) => {
                                     handleDeleteClick(
                                       tracker.trackerId,
                                       tracker.stockSymbol,
+                                      tracker.displayName,
                                       e,
                                     )
                                   }
@@ -482,7 +485,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onAddStock, onSelectStock }) => {
             </DialogTitle>
             <DialogDescription className="pt-2">
               Are you sure you want to delete the tracker for{" "}
-              <strong>{trackerToDelete?.symbol}</strong>?
+              <strong>{trackerToDelete?.displayName}</strong>?
               <br />
               <br />
               This action cannot be undone. All execution history and

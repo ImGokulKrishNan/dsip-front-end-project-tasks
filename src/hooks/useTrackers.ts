@@ -38,6 +38,8 @@ export function useTrackers() {
       id: tracker.trackerId.toString(),
       symbol: tracker.stockSymbol,
       name: tracker.stockName,
+      displayName:
+        tracker.displayName || tracker.stockName || tracker.stockSymbol || "",
       totalBudget: tracker.totalCapitalPlanned,
       deployedAmount: tracker.totalCapitalInvestedSoFar,
       currentPrice: tracker.currentPrice,

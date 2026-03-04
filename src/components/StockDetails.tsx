@@ -333,6 +333,11 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stock, onBack }) => {
               loadFactor: displayLoadFactor,
               initialInvestedAmount: displayInitialInvestedAmount,
               initialSharesHeld: displayInitialSharesHeld,
+              displayName:
+                trackerData?.display_name ||
+                trackerData?.stockName ||
+                trackerData?.stock_symbol ||
+                "",
             }}
             trackerData={trackerData}
           />
