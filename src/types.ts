@@ -8,6 +8,7 @@ export interface Stock {
   id: string;
   symbol: string;
   name: string;
+  displayName: string;
   totalBudget: number;
   deployedAmount: number;
   currentPrice: number;

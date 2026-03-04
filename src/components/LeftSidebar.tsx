@@ -18,8 +18,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ stocks }) => {
 
   const filteredStocks = useMemo(
     () =>
-      stocks.filter((stock) =>
-        stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
+      stocks.filter(
+        (stock) =>
+          stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          stock.displayName.toLowerCase().includes(searchQuery.toLowerCase()),
       ),
     [stocks, searchQuery],
   );
@@ -98,7 +100,7 @@ const StockCard = ({ stock }: StockCardProps) => {
       )}
     >
       <div className="flex justify-between items-start mb-1">
-        <span className="font-semibold text-sm">{stock.symbol}</span>
+        <span className="font-semibold text-sm">{stock.displayName}</span>
         {stock.isPaused && (
           <span
             className="w-1.5 h-1.5 rounded-full bg-amber-400"
