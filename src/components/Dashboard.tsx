@@ -266,7 +266,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onAddStock, onSelectStock }) => {
                       ? (tracker.dsip_net_profit_percentage ?? 0)
                       : (tracker.net_profit_percentage ?? 0);
                     const isStockProfit = pnlPct >= 0;
-                    const isPaused = tracker.status !== TrackerStatus.ACTIVE;
+                    const isPaused = tracker.status === TrackerStatus.PAUSED;
 
                     const deploymentPct =
                       tracker.totalCapitalPlanned > 0
