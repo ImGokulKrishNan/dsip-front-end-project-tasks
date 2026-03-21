@@ -6,6 +6,9 @@ import { AppShell, LandingGuard } from "@/App";
 import { HomePage } from "./HomePage";
 import { AddStockPage } from "./AddStockPage";
 import { TrackerPage } from "./TrackerPage";
+import SimulationPage from "./SimulationPage";
+import AddSimulationPage from "./AddSimulationPage";
+import DocumentationPage from "./DocumentationPage";
 import NotFound from "./NotFound";
 
 const LoadingSpinner: React.FC = () => (
@@ -30,6 +33,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="/home" element={<HomePage />} />
         <Route path="/create-tracker" element={<AddStockPage />} />
         <Route path="/tracker/:id" element={<TrackerPage />} />
+        <Route path="/simulation" element={<SimulationPage />} />
+        <Route path="/create-simulation" element={<AddSimulationPage />} />
+        <Route path="/documentation" element={<DocumentationPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

@@ -20,6 +20,18 @@ function usePageTitle(): { title: string; showBack: boolean } {
     return { title: "Create Tracker", showBack: true };
   }
 
+  if (location.pathname === "/simulation") {
+    return { title: "Simulation", showBack: true };
+  }
+
+  if (location.pathname === "/create-simulation") {
+    return { title: "Create Simulation", showBack: true };
+  }
+
+  if (location.pathname === "/documentation") {
+    return { title: "Documentation", showBack: true };
+  }
+
   return { title: "Home", showBack: false };
 }
 

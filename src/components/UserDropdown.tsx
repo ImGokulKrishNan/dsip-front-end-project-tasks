@@ -10,15 +10,25 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { ChevronDown, LogOut, Moon, Sun } from "lucide-react";
 import { useAuth, useLogout } from "../hooks/useAuth";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Icons } from "../constants";
 
 export const UserDropdown = () => {
   const { user } = useAuth();
   const { mutate: logout } = useLogout();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
   };
+
+  // Logic to determine current context
+  const isSimulationPage = location.pathname.startsWith("/simulation");
+  const isDocumentationPage = location.pathname.startsWith("/documentation");
+  const isPortfolioPage =
+    location.pathname === "/home" || location.pathname === "/";
 
   return (
     <DropdownMenu>
@@ -39,7 +49,7 @@ export const UserDropdown = () => {
               {user?.name?.charAt(0) || "?"}
             </div>
           )}
-          <div className="hidden md:flex flex-col items-start text-left min-w-0 max-w-[140px]">
+          <div className="hidden md:flex flex-col items-start text-left min-w-0 max-w-[1400px]">
             <span className="text-xs font-medium truncate w-full">
               {user?.name || "User"}
             </span>
@@ -62,6 +72,45 @@ export const UserDropdown = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1" />
+
+        {/*. NAVIGATION SECTION */}
+
+        {/* Show Portfolio link if not on Home/Dashboard */}
+        {!isPortfolioPage && (
+          <DropdownMenuItem
+            className="py-2 px-2 text-sm"
+            onClick={() => navigate("/home")}
+          >
+            <Icons.Menu className="mr-2 h-4 w-4" />
+            Portfolio
+          </DropdownMenuItem>
+        )}
+
+        {/* Show Simulation link if not on Simulation page */}
+        {!isSimulationPage && (
+          <DropdownMenuItem
+            className="py-2 px-2 text-sm"
+            onClick={() => navigate("/simulation")}
+          >
+            <Icons.Play className="mr-2 h-4 w-4" />
+            Simulation
+          </DropdownMenuItem>
+        )}
+
+        {/* Show Documentation link if not on Documentation page */}
+        {!isDocumentationPage && (
+          <DropdownMenuItem
+            className="py-2 px-2 text-sm"
+            onClick={() => navigate("/documentation")}
+          >
+            <Icons.BookOpen className="mr-2 h-4 w-4" />
+            Documentation
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuSeparator className="my-1" />
+
+        {/* --- THEME & LOGOUT SECTION --- */}
         <DropdownMenuItem
           className="py-2 px-2 text-sm"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -78,8 +127,13 @@ export const UserDropdown = () => {
             </>
           )}
         </DropdownMenuItem>
+
         <DropdownMenuSeparator className="my-1" />
-        <DropdownMenuItem className="py-2 px-2 text-sm" onClick={handleLogout}>
+
+        <DropdownMenuItem
+          className="py-2 px-2 text-sm text-destructive focus:text-destructive"
+          onClick={handleLogout}
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
         </DropdownMenuItem>

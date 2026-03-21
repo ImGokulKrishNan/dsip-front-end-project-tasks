@@ -1,12 +1,14 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import LeftSidebar from "./LeftSidebar";
+import LeftSimulationSidebar from "./LeftSimulationSidebar";
 import Performance from "./Performance";
 import { Icons } from "../constants";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { useTrackers } from "../hooks/useTrackers";
+import { useSimulations } from "../hooks/useSimulations";
 import { UserDropdown } from "./UserDropdown";
 import MobileStockSearch from "./MobileStockSearch";
 import PageHeader from "./PageHeader";
@@ -18,11 +20,20 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const selectedStockId = useSelectedStockId();
   const isTracker = !!selectedStockId;
-
   const { stocks } = useTrackers();
+  const { simulations } = useSimulations();
+
+  // Check if on simulation pages
+  const isSimulationPage = location.pathname === "/simulation";
+  const isCreateSimulationPage = location.pathname === "/create-simulation";
+  const isDocumentationPage = location.pathname === "/documentation";
+
+  // Check if current page should hide the sidebar
+  const hideSidebar = isDocumentationPage || isCreateSimulationPage;
 
   return (
     <div className="flex h-screen w-screen bg-background overflow-hidden font-sans">
@@ -47,9 +58,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <Separator />
 
         <div className="flex flex-1 w-full overflow-hidden">
-          <div className="hidden md:flex">
-            <LeftSidebar stocks={stocks} />
-          </div>
+          {!hideSidebar && (
+            <div className="hidden md:flex">
+              {isSimulationPage ? (
+                <LeftSimulationSidebar simulations={simulations} />
+              ) : (
+                <LeftSidebar stocks={stocks} />
+              )}
+            </div>
+          )}
           <div className="flex-1 flex flex-col xl:flex-row min-w-0 overflow-hidden">
             <ScrollArea className="flex-1 min-w-0 h-full">
               {children}
