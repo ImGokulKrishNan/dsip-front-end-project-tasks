@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Icons } from "../constants";
-import { LoadFactor, SimulationResult, SimulationCycleResult } from "../types";
+import { LoadFactor } from "../types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useSimulations } from "@/hooks/useSimulations";
 import { getStockClosingPrice } from "@/lib/api.fetcher";
+import {
+  runSimulationApi,
+  CreateSimulationPayload,
+} from "@/lib/simulation.fetcher";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Exchange, type StockPriceResponse } from "@/types/tracker.types";
 
 interface AddSimulationProps {
@@ -45,7 +49,7 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
 );
 
 const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
-  const { addSimulation } = useSimulations();
+  const queryClient = useQueryClient();
 
   const [symbol, setSymbol] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -65,6 +69,15 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+
+  const simulationMutation = useMutation({
+    mutationFn: (payload: CreateSimulationPayload) => runSimulationApi(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["simulations"] });
+      setShowConfirmModal(false);
+      onRunSimulation?.();
+    },
+  });
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -104,44 +117,18 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
   const handleConfirmSimulation = () => {
     if (!stockData) return;
 
-    const totalMonths = Number(convictionYears) * 12;
-    const cycle = Number(cycleMonths) || 1;
-    const count = Math.max(Math.floor(totalMonths / cycle), 1);
-    const perCycle = Number(totalCapital) / count;
-
-    const cycles: SimulationCycleResult[] = [];
-    for (let i = 0; i < count; i++) {
-      const price = stockData.closePrice || 100 + Math.random() * 50;
-      const shares = perCycle / price;
-      cycles.push({
-        cycleNumber: i + 1,
-        deployDate: `Cycle ${i + 1}`,
-        capitalDeployed: perCycle,
-        sharePrice: price,
-        sharesAcquired: shares,
-        totalSharesHeld: shares * (i + 1),
-        averageBuyPrice: Number(totalCapital) / (shares * (i + 1)),
-        currentMarketPrice: price * 1.1,
-        unrealizedGain: price * 0.1 * shares,
-      });
-    }
-
-    const simulation: SimulationResult = {
-      id: Date.now().toString(),
+    const payload: CreateSimulationPayload = {
       symbol: stockData.symbol,
       totalCapital: Number(totalCapital),
-      deploymentStyle: loadFactor,
-      convictionLevel: convictionLevel[0],
-      cycles,
-      finalValue: Number(totalCapital) * 1.1,
-      totalReturn: Number(totalCapital) * 0.1,
-      returnPercentage: 10,
-      createdAt: new Date().toISOString(),
+      convictionYears: Number(convictionYears),
+      cycleMonths: Number(cycleMonths),
+      startDate: startDate,
+      endDate: endDate,
+      loadFactor: loadFactor,
+      convictionLevel: Number(convictionLevel[0]),
     };
 
-    addSimulation(simulation);
-    setShowConfirmModal(false);
-    onRunSimulation?.();
+    simulationMutation.mutate(payload);
   };
 
   return (
@@ -476,9 +463,18 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
             >
               Cancel
             </Button>
-            <Button onClick={handleConfirmSimulation}>
-              <Icons.Check className="mr-2 w-4 h-4" />
-              Confirm & Create Simulation
+            <Button
+              onClick={handleConfirmSimulation}
+              disabled={simulationMutation.isPending}
+            >
+              {simulationMutation.isPending ? (
+                "Running..."
+              ) : (
+                <>
+                  <Icons.Check className="mr-2 w-4 h-4" />
+                  Confirm & Create Simulation
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

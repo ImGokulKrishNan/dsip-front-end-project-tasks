@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Icons } from "../constants";
-import { useSimulations } from "@/hooks/useSimulations";
 import { SimulationResult } from "@/types";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -13,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -28,6 +28,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  fetchSimulationsApi,
+  deleteSimulationApi,
+} from "@/lib/simulation.fetcher";
 
 const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
   <TooltipProvider>
@@ -46,7 +51,19 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
 
 const SimulationPage: React.FC = () => {
   const navigate = useNavigate();
-  const { simulations, isLoading, deleteSimulation } = useSimulations();
+  const queryClient = useQueryClient();
+
+  const { data: simulations = [], isLoading } = useQuery({
+    queryKey: ["simulations"],
+    queryFn: fetchSimulationsApi,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteSimulationApi(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["simulations"] });
+    },
+  });
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [simulationToDelete, setSimulationToDelete] =
     useState<SimulationResult | null>(null);
@@ -54,11 +71,11 @@ const SimulationPage: React.FC = () => {
 
   // --- Portfolio Calculations ---
   const totalInvestedValue = simulations.reduce(
-    (acc, s) => acc + s.totalCapital,
+    (acc, s) => acc + (s.totalCapital || 0),
     0,
   );
   const currentMarketValue = simulations.reduce(
-    (acc, s) => acc + s.finalValue,
+    (acc, s) => acc + (s.finalValue || 0),
     0,
   );
   const totalProfitLossPct =
@@ -67,7 +84,9 @@ const SimulationPage: React.FC = () => {
       : 0;
 
   const isPortfolioProfit = totalProfitLossPct >= 0;
-  const activeCount = simulations.filter((s) => s.returnPercentage > 0).length;
+  const activeCount = simulations.filter(
+    (s) => (s.returnPercentage || 0) > 0,
+  ).length;
   const totalCount = simulations.length;
 
   const handleDeleteClick = (sim: SimulationResult, e: React.MouseEvent) => {
@@ -78,43 +97,16 @@ const SimulationPage: React.FC = () => {
 
   const handleDeleteConfirm = () => {
     if (!simulationToDelete) return;
-    deleteSimulation(simulationToDelete.id);
+    deleteMutation.mutate(String(simulationToDelete.id));
     setDeleteDialogOpen(false);
     setSimulationToDelete(null);
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="h-full p-4 md:p-6 space-y-8 overflow-y-auto bg-background">
-        {simulations.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center min-h-[600px] py-12">
-            <div className="text-center space-y-6 max-w-md">
-              <div className="flex justify-center">
-                <div className="p-4 bg-primary/10 rounded-2xl">
-                  <Icons.Play size={48} className="text-primary" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-bold text-foreground">
-                No Simulations Yet
-              </h2>
-              <Button
-                onClick={() => navigate("/create-simulation")}
-                className="gap-2"
-              >
-                <Icons.Plus size={18} /> Create New Simulation
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-10 max-w-7xl mx-auto">
+      <div className="h-full p-4 md:p-6 space-y-6 overflow-y-auto bg-background">
+        <div className="space-y-6">
+          <div className="space-y-8">
             {/* --- TOP SUMMARY CARD --- */}
             <Card className="relative overflow-hidden border shadow-xl bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-black dark:border-gray-800">
               <div className="absolute -left-12 -bottom-12 w-40 h-40 bg-primary/10 rounded-full blur-3xl opacity-50" />
@@ -198,49 +190,66 @@ const SimulationPage: React.FC = () => {
               </div>
             </Card>
 
-            {/* --- SIMULATION GRID --- */}
-            <div className="space-y-6">
-              <div className="flex justify-between items-center px-1">
-                <h2 className="text-2xl font-bold text-foreground tracking-tight">
-                  Active Simualtion
-                </h2>
-                <Button
-                  onClick={() => navigate("/create-simulation")}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Icons.Plus size={16} /> New Sim
-                </Button>
-              </div>
+            {/* --- SIMULATION GRID SECTION --- */}
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight mb-4">
+                Simulation Trackers
+              </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {simulations.map((simulation) => (
-                  <SimulationCard
-                    key={simulation.id}
-                    simulation={simulation}
-                    onDelete={(e) => handleDeleteClick(simulation, e)}
-                  />
-                ))}
-              </div>
+              {/* Loading State */}
+              {isLoading && (
+                <div className="flex items-center justify-center p-12">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+
+              {/* Stock Cards Grid */}
+              {!isLoading && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {simulations.length === 0 && (
+                    <Card className="sm:col-span-2 lg:col-span-3 xl:col-span-4 p-8 flex flex-col items-center justify-center text-center border-dashed bg-muted/20">
+                      <p className="text-muted-foreground mb-4">
+                        No simulations deployed yet.
+                      </p>
+                      <Button
+                        onClick={() => navigate("/create-simulation")}
+                        variant="outline"
+                      >
+                        Create First Simulation
+                      </Button>
+                    </Card>
+                  )}
+
+                  {simulations.map((simulation) => (
+                    <SimulationCard
+                      key={simulation.id}
+                      simulation={simulation}
+                      onDelete={(e) => handleDeleteClick(simulation, e)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
-              <Icons.Trash size={18} /> Delete Simulation
+              <Icons.AlertTriangle className="w-5 h-5" />
+              Delete Simulation
             </DialogTitle>
             <DialogDescription className="pt-2">
               Are you sure you want to delete the backtest for{" "}
-              <strong>{simulationToDelete?.symbol}</strong>? This action is
-              permanent.
+              <strong>{simulationToDelete?.symbol}</strong>?
+              <br />
+              <br />
+              This action is permanent and cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
@@ -248,7 +257,7 @@ const SimulationPage: React.FC = () => {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
+              Delete Simulation
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -268,12 +277,12 @@ const SimulationCard: React.FC<SimulationCardProps> = ({
   onDelete,
 }) => {
   const navigate = useNavigate();
-  const isProfit = simulation.returnPercentage >= 0;
+  const isProfit = (simulation.returnPercentage || 0) >= 0;
 
   return (
     <Card
       onClick={() => navigate(`/simulation/${simulation.id}`)}
-      className="cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 group relative overflow-hidden bg-card border-border"
+      className="cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 group relative overflow-hidden"
     >
       <div
         className={cn(
@@ -288,85 +297,115 @@ const SimulationCard: React.FC<SimulationCardProps> = ({
             className={cn(
               "w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm text-white shadow-lg flex-shrink-0",
               isProfit
-                ? "bg-gradient-to-br from-emerald-400 to-emerald-700"
-                : "bg-gradient-to-br from-red-400 to-red-700",
+                ? "bg-gradient-to-br from-emerald-400 to-emerald-700 shadow-emerald-500/20"
+                : "bg-gradient-to-br from-red-400 to-red-700 shadow-red-500/20",
             )}
           >
             {simulation.symbol.substring(0, 2).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h4 className="font-bold text-foreground leading-none truncate text-lg">
+            <div className="flex items-center gap-2 min-w-0">
+              <h4 className="font-bold text-foreground leading-none truncate flex-1">
                 {simulation.symbol}
               </h4>
               <span
                 className={cn(
-                  "text-xs font-black",
-                  isProfit ? "text-emerald-500" : "text-red-500",
+                  "text-xs font-black tracking-tight flex-shrink-0",
+                  isProfit
+                    ? "text-emerald-500 dark:text-emerald-400"
+                    : "text-red-500 dark:text-red-400",
                 )}
               >
                 {isProfit ? "+" : ""}
-                {simulation.returnPercentage.toFixed(2)}%
+                {(simulation.returnPercentage || 0).toFixed(2)}%
               </span>
             </div>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1">
               <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
                 ● Simulated
               </span>
             </div>
           </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-7 w-7 p-0 hover:bg-accent flex-shrink-0"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Icons.MoreVertical size={14} />
+                <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onDelete} className="text-destructive">
-                <Icons.Trash className="mr-2 h-4 w-4" /> Delete
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/simulation/${simulation.id}`);
+                }}
+              >
+                <Icons.Settings className="mr-2 h-4 w-4" />
+                <span>View Details</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                onClick={onDelete}
+              >
+                <Icons.Trash className="mr-2 h-4 w-4" />
+                <span>Delete Tracker</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        <div className="flex items-stretch divide-x divide-border/50 border border-border/40 rounded-xl overflow-hidden mb-4 bg-muted/20">
-          <div className="flex-1 px-3 py-2.5">
+        <div className="flex items-stretch divide-x divide-border/50 border border-border/40 rounded-xl overflow-hidden mb-4">
+          <div className="flex-1 px-3 py-2.5 bg-muted/20">
             <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
               Invested
             </p>
-            <p className="text-sm font-bold">
-              ${Math.round(simulation.totalCapital).toLocaleString()}
+            <p className="text-sm font-bold text-foreground leading-none">
+              $
+              {Math.round(simulation.totalCapital || 0).toLocaleString(
+                undefined,
+                { maximumFractionDigits: 0 },
+              )}
             </p>
           </div>
-          <div className="flex-1 px-3 py-2.5">
+          <div className="flex-1 px-3 py-2.5 bg-muted/20">
             <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
               Final
             </p>
-            <p className="text-sm font-bold">
-              ${Math.round(simulation.finalValue).toLocaleString()}
+            <p className="text-sm font-bold text-foreground leading-none">
+              $
+              {Math.round(simulation.finalValue || 0).toLocaleString(
+                undefined,
+                { maximumFractionDigits: 0 },
+              )}
             </p>
           </div>
-          <div className="flex-1 px-3 py-2.5">
+          <div className="flex-1 px-3 py-2.5 bg-muted/20">
             <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
               Yield
             </p>
             <p
               className={cn(
-                "text-sm font-bold",
+                "text-sm font-bold leading-none",
                 isProfit ? "text-emerald-500" : "text-red-500",
               )}
             >
-              ${Math.round(Math.abs(simulation.totalReturn)).toLocaleString()}
+              $
+              {Math.round(Math.abs(simulation.totalReturn || 0)).toLocaleString(
+                undefined,
+                { maximumFractionDigits: 0 },
+              )}
             </p>
           </div>
         </div>
 
-        <div>
+        <div className="mb-4">
           <div className="flex justify-between items-center mb-1.5">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
               Progress
@@ -374,22 +413,26 @@ const SimulationCard: React.FC<SimulationCardProps> = ({
             <span className="text-[10px] font-bold text-emerald-500">100%</span>
           </div>
           <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 w-full" />
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500 ease-out"
+              style={{ width: "100%" }}
+            />
           </div>
           <div className="flex justify-between text-[9px] mt-1 text-muted-foreground/60 font-mono">
-            <span>${simulation.totalCapital.toLocaleString()}</span>
-            <span>of ${simulation.totalCapital.toLocaleString()}</span>
+            <span>${(simulation.totalCapital || 0).toLocaleString()}</span>
+            <span>of ${(simulation.totalCapital || 0).toLocaleString()}</span>
           </div>
         </div>
 
         <Button
-          className="w-full h-9 mt-4 text-xs font-bold uppercase bg-primary text-primary-foreground hover:opacity-90 transition-all"
+          className="w-full h-9 text-xs font-bold uppercase tracking-wider"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/simulation/${simulation.id}`);
           }}
         >
-          <Icons.Zap size={12} className="mr-2 fill-current" /> EXECUTE
+          <Icons.Zap className="w-3 h-3 mr-2" /> View Simulation
         </Button>
       </CardContent>
     </Card>

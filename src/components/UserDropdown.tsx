@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
-import { ChevronDown, LogOut, Moon, Sun } from "lucide-react";
+import { ChevronDown, LogOut, Moon, Sun, BookOpen } from "lucide-react";
 import { useAuth, useLogout } from "../hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Icons } from "../constants";
@@ -103,7 +103,7 @@ export const UserDropdown = () => {
             className="py-2 px-2 text-sm"
             onClick={() => navigate("/documentation")}
           >
-            <Icons.BookOpen className="mr-2 h-4 w-4" />
+            <BookOpen className="mr-2 h-4 w-4" />
             Documentation
           </DropdownMenuItem>
         )}
