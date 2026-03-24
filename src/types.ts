@@ -43,6 +43,8 @@ export interface SimulationCycleResult {
 }
 
 export interface SimulationResult {
+  displayName?: string;
+  totalCapitalPlanned: number;
   id: string;
   symbol: string;
   totalCapital: number;

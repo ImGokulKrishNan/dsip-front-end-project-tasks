@@ -24,7 +24,10 @@ const LeftSimulationSidebar: React.FC<LeftSimulationSidebarProps> = ({
       simulations.filter(
         (sim) =>
           sim.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          sim.deploymentStyle.toLowerCase().includes(searchQuery.toLowerCase()),
+          sim.deploymentStyle
+            ?.toString()
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()),
       ),
     [simulations, searchQuery],
   );
@@ -64,15 +67,18 @@ const LeftSimulationSidebar: React.FC<LeftSimulationSidebarProps> = ({
                 </p>
               </div>
             ) : (
-              filteredSimulations.map((simulation) => {
-                return (
-                  <SimulationCard
-                    key={simulation.id}
-                    simulation={simulation}
-                    onSelect={() => onSelectSimulation?.(simulation.id)}
-                  />
-                );
-              })
+              filteredSimulations.map((simulation) => (
+                <SimulationCard
+                  key={simulation.id}
+                  simulation={simulation}
+                  // FIX: was calling onSelectSimulation but SimulationCard
+                  // never forwarded it — onSelect was declared but onClick={() => {}}
+                  onSelect={() => {
+                    onSelectSimulation?.(simulation.id);
+                    navigate(`/simulation/${simulation.id}`);
+                  }}
+                />
+              ))
             )}
           </div>
         </div>
@@ -86,12 +92,13 @@ interface SimulationCardProps {
   onSelect: () => void;
 }
 
-const SimulationCard = ({ simulation }: SimulationCardProps) => {
+const SimulationCard = ({ simulation, onSelect }: SimulationCardProps) => {
   const isProfit = simulation.returnPercentage >= 0;
 
   return (
     <button
-      onClick={() => {}}
+      // FIX: was onClick={() => {}} — completely ignored onSelect prop
+      onClick={onSelect}
       className={cn(
         "w-full p-3 rounded-md text-left border transition-all hover:bg-accent hover:text-accent-foreground group",
         "bg-transparent border-transparent",

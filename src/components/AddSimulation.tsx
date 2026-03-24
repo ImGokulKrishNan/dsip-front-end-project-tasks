@@ -22,12 +22,10 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { getStockClosingPrice } from "@/lib/api.fetcher";
-import {
-  runSimulationApi,
-  CreateSimulationPayload,
-} from "@/lib/simulation.fetcher";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { useQueryClient } from "@tanstack/react-query";
 import { Exchange, type StockPriceResponse } from "@/types/tracker.types";
+import { runSimulationApi } from "@/lib/simulation.fetcher";
 
 interface AddSimulationProps {
   onRunSimulation?: () => void;
@@ -48,11 +46,24 @@ const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
   </TooltipProvider>
 );
 
+// Maps LoadFactor enum to the numeric deploymentStyle the backend expects
+const loadFactorToDeploymentStyle = (lf: LoadFactor): number => {
+  switch (lf) {
+    case LoadFactor.AGGRESSIVE:
+      return 0;
+    case LoadFactor.MODERATE:
+      return 1;
+    case LoadFactor.GRADUAL:
+      return 2;
+    default:
+      return 1;
+  }
+};
+
 const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
   const queryClient = useQueryClient();
 
   const [symbol, setSymbol] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [totalCapital, setTotalCapital] = useState("");
   const [convictionYears, setConvictionYears] = useState("");
   const [cycleMonths, setCycleMonths] = useState("");
@@ -61,38 +72,48 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
   const [loadFactor, setLoadFactor] = useState<LoadFactor>(LoadFactor.MODERATE);
   const [convictionLevel, setConvictionLevel] = useState([75]);
 
-  // State for Confirmation Modal
+  // Confirmation modal
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [stockData, setStockData] = useState<StockPriceResponse | null>(null);
+
+  // Download modal
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [csvBlob, setCsvBlob] = useState<Blob | null>(null);
+
+  // Loading / error states
   const [fetchLoading, setFetchLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
 
-  const simulationMutation = useMutation({
-    mutationFn: (payload: CreateSimulationPayload) => runSimulationApi(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["simulations"] });
-      setShowConfirmModal(false);
-      onRunSimulation?.();
-    },
-  });
-
+  // -------------------------------------------------------------------------
+  // Validation
+  // -------------------------------------------------------------------------
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    if (!symbol) errors.symbol = "Stock symbol is required";
+    if (!symbol.trim()) errors.symbol = "Stock symbol is required";
     if (!totalCapital || Number(totalCapital) <= 0)
       errors.totalCapital = "Capital allocation must be > 0";
     if (!convictionYears || Number(convictionYears) <= 0)
       errors.convictionYears = "Period required";
+    if (!cycleMonths || Number(cycleMonths) <= 0)
+      errors.cycleMonths = "Cycle months required";
     if (!startDate) errors.startDate = "Start date required";
     if (!endDate) errors.endDate = "End date required";
+    if (startDate && endDate && endDate <= startDate)
+      errors.endDate = "End date must be after start date";
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  // -------------------------------------------------------------------------
+  // Step 1 — validate form, look up stock price, open confirm modal
+  // -------------------------------------------------------------------------
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -114,23 +135,72 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
     }
   };
 
-  const handleConfirmSimulation = () => {
+  // -------------------------------------------------------------------------
+  // Step 2 — POST to backend, download CSV response, invalidate cache
+  // -------------------------------------------------------------------------
+  const handleConfirmSimulation = async () => {
     if (!stockData) return;
 
-    const payload: CreateSimulationPayload = {
-      symbol: stockData.symbol,
-      totalCapital: Number(totalCapital),
-      convictionYears: Number(convictionYears),
-      cycleMonths: Number(cycleMonths),
-      startDate: startDate,
-      endDate: endDate,
-      loadFactor: loadFactor,
-      convictionLevel: Number(convictionLevel[0]),
-    };
+    setSubmitLoading(true);
+    setSubmitError(null);
 
-    simulationMutation.mutate(payload);
+    try {
+      const csvBlob = await runSimulationApi({
+        stockSymbol: symbol.trim().toUpperCase(),
+        startDate,
+        endDate,
+        convictionPeriodYears: Number(convictionYears),
+        totalCapitalPlanned: Number(totalCapital),
+        partitionMonths: Number(cycleMonths),
+        baseConvictionScore: convictionLevel[0],
+        deploymentStyle: loadFactorToDeploymentStyle(loadFactor),
+        initialInvestedAmount: 0,
+        initialSharesHeld: 0,
+        isFractionalSharesAllowed: true,
+      });
+
+      // Save blob to state instead of downloading automatically
+      setCsvBlob(csvBlob);
+
+      // Refresh the simulations list
+      queryClient.invalidateQueries({ queryKey: ["simulations"] });
+
+      setShowConfirmModal(false);
+      setShowDownloadModal(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "Simulation failed. Please try again.",
+      );
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
+  const handleDownloadCsv = () => {
+    if (!csvBlob) return;
+    const url = URL.createObjectURL(csvBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `simulation_${symbol.trim().toUpperCase()}_${startDate}_${endDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    setShowDownloadModal(false);
+    onRunSimulation?.();
+  };
+
+  const handleSkipDownload = () => {
+    setShowDownloadModal(false);
+    onRunSimulation?.();
+  };
+
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
   return (
     <div className="flex-1 flex flex-col h-full bg-background text-foreground selection:bg-primary/30">
       <div className="flex-1 overflow-y-auto">
@@ -174,28 +244,12 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
                     </p>
                   )}
                 </div>
-
-                <div className="grid gap-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Display Name{" "}
-                    <span className="text-xs text-muted-foreground font-normal">
-                      (Optional)
-                    </span>
-                    <InfoTooltip text="Custom label for this specific simulation run." />
-                  </Label>
-                  <Input
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="NFLX-1"
-                    className="bg-card border-input py-6 focus:border-primary"
-                  />
-                </div>
               </div>
 
               <div className="space-y-6 pt-4">
                 <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground">
                   <span className="w-1.5 h-1.5 bg-primary rounded-full" />
-                  Simulation parameters
+                  Simulation Parameters
                 </h3>
 
                 <div className="grid gap-2">
@@ -217,6 +271,11 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
                       placeholder="5000"
                     />
                   </div>
+                  {validationErrors.totalCapital && (
+                    <p className="text-[10px] text-destructive font-bold uppercase italic tracking-tighter">
+                      {validationErrors.totalCapital}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-6 pt-2">
@@ -229,8 +288,17 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
                       value={convictionYears}
                       onChange={(e) => setConvictionYears(e.target.value)}
                       placeholder="3"
-                      className="bg-card border-input h-12 font-bold focus:border-primary"
+                      className={cn(
+                        "bg-card border-input h-12 font-bold focus:border-primary",
+                        validationErrors.convictionYears &&
+                          "border-destructive",
+                      )}
                     />
+                    {validationErrors.convictionYears && (
+                      <p className="text-[10px] text-destructive font-bold uppercase italic tracking-tighter">
+                        {validationErrors.convictionYears}
+                      </p>
+                    )}
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -240,9 +308,17 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
                     <Input
                       value={cycleMonths}
                       onChange={(e) => setCycleMonths(e.target.value)}
-                      placeholder="8"
-                      className="bg-card border-input h-12 font-bold focus:border-primary"
+                      placeholder="3"
+                      className={cn(
+                        "bg-card border-input h-12 font-bold focus:border-primary",
+                        validationErrors.cycleMonths && "border-destructive",
+                      )}
                     />
+                    {validationErrors.cycleMonths && (
+                      <p className="text-[10px] text-destructive font-bold uppercase italic tracking-tighter">
+                        {validationErrors.cycleMonths}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -256,8 +332,16 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="bg-card border-input h-12 focus:border-primary dark:[color-scheme:dark]"
+                      className={cn(
+                        "bg-card border-input h-12 focus:border-primary dark:[color-scheme:dark]",
+                        validationErrors.startDate && "border-destructive",
+                      )}
                     />
+                    {validationErrors.startDate && (
+                      <p className="text-[10px] text-destructive font-bold uppercase italic tracking-tighter">
+                        {validationErrors.startDate}
+                      </p>
+                    )}
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -268,8 +352,16 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="bg-card border-input h-12 focus:border-primary dark:[color-scheme:dark]"
+                      className={cn(
+                        "bg-card border-input h-12 focus:border-primary dark:[color-scheme:dark]",
+                        validationErrors.endDate && "border-destructive",
+                      )}
                     />
+                    {validationErrors.endDate && (
+                      <p className="text-[10px] text-destructive font-bold uppercase italic tracking-tighter">
+                        {validationErrors.endDate}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -453,6 +545,12 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
               <div className="bg-muted/50 rounded-lg p-3 text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
                 Simulation will run from {startDate} to {endDate}
               </div>
+
+              {submitError && (
+                <p className="text-sm text-destructive font-medium text-center">
+                  {submitError}
+                </p>
+              )}
             </div>
           )}
 
@@ -460,21 +558,58 @@ const AddSimulation: React.FC<AddSimulationProps> = ({ onRunSimulation }) => {
             <Button
               variant="outline"
               onClick={() => setShowConfirmModal(false)}
+              disabled={submitLoading}
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleConfirmSimulation}
-              disabled={simulationMutation.isPending}
-            >
-              {simulationMutation.isPending ? (
-                "Running..."
+            <Button onClick={handleConfirmSimulation} disabled={submitLoading}>
+              {submitLoading ? (
+                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
               ) : (
-                <>
-                  <Icons.Check className="mr-2 w-4 h-4" />
-                  Confirm & Create Simulation
-                </>
+                <Icons.Check className="mr-2 w-4 h-4" />
               )}
+              {submitLoading
+                ? "Running Simulation..."
+                : "Confirm & Run Simulation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Download Prompt Modal */}
+      <Dialog
+        open={showDownloadModal}
+        onOpenChange={(open) => {
+          if (!open) handleSkipDownload();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-center">
+              Simulation Completed!
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-6 space-y-4 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-2">
+              <Icons.Check size={32} />
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Your backtest simulation for <strong>{symbol}</strong> was created
+              successfully.
+              <br />
+              <br />
+              Would you like to download the detailed execution report (CSV)?
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleSkipDownload}>
+              Skip & View Tracker
+            </Button>
+            <Button onClick={handleDownloadCsv}>
+              <Icons.ArrowDown className="mr-2 w-4 h-4" />
+              Download CSV Report
             </Button>
           </DialogFooter>
         </DialogContent>
